@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>追星記帳 V11 - 完整功能版雲端登入</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --brand-color: #92A8D1; 
+            --brand-gradient: linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%);
+            --app-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border-color: #f1f5f9;
+        }
+
+        body.dark-mode {
+            --app-bg: #000000;
+            --card-bg: #1a1a1a;
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --border-color: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--app-bg);
+            color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .bg-brand { background: var(--brand-gradient) !important; }
+        .text-brand { color: var(--brand-color) !important; }
+        .tab-active { color: var(--brand-color) !important; font-weight: 900; }
+        
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        body.dark-mode .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+
+        .status-unArrived { background-color: #fee2e2; color: #ef4444; }
+        .status-toShip { background-color: #fef3c7; color: #d97706; }
+        .status-received { background-color: #dcfce7; color: #16a34a; }
+
+        .chip {
+            flex-shrink: 0; padding: 6px 14px; border-radius: 12px; font-size: 11px;
+            font-weight: 600; transition: all 0.2s; cursor: pointer;
+            border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-sub);
+        }
+        .chip.active-tag { background: var(--brand-gradient) !important; color: #fff !important; border-color: transparent !important; }
+        .report-range-btn.active { background: var(--brand-gradient); color: white; }
+        
+        .color-preset { width: 42px; height: 42px; border-radius: 50%; cursor: pointer; border: 2px solid #e2e8f0; transition: all 0.2s; }
+        .color-preset.active { border-color: #fff !important; outline: 3px solid var(--brand-color); }
+        .photo-tab.active { border-bottom: 3px solid var(--brand-color); color: var(--brand-color); font-weight: 900; }
+
+        body.dark-mode .bg-white { background-color: var(--card-bg) !important; }
+        body.dark-mode .text-slate-800, body.dark-mode .text-gray-800 { color: #ffffff !important; }
+        body.dark-mode .bg-slate-50 { background-color: #262626 !important; }
+        body.dark-mode .border-gray-100 { border-color: #333333 !important; }
+
+        #toast {
+            visibility: hidden; min-width: 200px; background-color: rgba(30, 41, 59, 0.95);
+            color: #fff; text-align: center; border-radius: 16px; padding: 12px 24px;
+            position: fixed; z-index: 999; left: 50%; bottom: 100px; transform: translateX(-50%);
+            font-size: 14px; font-weight: 600; backdrop-filter: blur(8px); opacity: 0;
+            transition: all 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-32"></main>
+    <div id="toast">提示訊息</div>
+    <button id="fab" onclick="openAddModal()" class="bg-brand fixed bottom-28 right-6 w-14 h-14 text-white rounded-full flex items-center justify-center text-3xl shadow-lg z-40 transition-transform active:scale-90">＋</button>
+
+    <!-- 底部導覽 -->
+    <footer class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center h-20 safe-area-bottom z-50 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        <button onclick="switchTab('expense')" id="tab-expense" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="2"/></svg>
+            <span class="text-[10px] font-bold">消費清單</span>
+        </button>
+        <button onclick="switchTab('report')" id="tab-report" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-width="2"/><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-width="2"/></svg>
+            <span class="text-[10px] font-bold">財務報表</span>
+        </button>
+        <button onclick="switchTab('wish')" id="tab-wish" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-width="2"/></svg>
+            <span class="text-[10px] font-bold">願望清單</span>
+        </button>
+        <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/></svg>
+            <span class="text-[10px] font-bold">設定</span>
+        </button>
+    </footer>
+
+    <!-- 彈窗內容 -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div id="modal-container" class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden modal-enter shadow-2xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">新增消費</h3>
+                    <button onclick="closeModal()" class="text-gray-400 p-2 text-xl">✕</button>
+                </div>
+                <form id="data-form" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar pb-6 px-1"></form>
+                <div class="pt-4 border-t border-gray-50 flex gap-3">
+                    <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl active:scale-95 transition-transform">取消</button>
+                    <button onclick="saveData()" class="bg-brand flex-[2] text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">確認儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 刪除確認 -->
+    <div id="delete-modal-overlay" class="fixed inset-0 bg-black/70 hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl overflow-hidden p-6 text-center shadow-2xl scale-95">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">確定要刪除嗎？</h3>
+            <p class="text-sm text-gray-400 mb-6">紀錄刪除後將無法恢復。</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 燈箱 -->
+    <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+            <img id="lightbox-img" src="" class="w-full h-auto rounded-3xl shadow-2xl">
+            <div id="lightbox-info" class="absolute bottom-[-60px] left-0 right-0 text-white text-center">
+                <p id="lightbox-name" class="font-black text-lg"></p>
+                <p id="lightbox-sub" class="text-white/60 text-xs"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+    getAuth,
+    signInWithPopup,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signOut,
+    signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
+        authDomain: "fandom-expense.firebaseapp.com",
+        projectId: "fandom-expense",
+        storageBucket: "fandom-expense.firebasestorage.app",
+        messagingSenderId: "275234127604",
+        appId: "1:275234127604:web:af62f27f272290236ae8a1",
+        measurementId: "G-4QE8P5ZDQ6"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    /* === Google 登入改成按鈕觸發 === */
+    window.cloud = {
+    login: async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+        await signInWithPopup(auth, provider);  // 這個必須按鈕觸發
+        } catch (err) {
+        console.error(err);
+        showToast("登入失敗，請允許彈窗");
+        }
+    },
+
+    logout: async () => {
+        await signOut(auth);
+        localStorage.clear();
+        location.reload();
+    },
+
+    sync: async (expenses, wishlist) => {
+        if (!auth.currentUser) return;
+        await setDoc(
+        doc(db, "users", auth.currentUser.uid),
+        { expenses, wishlist },
+        { merge: true }
+        );
+    },
+
+    pull: async () => {
+        if (!auth.currentUser) return null;
+        const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        return snap.exists() ? snap.data() : null;
+    }
+    };
+
+    /* === Auth 初始化 === */
+    onAuthStateChanged(auth, async (user) => {
+    state.user = user || null;
+
+    if (user) {
+        const data = await window.cloud.pull();
+        if (data) {
+        state.expenses = data.expenses || state.expenses;
+        state.wishlist = data.wishlist || state.wishlist;
+        localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+        localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
+        }
+    }
+    renderContent();
+    });
+
+    /* === 訪客模式只在沒有登入時啟用 === */
+    // onAuthStateChanged(auth, (user) => {
+    // if (!user) {
+    //     signInAnonymously(auth).catch(err => console.error(err));
+    // }
+    // });
+    // 改成按鈕觸發匿名登入
+    document.getElementById('guestBtn').addEventListener('click', async () => {
+        try {
+            await signInAnonymously(auth);
+            showToast('已以訪客模式登入');
+        } catch {
+            showToast('訪客登入失敗');
+        }
+    });
+
+    // /* === 雲端操作（只改路徑） === */
+    // window.cloud = {
+    // login: async () => {
+    //     const provider = new GoogleAuthProvider();
+    //     try {
+    //     await signInWithPopup(auth, provider);
+    //     } catch {
+    //     showToast("登入失敗，請允許彈窗");
+    //     }
+    // },
+    // logout: async () => {
+    //     await signOut(auth);
+    //     localStorage.clear();
+    //     location.reload();
+    // },
+    // sync: async (expenses, wishlist) => {
+    //     if (!auth.currentUser) return;
+    //     await setDoc(
+    //     doc(db, "users", auth.currentUser.uid),
+    //     { expenses, wishlist },
+    //     { merge: true }
+    //     );
+    // },
+    // pull: async () => {
+    //     if (!auth.currentUser) return null;
+    //     const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    //     return snap.exists() ? snap.data() : null;
+    // }
+    // };
+
+    // /* === Auth 初始化 === */
+    // onAuthStateChanged(auth, async (user) => {
+    // state.user = user || null;
+
+    // if (user) {
+    //     const data = await window.cloud.pull();
+    //     if (data) {
+    //     state.expenses = data.expenses || state.expenses;
+    //     state.wishlist = data.wishlist || state.wishlist;
+    //     localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+    //     localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
+    //     }
+    // }
+    // renderContent();
+    // });
+
+    // /* 訪客模式 */
+    // signInAnonymously(auth);
+    </script>
+
+
+    <script>
+        /**
+         * 1. 狀態管理
+         */
+        let state = {
+            activeTab: 'expense',
+            subPage: null,
+            photoWallTab: 'purchased',
+            themeColor: localStorage.getItem('fe_v11_theme') || 'svt', 
+            expenses: JSON.parse(localStorage.getItem('fe_v11_expenses')) || [],
+            wishlist: JSON.parse(localStorage.getItem('fe_v11_wishlist')) || [],
+            filterYear: Number(new Date().getFullYear()),
+            filterMonth: Number(new Date().getMonth() + 1),
+            reportRange: '6months', 
+            reportOffset: 0,
+            searchKeyword: '',
+            selectedCategory: '',
+            wishPhotoCategory: '',
+            editingId: null,
+            deleteTarget: { type: null, id: null },
+            tempImage: null,
+            user: null
+        };
+
+        const excelHeaderMap = {
+            name: "項目名稱", price: "單價", qty: "數量", category: "分類",
+            year: "消費年份", month: "消費月份", platform: "收物平台",
+            arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
+        };
+
+        const categories = [
+            { id: '專輯', icon: '🎵', color: '#818cf8' },
+            { id: '演唱會 / 見面會門票', icon: '🎫', color: '#f87171' },
+            { id: '周邊商品', icon: '🧸', color: '#fbbf24' },
+            { id: '國際運費', icon: '📦', color: '#34d399' },
+            { id: '交通 / 住宿', icon: '✈️', color: '#60a5fa' },
+            { id: '其他追星支出', icon: '🌈', color: '#9ca3af' }
+        ];
+
+        const wishCategories = ["專輯", "周邊", "娃娃", "小卡"];
+        const arrivalOptions = ['未到貨', '待出貨', '已取貨'];
+        const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金'];
+        let myChart = null;
+
+        /**
+         * 2. 工具函式
+         */
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            if(!t) return;
+            t.textContent = msg; t.classList.add("show");
+            setTimeout(() => t.classList.remove("show"), 2000);
+        }
+
+        function applyTheme(color) {
+            state.themeColor = color;
+            const root = document.documentElement;
+            const body = document.body;
+            body.classList.remove('dark-mode');
+            if (color === 'svt') {
+                root.style.setProperty('--brand-color', '#92A8D1');
+                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)');
+            } else if (color === 'bp') {
+                root.style.setProperty('--brand-color', '#FF85D0');
+                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #000000 0%, #FF85D0 100%)');
+                body.classList.add('dark-mode');
+            } else {
+                root.style.setProperty('--brand-color', color);
+                root.style.setProperty('--brand-gradient', color);
+            }
+            localStorage.setItem('fe_v11_theme', color);
+        }
+
+        function compressImage(base64Str, maxWidth = 800) {
+            return new Promise((resolve) => {
+                const img = new Image(); img.src = base64Str;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+            });
+        }
+
+        function getStatusClass(s) {
+            if (s === '未到貨') return 'status-unArrived';
+            if (s === '待出貨') return 'status-toShip';
+            return 'status-received';
+        }
+
+        /**
+         * 3. 導覽與渲染
+         */
+        function switchTab(tab) {
+            state.activeTab = tab; state.subPage = null; state.searchKeyword = ''; state.selectedCategory = '';
+            ['expense', 'report', 'wish', 'settings'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (el) el.className = `flex-1 flex flex-col items-center gap-1 transition-colors ${tab === t ? 'tab-active' : 'text-gray-400'}`;
+            });
+            document.getElementById('fab').classList.toggle('hidden', tab === 'report' || tab === 'settings');
+            renderContent();
+        }
+
+        function renderContent() {
+            const container = document.getElementById('main-content');
+            if(!container) return;
+            container.innerHTML = '';
+            if (state.activeTab === 'expense') renderExpenseList(container);
+            else if (state.activeTab === 'report') renderReport(container);
+            else if (state.activeTab === 'wish') renderWishList(container);
+            else if (state.activeTab === 'settings') {
+                if (state.subPage === 'backup') renderBackupView(container);
+                else if (state.subPage === 'appearance') renderAppearanceView(container);
+                else if (state.subPage === 'photowall') renderPhotoWall(container);
+                else renderSettings(container);
+            }
+        }
+
+        function renderExpenseList(container) {
+            container.innerHTML = `
+                <div class="p-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
+                        <div class="flex gap-2 text-gray-800">
+                            <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">${[2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}</select>
+                            <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}</select>
+                        </div>
+                    </div>
+                    <div class="relative mb-3">
+                        <input type="text" placeholder="搜尋項目、標籤或備註..." oninput="state.searchKeyword=this.value;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                        <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
+                    </div>
+                    <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
+                    <div id="tag-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
+                </div>
+                <div id="expense-list-items" class="px-6 space-y-4 pb-12 pt-4"></div>
+            `;
+            renderTagAndCatBar();
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
+
+        function renderTagAndCatBar() {
+            const catBar = document.getElementById('cat-bar'); if (!catBar) return;
+            catBar.innerHTML = categories.map(cat => `<div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}');renderTagAndCatBar();renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.selectedCategory === cat.id ? 'active-cat text-white' : ''}" style="${state.selectedCategory === cat.id ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">${cat.icon} ${cat.id.split(' ')[0]}</div>`).join('');
+            const tagBar = document.getElementById('tag-bar');
+            const allTags = [...new Set(state.expenses.flatMap(ex => ex.tags || []))].filter(t => t);
+            tagBar.innerHTML = allTags.map(tag => `<div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}');renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.searchKeyword === tag ? 'active-tag' : ''}">#${tag}</div>`).join('');
+        }
+
+        function renderExpenseListItems(container) {
+            if(!container) return;
+            const kw = state.searchKeyword.toLowerCase();
+            const filtered = state.expenses.filter(ex => 
+                (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth)) && 
+                (ex.name.toLowerCase().includes(kw) || (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || (ex.remark && ex.remark.toLowerCase().includes(kw))) && 
+                (state.selectedCategory === '' || ex.category === state.selectedCategory)
+            );
+            const total = filtered.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0);
+            
+            if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
+            
+            container.innerHTML = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6"><div><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider mb-1">Monthly Cost</p><h3 class="text-3xl font-black">$ ${total.toLocaleString()}</h3></div><p class="text-xs text-white/80 font-medium">${filtered.length} 項紀錄</p></div>` + 
+            filtered.sort((a,b) => b.id - a.id).map(item => {
+                const catInfo = categories.find(c => c.id === item.category) || { icon: '🌈' };
+                const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
+                return `<div class="bg-white rounded-3xl p-4 card-shadow relative overflow-hidden group">
+                    <div class="absolute top-4 right-4 flex gap-2 z-10">
+                        <button onclick="handleEdit(event, 'expense', '${item.id}')" class="action-btn p-2 bg-slate-50 text-slate-400 rounded-full shadow-sm hover:text-brand"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg></button>
+                        <button onclick="handleDelete(event, 'expense', '${item.id}')" class="action-btn p-2 bg-slate-50 text-slate-400 rounded-full shadow-sm hover:bg-red-50 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
+                    </div>
+                    <div class="flex gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">
+                        ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl">` : 
+                        `<div class="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
+                        <div class="flex-grow">
+                            <div class="flex gap-2 mb-1">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand">${catInfo.icon} ${item.category}</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
+                            <p class="text-[10px] text-slate-400 mt-1">📍 ${item.platform || '未標註'}</p>
+                            <div class="flex justify-between items-end mt-2">
+                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="bg-slate-50 text-slate-400 text-[9px] px-2 py-0.5 rounded-md">#${t}</span>`).join('')}</div>
+                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty}</p><p class="font-black text-lg leading-none">$${(Number(item.price) * Number(item.qty)).toLocaleString()}</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1">
+                        <div class="text-[10px] text-slate-400"><span class="font-bold text-slate-500">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '匯款訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
+                        ${item.remark ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderWishList(container) {
+            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-6 tracking-tight text-slate-800">願望清單</h2><div class="space-y-4 pb-12">${state.wishlist.length === 0 ? `<div class="text-center py-24 text-slate-300 font-bold">快許下新的願望吧！</div>` : state.wishlist.map(item => `
+                <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
+                    <div class="absolute top-4 right-4 flex gap-1 z-10">
+                        <button onclick="buyWish('${item.id}')" class="p-2 bg-brand/10 text-brand rounded-full hover:bg-brand hover:text-white transition-all">🛒</button>
+                        <button onclick="handleEdit(event, 'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-brand transition-all">✎</button>
+                        <button onclick="handleDelete(event, 'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-all">✕</button>
+                    </div>
+                    <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
+                        ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                        <div class="flex-grow pr-24">
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
+                            <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
+                            <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
+                            <p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate || '未定'} ${item.releaseTime || ''}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1">
+                        ${item.remark ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
+                    </div>
+                </div>`).join('')}</div></div>`;
+        }
+
+        // --- 財務報表 (V6 樣式) ---
+        function renderReport(container) {
+            const rangeData = calculateReportRange();
+            const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
+            const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
+            const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);
+
+            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
+                <div class="flex flex-col gap-4 mb-8">
+                    <div class="flex bg-slate-200/50 p-1 rounded-2xl">${['month', '6months', 'year'].map(r => `<button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange===r?'active':''}">${r==='month'?'月':r==='year'?'年':'近 6 個月'}</button>`).join('')}</div>
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow"><button onclick="shiftRange(-1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><span class="text-sm font-black text-slate-700">${rangeData.label}</span><button onclick="shiftRange(1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button></div>
+                </div>
+                ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalSpending.toLocaleString()}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
+            if (totalSpending > 0) initChart(stats);
+        }
+
+        function renderSettings(container) {
+            const user = state.user;
+            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
+                
+                <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full overflow-hidden bg-slate-50 border-2 border-brand/20 flex items-center justify-center">
+                        ${state.user 
+                        ? `<img src="${state.user.photoURL}" class="w-full h-full object-cover" alt="使用者頭像">` 
+                        : `<span class="text-xl">👤</span>`}
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-slate-800 text-sm">
+                        ${state.user ? (state.user.displayName || 'Google 用戶') : '訪客模式'}
+                        </h4>
+                        <p class="text-[10px] text-slate-400">
+                        ${state.user ? '雲端資料已同步 ☁️' : '登入後開啟雲端備份'}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        ${state.user 
+                        ? `<button onclick="window.cloud.logout()" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-2 rounded-xl active:scale-95 transition-all">登出</button>` 
+                        : `<button onclick="window.cloud.login()" class="text-xs bg-brand text-white font-bold px-4 py-2 rounded-xl shadow-md active:scale-95 transition-transform">登入</button>`}
+                    </div>
+                    </div>
+
+                <div class="bg-white rounded-3xl overflow-hidden card-shadow">
+                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-indigo-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer"><div class="flex items-center gap-4 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+                </div></div>`;
+        }
+        // --- 照片牆實作 ---
+function renderPhotoWall(container) {
+            const isWishWall = state.photoWallTab === 'wish';
+            let photos = (isWishWall ? state.wishlist : state.expenses).filter(i => i.image);
+            if (isWishWall && state.wishPhotoCategory !== '') {
+                photos = photos.filter(p => p.category === state.wishPhotoCategory);
+            }
+            container.innerHTML = `<div class="p-6">
+                <div class="flex items-center gap-3 mb-6"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button><h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2></div><div class="flex border-b border-gray-100 mb-6"><button onclick="state.photoWallTab='purchased';state.wishPhotoCategory='';renderContent()" class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button><button onclick="state.photoWallTab='wish';renderContent()" class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button></div>${isWishWall ? `<div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2"><div onclick="state.wishPhotoCategory='';renderContent()" class="chip ${state.wishPhotoCategory === '' ? 'active-tag' : ''}">全部</div>${wishCategories.map(c => `<div onclick="state.wishPhotoCategory='${c}';renderContent()" class="chip ${state.wishPhotoCategory === c ? 'active-tag' : ''}">${c}</div>`).join('')}</div>` : ''}<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">${photos.length > 0 ? photos.map(item => `<div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year || '')}')" class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all"><img src="${item.image}" class="w-full h-full object-cover"></div>`).join('') : `<div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>`}</div></div>`;
+        }
+
+        // --- 外觀設定 ---
+        function renderAppearanceView(container) {
+            const presets = [
+                {name:'SVT', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
+                {name:'幻紫', c:'#BB96FF'},
+                {name:'沁藍', c:'#69C4E0'},
+                {name:'螢綠', c:'#B6ED00'},
+                {name:'曜粉', c:'bp', g: 'linear-gradient(135deg, #000000 0%, #FF85D0 100%)'},
+                {name:'極光', c:'#6C3591'},
+                {name:'熠金', c:'#E2B216'}
+            ];
+            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2></div>
+                <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800"><h3 class="text-sm font-bold text-slate-600 mb-6 tracking-wide">選擇主題色</h3><div class="grid grid-cols-4 gap-y-8 gap-x-4 place-items-center mb-10">
+                ${presets.map(p => `<div class="flex flex-col items-center gap-2"><div onclick="applyTheme('${p.c}');renderContent()" class="color-preset ${state.themeColor===p.c?'active':''}" style="background:${p.g || p.c}"></div><span class="text-[10px] font-bold text-slate-400">${p.name}</span></div>`).join('')}
+                <div class="flex flex-col items-center gap-2"><input type="color" onchange="applyTheme(this.value);renderContent()" value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm"><span class="text-[10px] font-bold text-slate-400">自選</span></div></div></div></div>`;
+        }
+
+        // --- 數據備份 ---
+        function renderBackupView(container) {
+            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
+                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料。</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
+        }
+
+
+        /**
+         * 4. 付款方式動態監聽
+         */
+        function handlePaymentChange(val) {
+            const amountContainer = document.getElementById('paid-amount-container');
+            if (amountContainer) {
+                amountContainer.classList.toggle('hidden', val !== '已付訂金');
+            }
+        }
+
+        /**
+         * 5. 數據處理
+         */
+        function openAddModal(itemData = null) {
+            state.editingId = itemData?.id ? String(itemData.id) : null;
+            state.tempImage = itemData?.image || null;
+            const form = document.getElementById('data-form');
+            const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
+            document.getElementById('modal-title').textContent = isWishMode ? (state.editingId ? "編輯心願" : "新增心願") : (state.editingId ? "編輯紀錄" : "新增消費");
+            
+            if (!isWishMode) {
+                const defaultMonthStr = String(state.filterMonth).padStart(2,'0');
+                const defaultDate = `${state.filterYear}-${defaultMonthStr}`;
+                const isPaidDeposit = itemData?.paymentMethod === '已付訂金';
+
+                form.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">項目名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單價</label><input type="number" id="m-price" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">數量</label><input type="number" id="m-qty" required value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${categories.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">收物平台</label><input type="text" id="m-platform" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${arrivalOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+                        </div>
+                        <!-- 付款方式與金額 -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+                            <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                        </div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="寫點什麼..." class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
+                        <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
+                    </div>`;
+            } else {
+                // 願望模式 - 依照要求設定預設日期時間
+                const now = new Date();
+                const today = now.toISOString().split('T')[0];
+                const defaultTime = "12:00";
+
+                form.innerHTML = `<div class="space-y-4">
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預估價格</label><input type="number" id="m-price" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${wishCategories.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
+                        <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
+                    </div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
+                    <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed rounded-3xl h-24 flex items-center justify-center cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-xs font-bold font-bold">上傳相片</span>`}</div>
+                    <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
+                </div>`;
+            }
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        async function saveData() {
+            const n = document.getElementById('m-name')?.value; if (!n) return;
+            const isExp = (state.activeTab === 'expense' || document.getElementById('m-qty'));
+            const key = isExp ? 'expenses' : 'wishlist';
+            let item;
+            if (isExp) {
+                const dateParts = document.getElementById('m-date').value.split('-');
+                const y = Number(dateParts[0]), m = Number(dateParts[1]);
+                const p = Number(document.getElementById('m-price').value), q = Number(document.getElementById('m-qty').value);
+                const payM = document.getElementById('m-pay-method').value;
+                item = { 
+                    id: state.editingId || String(Date.now()), 
+                    name: n, price: p, qty: q, total: p * q, 
+                    category: document.getElementById('m-cat').value, 
+                    year: y, month: m, image: state.tempImage, 
+                    platform: document.getElementById('m-platform').value || '未標註', 
+                    arrivalStatus: document.getElementById('m-status').value, 
+                    paymentMethod: payM,
+                    paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : 0,
+                    tags: document.getElementById('m-tags').value.split(/[,，]/).map(t => t.trim()).filter(t => t), 
+                    remark: document.getElementById('m-remark').value || '' 
+                };
+            } else {
+                item = { 
+                    id: state.editingId || String(Date.now()), name: n, 
+                    price: Number(document.getElementById('m-price').value) || 0, 
+                    category: document.getElementById('m-wish-cat').value, 
+                    releaseDate: document.getElementById('m-release-date').value, 
+                    releaseTime: document.getElementById('m-release-time').value, 
+                    remark: document.getElementById('m-remark').value || '', 
+                    image: state.tempImage 
+                };
+            }
+            if (state.editingId) { 
+                const idx = state[key].findIndex(i => String(i.id) === state.editingId); 
+                if (idx !== -1) state[key][idx] = item; 
+            } else { 
+                state[key].push(item); 
+            }
+            localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
+            if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+            closeModal(); renderContent(); showToast("已儲存");
+        }
+
+        /**
+         * 6. 其它功能
+         */
+        function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+        function closeDeleteModal() { document.getElementById('delete-modal-overlay').classList.add('hidden'); }
+        function handleDelete(e, type, id) { e.stopPropagation(); state.deleteTarget = { type, id }; document.getElementById('delete-modal-overlay').classList.remove('hidden'); }
+        async function confirmDelete() { 
+            const { type, id } = state.deleteTarget; const key = type === 'expense' ? 'expenses' : 'wishlist'; 
+            state[key] = state[key].filter(i => String(i.id) !== String(id)); 
+            localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key])); 
+            if (window.cloud) window.cloud.sync(state.expenses, state.wishlist); closeDeleteModal(); renderContent(); 
+        }
+        function handleEdit(e, type, id) { e.stopPropagation(); const list = type === 'expense' ? state.expenses : state.wishlist; const item = list.find(i => String(i.id) === String(id)); if (item) openAddModal(item); }
+        function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
+        async function handleImage(input) { const file = input.files[0]; if (file) { const reader = new FileReader(); reader.onload = async (e) => { state.tempImage = await compressImage(e.target.result); document.getElementById('img-placeholder').innerHTML = `<img src="${state.tempImage}" class="w-full h-full object-cover">`; }; reader.readAsDataURL(file); } }
+        function buyWish(id) { const wish = state.wishlist.find(i => String(i.id) === String(id)); if (wish) { state.activeTab = 'expense'; openAddModal({ ...wish, qty: 1, category: '周邊商品', tags: ['願望達成'], arrivalStatus: '未到貨', paymentMethod: '待付款' }); } }
+        function openLightbox(url, name, sub) { const overlay = document.getElementById('lightbox-overlay'); const img = document.getElementById('lightbox-img'); document.getElementById('lightbox-name').textContent = name; document.getElementById('lightbox-sub').textContent = sub; img.src = url; overlay.classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
+
+        function calculateReportRange() {
+            let start, end, label; const now = new Date();
+            if (state.reportRange === 'month') { start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1); end = new Date(start.getFullYear(), start.getMonth() + 1, 0); label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; }
+            else if (state.reportRange === '6months') { end = new Date(now.getFullYear(), now.getMonth() + state.reportOffset + 1, 0); start = new Date(end.getFullYear(), end.getMonth() - 5, 1); label = `${start.getFullYear()}.${start.getMonth()+1} ～ ${end.getFullYear()}.${end.getMonth()+1}`; }
+            else { start = new Date(now.getFullYear() + state.reportOffset, 0, 1); end = new Date(start.getFullYear(), 11, 31); label = `${start.getFullYear()} 年度報告`; }
+            return { start, end, label };
+        }
+
+        function initChart(stats) {
+            const ctx = document.getElementById('donutChart'); if (!ctx) return;
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, { type: 'doughnut', data: { labels: stats.map(s => s.id), datasets: [{ data: stats.map(s => s.amount), backgroundColor: stats.map(s => s.color), borderWidth: 0 }] }, options: { cutout: '75%', plugins: { legend: { display: false } } } });
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const headers = Object.values(excelHeaderMap);
+            const rows = state.expenses.map(i => { return Object.keys(excelHeaderMap).map(engKey => { let val = i[engKey]; if (engKey === 'tags' && Array.isArray(val)) return val.join(','); return (val !== undefined && val !== null) ? val : ""; }); });
+            const wsExp = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            XLSX.utils.book_append_sheet(wb, wsExp, "消費清單");
+            XLSX.writeFile(wb, `追星記帳_備份_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function importFromExcel(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    if (!workbook.SheetNames.includes("消費清單")) { showToast("找不到「消費清單」工作表"); return; }
+                    const worksheet = workbook.Sheets["消費清單"];
+                    const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    if (aoa.length < 1) { showToast("檔案為空"); return; }
+                    const fileHeaders = aoa[0].map(h => String(h || "").trim());
+                    const nameIdx = fileHeaders.indexOf("項目名稱");
+                    if (nameIdx === -1) { showToast("找不到「項目名稱」欄位"); return; }
+                    const importedData = [];
+                    for (let r = 1; r < aoa.length; r++) {
+                        const row = aoa[r]; if (!row[nameIdx]) continue;
+                        let item = { id: String(Date.now() + r), image: null };
+                        Object.keys(excelHeaderMap).forEach(engKey => {
+                            const chiKey = excelHeaderMap[engKey]; const colIdx = fileHeaders.indexOf(chiKey);
+                            let val = colIdx > -1 ? row[colIdx] : "";
+                            if (engKey === 'tags') item[engKey] = val ? String(val).split(',').map(t => t.trim()) : [];
+                            else if (['year', 'month', 'price', 'qty', 'paidAmount'].includes(engKey)) item[engKey] = Number(val) || 0;
+                            else item[engKey] = (val === undefined || val === null) ? "" : String(val);
+                        });
+                        item.total = Number(item.price) * Number(item.qty);
+                        importedData.push(item);
+                    }
+                    if (importedData.length > 0) {
+                        state.expenses = importedData;
+                        localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+                        if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                        renderContent(); showToast(`匯入成功：共 ${importedData.length} 筆`);
+                    }
+                } catch (err) { showToast("檔案格式錯誤"); }
+            };
+            reader.readAsArrayBuffer(file);
+            input.value = "";
+        }
+
+        window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); };
+    </script>
+</body>
+</html>
