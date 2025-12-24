@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PWA 相關標籤 -->
+    <meta name="theme-color" content="#92A8D1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="追星記帳">
+    <link rel="manifest" href="manifest.json">
     <title>追星記帳 V11 - 完整功能版雲端登入</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -150,151 +156,86 @@
         </div>
     </div>
 
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import {
-    getAuth,
-    signInWithPopup,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signOut,
-    signInAnonymously
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import {
+            getAuth,
+            signInWithPopup,
+            GoogleAuthProvider,
+            onAuthStateChanged,
+            signOut,
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
-        authDomain: "fandom-expense.firebaseapp.com",
-        projectId: "fandom-expense",
-        storageBucket: "fandom-expense.firebasestorage.app",
-        messagingSenderId: "275234127604",
-        appId: "1:275234127604:web:af62f27f272290236ae8a1",
-        measurementId: "G-4QE8P5ZDQ6"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
+            authDomain: "fandom-expense.firebaseapp.com",
+            projectId: "fandom-expense",
+            storageBucket: "fandom-expense.firebasestorage.app",
+            messagingSenderId: "275234127604",
+            appId: "1:275234127604:web:af62f27f272290236ae8a1",
+            measurementId: "G-4QE8P5ZDQ6"
+        };
 
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    /* === Google 登入改成按鈕觸發 === */
-    window.cloud = {
-    login: async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-        await signInWithPopup(auth, provider);  // 這個必須按鈕觸發
-        } catch (err) {
-        console.error(err);
-        showToast("登入失敗，請允許彈窗");
+        window.cloud = {
+            login: async () => {
+                const provider = new GoogleAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (err) {
+                    showToast("登入失敗，請檢查網路或彈窗設定");
+                }
+            },
+            logout: async () => {
+                await signOut(auth);
+                localStorage.clear();
+                location.reload();
+            },
+            sync: async (expenses, wishlist) => {
+                if (!auth.currentUser) return;
+                await setDoc(doc(db, "users", auth.currentUser.uid), { expenses, wishlist }, { merge: true });
+            },
+            pull: async () => {
+                if (!auth.currentUser) return null;
+                const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+                return snap.exists() ? snap.data() : null;
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            state.user = user || null;
+            if (user) {
+                const data = await window.cloud.pull();
+                if (data) {
+                    state.expenses = data.expenses || state.expenses;
+                    state.wishlist = data.wishlist || state.wishlist;
+                    localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+                    localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
+                }
+            }
+            renderContent();
+        });
+
+        // 註冊 Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW Registered!');
+                }).catch(err => {
+                    console.log('SW Registration failed: ', err);
+                });
+            });
         }
-    },
-
-    logout: async () => {
-        await signOut(auth);
-        localStorage.clear();
-        location.reload();
-    },
-
-    sync: async (expenses, wishlist) => {
-        if (!auth.currentUser) return;
-        await setDoc(
-        doc(db, "users", auth.currentUser.uid),
-        { expenses, wishlist },
-        { merge: true }
-        );
-    },
-
-    pull: async () => {
-        if (!auth.currentUser) return null;
-        const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-        return snap.exists() ? snap.data() : null;
-    }
-    };
-
-    /* === Auth 初始化 === */
-    onAuthStateChanged(auth, async (user) => {
-    state.user = user || null;
-
-    if (user) {
-        const data = await window.cloud.pull();
-        if (data) {
-        state.expenses = data.expenses || state.expenses;
-        state.wishlist = data.wishlist || state.wishlist;
-        localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
-        localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
-        }
-    }
-    renderContent();
-    });
-
-    /* === 訪客模式只在沒有登入時啟用 === */
-    // onAuthStateChanged(auth, (user) => {
-    // if (!user) {
-    //     signInAnonymously(auth).catch(err => console.error(err));
-    // }
-    // });
-    // 改成按鈕觸發匿名登入
-    document.getElementById('guestBtn').addEventListener('click', async () => {
-        try {
-            await signInAnonymously(auth);
-            showToast('已以訪客模式登入');
-        } catch {
-            showToast('訪客登入失敗');
-        }
-    });
-
-    // /* === 雲端操作（只改路徑） === */
-    // window.cloud = {
-    // login: async () => {
-    //     const provider = new GoogleAuthProvider();
-    //     try {
-    //     await signInWithPopup(auth, provider);
-    //     } catch {
-    //     showToast("登入失敗，請允許彈窗");
-    //     }
-    // },
-    // logout: async () => {
-    //     await signOut(auth);
-    //     localStorage.clear();
-    //     location.reload();
-    // },
-    // sync: async (expenses, wishlist) => {
-    //     if (!auth.currentUser) return;
-    //     await setDoc(
-    //     doc(db, "users", auth.currentUser.uid),
-    //     { expenses, wishlist },
-    //     { merge: true }
-    //     );
-    // },
-    // pull: async () => {
-    //     if (!auth.currentUser) return null;
-    //     const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    //     return snap.exists() ? snap.data() : null;
-    // }
-    // };
-
-    // /* === Auth 初始化 === */
-    // onAuthStateChanged(auth, async (user) => {
-    // state.user = user || null;
-
-    // if (user) {
-    //     const data = await window.cloud.pull();
-    //     if (data) {
-    //     state.expenses = data.expenses || state.expenses;
-    //     state.wishlist = data.wishlist || state.wishlist;
-    //     localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
-    //     localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
-    //     }
-    // }
-    // renderContent();
-    // });
-
-    // /* 訪客模式 */
-    // signInAnonymously(auth);
     </script>
 
 
