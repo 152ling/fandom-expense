@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="追星記帳">
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png">
     <title>追星記帳 V11 - 完整功能版雲端登入</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -221,6 +222,15 @@
 
             showToast(msg);
             }
+        }, 
+        logout: async () => { await signOut(auth); localStorage.clear(); location.reload(); },
+        sync: async (expenses, wishlist) => {
+            if (!auth.currentUser || auth.currentUser.isAnonymous) return;
+        try { await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'data'), { expenses, wishlist }); } catch (e) {}
+        },
+        pull: async () => {
+            if (!auth.currentUser || auth.currentUser.isAnonymous) return null;
+            try { const snap = await getDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'data')); return snap.exists() ? snap.data() : null; } catch (e) { return null; }
         }
         };
 
@@ -680,7 +690,7 @@ function renderPhotoWall(container) {
         async function confirmDelete() { 
             const { type, id } = state.deleteTarget; const key = type === 'expense' ? 'expenses' : 'wishlist'; 
             state[key] = state[key].filter(i => String(i.id) !== String(id)); 
-            localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key])); 
+            localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
             if (window.cloud) window.cloud.sync(state.expenses, state.wishlist); closeDeleteModal(); renderContent(); 
         }
         function handleEdit(e, type, id) { e.stopPropagation(); const list = type === 'expense' ? state.expenses : state.wishlist; const item = list.find(i => String(i.id) === String(id)); if (item) openAddModal(item); }
