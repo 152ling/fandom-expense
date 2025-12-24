@@ -188,28 +188,40 @@
         const db = getFirestore(app);
 
         window.cloud = {
-            login: async () => {
-                const provider = new GoogleAuthProvider();
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (err) {
-                    showToast("登入失敗，請檢查網路或彈窗設定");
-                }
-            },
-            logout: async () => {
-                await signOut(auth);
-                localStorage.clear();
-                location.reload();
-            },
-            sync: async (expenses, wishlist) => {
-                if (!auth.currentUser) return;
-                await setDoc(doc(db, "users", auth.currentUser.uid), { expenses, wishlist }, { merge: true });
-            },
-            pull: async () => {
-                if (!auth.currentUser) return null;
-                const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-                return snap.exists() ? snap.data() : null;
+        login: async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+            const result = await signInWithPopup(auth, provider);
+            console.log("登入成功", result.user);
+            } catch (err) {
+            console.error("Firebase Auth error:", err);
+
+            // 預設訊息
+            let msg = "登入失敗，請稍後再試";
+
+            switch (err.code) {
+                case "auth/popup-blocked":
+                msg = "瀏覽器阻擋登入彈窗，請允許彈窗";
+                break;
+                case "auth/popup-closed-by-user":
+                msg = "你關閉了登入視窗";
+                break;
+                case "auth/unauthorized-domain":
+                msg = "此網址尚未加入 Firebase 授權網域";
+                break;
+                case "auth/network-request-failed":
+                msg = "網路連線異常，請檢查網路";
+                break;
+                case "auth/cancelled-popup-request":
+                msg = "登入已被取消";
+                break;
+                default:
+                msg = err.message; // 開發階段很有用
             }
+
+            showToast(msg);
+            }
+        }
         };
 
         onAuthStateChanged(auth, async (user) => {
