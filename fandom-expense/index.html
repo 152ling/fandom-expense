@@ -720,26 +720,33 @@
 
                 form.innerHTML = `
                     <div class="space-y-4">
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" autocomplete="off" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單價</label><input type="number" id="m-price" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">數量</label><input type="number" id="m-qty" required value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單價</label><input type="number" id="m-price" autocomplete="off" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase">數量</label>
+                                <select id="m-qty" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                    ${Array.from({ length: 10 }, (_, i) => i + 1).map(num => 
+                                        `<option value="${num}" ${ (itemData?.qty || 1) == num ? 'selected' : '' }>${num}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${categories.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
                             <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="off" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${arrivalOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                         </div>
                         <!-- 付款方式與金額 -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
-                            <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="off" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔 例:SEVENTEEN,撒浪嘿" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" autocomplete="off" autocorrect="off" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔 例:SEVENTEEN,撒浪嘿" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="off" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
                         <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
@@ -750,14 +757,14 @@
                 const defaultTime = "12:00";
 
                 form.innerHTML = `<div class="space-y-4">
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預估價格</label><input type="number" id="m-price" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${wishCategories.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" autocomplete="off" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預估價格</label><input type="number" id="m-price" autocomplete="off" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="off" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${wishCategories.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
                     </div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="off" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
                     <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed rounded-3xl h-24 flex items-center justify-center cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-xs font-bold font-bold">上傳相片</span>`}</div>
                     <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                 </div>`;
