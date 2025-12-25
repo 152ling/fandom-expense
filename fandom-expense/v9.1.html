@@ -335,7 +335,15 @@
             catBar.innerHTML = categories.map(cat => `<div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}');renderTagAndCatBar();renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.selectedCategory === cat.id ? 'active-cat text-white' : ''}" style="${state.selectedCategory === cat.id ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">${cat.icon} ${cat.id.split(' ')[0]}</div>`).join('');
             const tagBar = document.getElementById('tag-bar');
             const allTags = [...new Set(state.expenses.flatMap(ex => ex.tags || []))].filter(t => t);
-            tagBar.innerHTML = allTags.map(tag => `<div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}');renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.searchKeyword === tag ? 'active-tag' : ''}">#${tag}</div>`).join('');
+            tagBar.innerHTML = allTags.map(tag => {
+            // 關鍵修正：檢查目前的搜尋關鍵字是否等於標籤名稱
+            const isActive = state.searchKeyword === tag;
+            return `
+                <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); renderTagAndCatBar(); renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                    class="chip ${isActive ? 'active-tag' : ''}">
+                    #${tag}
+                </div>`;
+            }).join('');
         }
 
         function renderExpenseListItems(container) {

@@ -158,107 +158,82 @@
     </div>
 
 <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import {
-            getAuth,
-            signInWithPopup,
-            GoogleAuthProvider,
-            onAuthStateChanged,
-            signOut,
-            signInAnonymously
-        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import {
-            getFirestore,
-            doc,
-            setDoc,
-            getDoc
-        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
-            authDomain: "fandom-expense.firebaseapp.com",
-            projectId: "fandom-expense",
-            storageBucket: "fandom-expense.firebasestorage.app",
-            messagingSenderId: "275234127604",
-            appId: "1:275234127604:web:af62f27f272290236ae8a1",
-            measurementId: "G-4QE8P5ZDQ6"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
+        authDomain: "fandom-expense.firebaseapp.com",
+        projectId: "fandom-expense",
+        storageBucket: "fandom-expense.firebasestorage.app",
+        messagingSenderId: "275234127604",
+        appId: "1:275234127604:web:af62f27f272290236ae8a1",
+        measurementId: "G-4QE8P5ZDQ6"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    const appId = 'fandom-expense-v11'; 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-        window.cloud = {
+    window.cloud = {
         login: async () => {
             const provider = new GoogleAuthProvider();
             try {
-            const result = await signInWithPopup(auth, provider);
-            console.log("登入成功", result.user);
+                await signInWithPopup(auth, provider);
             } catch (err) {
-            console.error("Firebase Auth error:", err);
-
-            // 預設訊息
-            let msg = "登入失敗，請稍後再試";
-
-            switch (err.code) {
-                case "auth/popup-blocked":
-                msg = "瀏覽器阻擋登入彈窗，請允許彈窗";
-                break;
-                case "auth/popup-closed-by-user":
-                msg = "你關閉了登入視窗";
-                break;
-                case "auth/unauthorized-domain":
-                msg = "此網址尚未加入 Firebase 授權網域";
-                break;
-                case "auth/network-request-failed":
-                msg = "網路連線異常，請檢查網路";
-                break;
-                case "auth/cancelled-popup-request":
-                msg = "登入已被取消";
-                break;
-                default:
-                msg = err.message; // 開發階段很有用
+                console.error("Login Error:", err);
+                showToast("登入失敗，請檢查彈窗設定");
             }
-
-            showToast(msg);
-            }
-        }, 
+        },
         logout: async () => { await signOut(auth); localStorage.clear(); location.reload(); },
+        uploadFile: async (blob, fileName) => {
+            if (!auth.currentUser) return null;
+            try {
+                const fileRef = ref(storage, `users/${auth.currentUser.uid}/images/${fileName}`);
+                const snapshot = await uploadBytes(fileRef, blob);
+                return await getDownloadURL(snapshot.ref);
+            } catch (e) {
+                console.error("Upload failed:", e);
+                return null;
+            }
+        },
         sync: async (expenses, wishlist) => {
             if (!auth.currentUser || auth.currentUser.isAnonymous) return;
-        try { await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'data'), { expenses, wishlist }); } catch (e) {}
+            try {
+                // 修正：路徑增加 'main' 使其變為偶數對 (6層)
+                const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
+                await setDoc(userDoc, { expenses, wishlist }, { merge: true });
+            } catch (e) { console.error("Sync failed:", e); }
         },
         pull: async () => {
             if (!auth.currentUser || auth.currentUser.isAnonymous) return null;
-            try { const snap = await getDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'data')); return snap.exists() ? snap.data() : null; } catch (e) { return null; }
+            try {
+                // 修正：路徑必須與 sync 一致
+                const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
+                const snap = await getDoc(userDoc);
+                return snap.exists() ? snap.data() : null;
+            } catch (e) { return null; }
         }
-        };
+    };
 
-        onAuthStateChanged(auth, async (user) => {
-            state.user = user || null;
-            if (user) {
-                const data = await window.cloud.pull();
-                if (data) {
-                    state.expenses = data.expenses || state.expenses;
-                    state.wishlist = data.wishlist || state.wishlist;
-                    localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
-                    localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
-                }
+    onAuthStateChanged(auth, async (user) => {
+        state.user = (user && !user.isAnonymous) ? user : null;
+        if (state.user) {
+            const data = await window.cloud.pull();
+            if (data) {
+                state.expenses = data.expenses || state.expenses;
+                state.wishlist = data.wishlist || state.wishlist;
+                localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
+                localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
             }
-            renderContent();
-        });
-
-        // 註冊 Service Worker (PWA)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
-                    console.log('SW Registered!');
-                }).catch(err => {
-                    console.log('SW Registration failed: ', err);
-                });
-            });
         }
-    </script>
+        renderContent();
+    });
+</script>
 
 
     <script>
@@ -271,17 +246,20 @@
             photoWallTab: 'purchased',
             themeColor: localStorage.getItem('fe_v11_theme') || 'svt', 
             expenses: JSON.parse(localStorage.getItem('fe_v11_expenses')) || [],
+            tempImage: null,     // 用來存既有的圖片網址 (URL)
+            tempImageBlob: null, // 用來存新選取的圖片檔案 (Blob)
             wishlist: JSON.parse(localStorage.getItem('fe_v11_wishlist')) || [],
+            wishSourceId: null, // 用來暫存轉換中的願望 ID
             filterYear: Number(new Date().getFullYear()),
             filterMonth: Number(new Date().getMonth() + 1),
             reportRange: '6months', 
             reportOffset: 0,
             searchKeyword: '',
             selectedCategory: '',
-            wishPhotoCategory: '',
+            //wishPhotoCategory: '',
+            photoFilterCat: '',
             editingId: null,
             deleteTarget: { type: null, id: null },
-            tempImage: null,
             user: null
         };
 
@@ -292,12 +270,13 @@
         };
 
         const categories = [
-            { id: '專輯', icon: '🎵', color: '#818cf8' },
-            { id: '演唱會 / 見面會門票', icon: '🎫', color: '#f87171' },
-            { id: '周邊商品', icon: '🧸', color: '#fbbf24' },
-            { id: '國際運費', icon: '📦', color: '#34d399' },
-            { id: '交通 / 住宿', icon: '✈️', color: '#60a5fa' },
-            { id: '其他追星支出', icon: '🌈', color: '#9ca3af' }
+            { id: '專輯', icon: '🎵', color: '#6366f1' },               // 靛藍 (Indigo) - 沉穩的音樂感
+            { id: '小卡', icon: '✨', color: '#f472b6' },               // 亮粉 (Pink) - 閃閃發光的收藏感
+            { id: '演唱會 / 見面會門票', icon: '🎫', color: '#fb7185' },  // 珊瑚紅 (Rose) - 充滿熱情的現場感
+            { id: '周邊商品', icon: '🧸', color: '#f59e0b' },           // 琥珀 (Amber) - 溫暖的物質感
+            { id: '國際運費', icon: '📦', color: '#14b8a6' },           // 翠藍 (Teal) - 專業的物流感
+            { id: '交通 / 住宿', icon: '✈️', color: '#60a5fa' },          // 天藍 (Sky) - 飛翔與旅遊感
+            { id: '其他追星支出', icon: '🌈', color: '#94a3b8' }           // 冷灰 (Slate) - 中性且不搶戲
         ];
 
         const wishCategories = ["專輯", "周邊", "娃娃", "小卡"];
@@ -393,7 +372,7 @@
                         </div>
                     </div>
                     <div class="relative mb-3">
-                        <input type="text" placeholder="搜尋項目、標籤或備註..." oninput="state.searchKeyword=this.value;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                        <input type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                         <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
                     </div>
                     <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
@@ -406,21 +385,77 @@
         }
 
         function renderTagAndCatBar() {
-            const catBar = document.getElementById('cat-bar'); if (!catBar) return;
-            catBar.innerHTML = categories.map(cat => `<div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}');renderTagAndCatBar();renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.selectedCategory === cat.id ? 'active-cat text-white' : ''}" style="${state.selectedCategory === cat.id ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">${cat.icon} ${cat.id.split(' ')[0]}</div>`).join('');
-            const tagBar = document.getElementById('tag-bar');
-            const allTags = [...new Set(state.expenses.flatMap(ex => ex.tags || []))].filter(t => t);
-            tagBar.innerHTML = allTags.map(tag => `<div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}');renderExpenseListItems(document.getElementById('expense-list-items'))" class="chip ${state.searchKeyword === tag ? 'active-tag' : ''}">#${tag}</div>`).join('');
-        }
+        const catBar = document.getElementById('cat-bar'); 
+        if (!catBar) return;
 
+        // --- 第一層：分類 (Categories) 渲染 ---
+        catBar.innerHTML = categories.map(cat => {
+            const isActive = state.selectedCategory === cat.id;
+            return `
+                <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
+                            state.searchKeyword=''; // 關鍵修正：切換分類時清空標籤/關鍵字搜尋
+                            renderTagAndCatBar(); 
+                            renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                    class="chip ${isActive ? 'active-cat text-white' : ''}" 
+                    style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
+                    ${cat.icon} ${cat.id.split(' ')[0]}
+                </div>`;
+        }).join('');
+
+        // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
+        const tagBar = document.getElementById('tag-bar');
+        if (!tagBar) return;
+
+        // 1. 根據目前選中的分類，篩選出該分類下的消費紀錄
+        const filteredExpensesForTags = state.selectedCategory 
+            ? state.expenses.filter(ex => ex.category === state.selectedCategory)
+            : state.expenses;
+
+        // 2. 提取這些紀錄中不重複的標籤
+        const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
+
+        // 3. 渲染標籤列
+        if (relevantTags.length === 0) {
+            tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
+        } else {
+            tagBar.innerHTML = relevantTags.map(tag => {
+                const isActive = state.searchKeyword === tag;
+                return `
+                    <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
+                                renderTagAndCatBar(); 
+                                renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                        class="chip ${isActive ? 'active-tag' : ''}">
+                        #${tag}
+                    </div>`;
+            }).join('');
+        }
+    }
         function renderExpenseListItems(container) {
             if(!container) return;
             const kw = state.searchKeyword.toLowerCase();
-            const filtered = state.expenses.filter(ex => 
-                (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth)) && 
-                (ex.name.toLowerCase().includes(kw) || (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || (ex.remark && ex.remark.toLowerCase().includes(kw))) && 
-                (state.selectedCategory === '' || ex.category === state.selectedCategory)
+            // const filtered = state.expenses.filter(ex => 
+            //     (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth)) && 
+            //     (ex.name.toLowerCase().includes(kw) || (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || (ex.remark && ex.remark.toLowerCase().includes(kw))) && 
+            //     (state.selectedCategory === '' || ex.category === state.selectedCategory)
+            // );
+            const filtered = state.expenses.filter(ex => {
+            // 1. 基本時間過濾
+            const dateMatch = (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth));
+            
+            // 2. 分類過濾
+            const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
+            
+            // 3. 進階關鍵字過濾 (包含：名稱、標籤、備註、到貨狀態、收物平台)
+            const keywordMatch = (
+                ex.name.toLowerCase().includes(kw) || 
+                (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || 
+                (ex.remark && ex.remark.toLowerCase().includes(kw)) ||
+                (ex.arrivalStatus && ex.arrivalStatus.toLowerCase().includes(kw)) || // 新增：搜尋到貨狀態
+                (ex.platform && ex.platform.toLowerCase().includes(kw))             // 新增：搜尋收物平台
             );
+
+            return dateMatch && catMatch && keywordMatch;
+        });
             const total = filtered.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0);
             
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
@@ -443,7 +478,8 @@
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
-                            <p class="text-[10px] text-slate-400 mt-1">📍 ${item.platform || '未標註'}</p>
+                            ${item.remark ? `<div class="text-[10px] text-slate-400 mt-1"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
+
                             <div class="flex justify-between items-end mt-2">
                                 <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="bg-slate-50 text-slate-400 text-[9px] px-2 py-0.5 rounded-md">#${t}</span>`).join('')}</div>
                                 <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty}</p><p class="font-black text-lg leading-none">$${(Number(item.price) * Number(item.qty)).toLocaleString()}</p></div>
@@ -452,7 +488,7 @@
                     </div>
                     <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1">
                         <div class="text-[10px] text-slate-400"><span class="font-bold text-slate-500">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '匯款訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
-                        ${item.remark ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
+                        ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70"></span>📍 ${item.platform}</div>` : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -496,6 +532,22 @@
                 ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalSpending.toLocaleString()}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
             if (totalSpending > 0) initChart(stats);
         }
+        /**
+         * 報表範圍切換 (月/半年/年)
+         */
+        function changeReportRange(range) {
+            state.reportRange = range;
+            state.reportOffset = 0; // 切換時重設偏移量
+            renderContent();
+        }
+
+        /**
+         * 報表時間軸前後移動
+         */
+        function shiftRange(delta) {
+            state.reportOffset += delta;
+            renderContent();
+        }
 
         function renderSettings(container) {
             const user = state.user;
@@ -531,14 +583,64 @@
                 </div></div>`;
         }
         // --- 照片牆實作 ---
-function renderPhotoWall(container) {
+        function renderPhotoWall(container) {
             const isWishWall = state.photoWallTab === 'wish';
-            let photos = (isWishWall ? state.wishlist : state.expenses).filter(i => i.image);
-            if (isWishWall && state.wishPhotoCategory !== '') {
-                photos = photos.filter(p => p.category === state.wishPhotoCategory);
+            
+            // 根據標籤決定資料來源與分類清單
+            const dataSource = isWishWall ? state.wishlist : state.expenses;
+            const currentCats = isWishWall ? wishCategories : categories.map(c => c.id);
+
+            // 取得有照片的資料並過濾分類
+            let photos = dataSource.filter(i => i.image);
+            if (state.photoFilterCat && state.photoFilterCat !== '') {
+                photos = photos.filter(p => p.category === state.photoFilterCat);
             }
-            container.innerHTML = `<div class="p-6">
-                <div class="flex items-center gap-3 mb-6"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button><h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2></div><div class="flex border-b border-gray-100 mb-6"><button onclick="state.photoWallTab='purchased';state.wishPhotoCategory='';renderContent()" class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button><button onclick="state.photoWallTab='wish';renderContent()" class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button></div>${isWishWall ? `<div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2"><div onclick="state.wishPhotoCategory='';renderContent()" class="chip ${state.wishPhotoCategory === '' ? 'active-tag' : ''}">全部</div>${wishCategories.map(c => `<div onclick="state.wishPhotoCategory='${c}';renderContent()" class="chip ${state.wishPhotoCategory === c ? 'active-tag' : ''}">${c}</div>`).join('')}</div>` : ''}<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">${photos.length > 0 ? photos.map(item => `<div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year || '')}')" class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all"><img src="${item.image}" class="w-full h-full object-cover"></div>`).join('') : `<div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>`}</div></div>`;
+
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
+                    </div>
+
+                    <div class="flex border-b border-gray-100 mb-6">
+                        <button onclick="state.photoWallTab='purchased';state.photoFilterCat='';renderContent()" 
+                            class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button>
+                        <button onclick="state.photoWallTab='wish';state.photoFilterCat='';renderContent()" 
+                            class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button>
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
+                        <div onclick="state.photoFilterCat='';renderContent()" 
+                            class="chip ${state.photoFilterCat === '' ? 'active-tag' : ''}">全部</div>
+                        ${currentCats.map(c => `
+                            <div onclick="state.photoFilterCat='${c}';renderContent()" 
+                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}">${c.split(' ')[0]}</div>
+                        `).join('')}
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">
+                        ${photos.length > 0 ? photos.map(item => `
+                            <div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
+                                class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
+                                <img src="${item.image}" class="w-full h-full object-cover">
+                            </div>
+                        `).join('') : `
+                            <div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
+                        `}
+                    </div>
+                </div>`;
+             // 修正：渲染完後，自動將啟動中的 Chip 捲動到可視範圍
+            requestAnimationFrame(() => {
+                const activeChip = container.querySelector('.active-tag');
+                if (activeChip) {
+                    activeChip.scrollIntoView({
+                        behavior: 'auto', // 直接切換
+                        inline: 'center',   // 將該元素置中顯示
+                        block: 'nearest'    // 垂直方向不變
+                    });
+                }
+            });
         }
 
         // --- 外觀設定 ---
@@ -580,11 +682,29 @@ function renderPhotoWall(container) {
          */
         function openAddModal(itemData = null) {
             state.editingId = itemData?.id ? String(itemData.id) : null;
-            state.tempImage = itemData?.image || null;
+            state.tempImage = itemData?.image || null; // 既有網址存在這裡
+            state.tempImageBlob = null;               // 開啟時清空新選取的檔案
             const form = document.getElementById('data-form');
+            const modalTitle = document.getElementById('modal-title');
+            // 修改判斷邏輯：如果資料裡有 qty，或者目前確實在 expense 分頁，才顯示消費模式
             const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
-            document.getElementById('modal-title').textContent = isWishMode ? (state.editingId ? "編輯心願" : "新增心願") : (state.editingId ? "編輯紀錄" : "新增消費");
-            
+            //document.getElementById('modal-title').textContent = isWishMode ? (state.editingId ? "編輯心願" : "新增心願") : (state.editingId ? "編輯紀錄" : "新增消費");
+            // --- 標題判斷邏輯優化 ---
+            if (isWishMode) {
+                modalTitle.textContent = state.editingId ? "編輯心願" : "新增心願";
+            } else {
+                // 消費模式下的三種情況：
+                if (state.wishSourceId) {
+                    // 1. 從願望清單轉換而來
+                    modalTitle.textContent = "加入消費清單";
+                } else if (state.editingId) {
+                    // 2. 編輯現有消費紀錄
+                    modalTitle.textContent = "編輯消費";
+                } else {
+                    // 3. 一般新增消費
+                    modalTitle.textContent = "新增消費";
+                }
+            }
             if (!isWishMode) {
                 const defaultMonthStr = String(state.filterMonth).padStart(2,'0');
                 const defaultDate = `${state.filterYear}-${defaultMonthStr}`;
@@ -592,7 +712,7 @@ function renderPhotoWall(container) {
 
                 form.innerHTML = `
                     <div class="space-y-4">
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">項目名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單價</label><input type="number" id="m-price" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">數量</label><input type="number" id="m-qty" required value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
@@ -602,7 +722,7 @@ function renderPhotoWall(container) {
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">收物平台</label><input type="text" id="m-platform" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${arrivalOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                         </div>
                         <!-- 付款方式與金額 -->
@@ -610,8 +730,8 @@ function renderPhotoWall(container) {
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                             <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="寫點什麼..." class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔 例:SEVENTEEN,撒浪嘿" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="通路、oo代購、預計出貨等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
                         <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
@@ -634,32 +754,61 @@ function renderPhotoWall(container) {
                     <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                 </div>`;
             }
+                        
             document.getElementById('modal-overlay').classList.remove('hidden');
+            setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
         }
 
-        async function saveData() {
-            const n = document.getElementById('m-name')?.value; if (!n) return;
+    async function saveData() {
+        try {
+            const n = document.getElementById('m-name')?.value; 
+            const p = document.getElementById('m-price')?.value; 
+            if (!n) {
+                showToast("請輸入商品名稱");
+                return;
+            }
+            if (!p) {
+                showToast("請輸入單價");
+                return;
+            }
+
             const isExp = (state.activeTab === 'expense' || document.getElementById('m-qty'));
             const key = isExp ? 'expenses' : 'wishlist';
+            
+            // --- 關鍵修正：處理圖片上傳 ---
+            let finalImageUrl = state.tempImage; // 如果是編輯模式且沒換圖，保留原網址
+            if (state.tempImageBlob) {
+                showToast("正在上傳圖片...");
+                const fileName = `${Date.now()}.jpg`;
+                const uploadedUrl = await window.cloud.uploadFile(state.tempImageBlob, fileName);
+                if (uploadedUrl) {
+                    finalImageUrl = uploadedUrl;
+                }
+            }
             let item;
             if (isExp) {
-                const dateParts = document.getElementById('m-date').value.split('-');
-                const y = Number(dateParts[0]), m = Number(dateParts[1]);
-                const p = Number(document.getElementById('m-price').value), q = Number(document.getElementById('m-qty').value);
-                const payM = document.getElementById('m-pay-method').value;
+                const dateVal = document.getElementById('m-date').value;
+                const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
+                const y = Number(dateParts[0]);
+                const m = Number(dateParts[1]);
+                const p = Number(document.getElementById('m-price').value) || 0;
+                const q = Number(document.getElementById('m-qty').value) || 1;
+                const payM = document.getElementById('m-pay-method')?.value || '待付款';
+
                 item = { 
                     id: state.editingId || String(Date.now()), 
                     name: n, price: p, qty: q, total: p * q, 
                     category: document.getElementById('m-cat').value, 
-                    year: y, month: m, image: state.tempImage, 
-                    platform: document.getElementById('m-platform').value || '未標註', 
+                    year: y, month: m,   image: finalImageUrl, 
+                    platform: document.getElementById('m-platform').value || '', 
                     arrivalStatus: document.getElementById('m-status').value, 
                     paymentMethod: payM,
                     paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : 0,
                     tags: document.getElementById('m-tags').value.split(/[,，]/).map(t => t.trim()).filter(t => t), 
-                    remark: document.getElementById('m-remark').value || '' 
+                    remark: document.getElementById('m-remark').value || '' ,
                 };
-            } else {
+                item.total = item.price * item.qty;
+            } else { //心願模式
                 item = { 
                     id: state.editingId || String(Date.now()), name: n, 
                     price: Number(document.getElementById('m-price').value) || 0, 
@@ -667,19 +816,54 @@ function renderPhotoWall(container) {
                     releaseDate: document.getElementById('m-release-date').value, 
                     releaseTime: document.getElementById('m-release-time').value, 
                     remark: document.getElementById('m-remark').value || '', 
-                    image: state.tempImage 
+                    image: finalImageUrl
                 };
             }
-            if (state.editingId) { 
-                const idx = state[key].findIndex(i => String(i.id) === state.editingId); 
-                if (idx !== -1) state[key][idx] = item; 
-            } else { 
-                state[key].push(item); 
+
+            // 更新 state、LocalStorage 並同步
+            if (state.editingId) {
+                const idx = state[key].findIndex(i => String(i.id) === state.editingId);
+                if (idx !== -1) {
+                    state[key][idx] = item;
+                } else {
+                    // 如果是編輯模式但在該清單找不到（例如從願望轉過來），改用新增
+                    state[key].push(item);
+                }
+            } else {
+                state[key].push(item);
             }
+
+            // 儲存至本地 (修正引號問題)
             localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
-            if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
-            closeModal(); renderContent(); showToast("已儲存");
+            // --- 核心修正：如果是從願望轉過來的，刪除該願望 ---
+            if (isExp && state.wishSourceId) {
+                state.wishlist = state.wishlist.filter(w => String(w.id) !== state.wishSourceId);
+                localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
+                state.wishSourceId = null; // 處理完後清空
+            }
+
+            // 同步至雲端 (加入 await)
+            if (window.cloud && typeof window.cloud.sync === 'function') {
+                await window.cloud.sync(state.expenses, state.wishlist);
+                // 存檔後清除暫存 Blob
+                state.tempImageBlob = null;
+            }
+            if (isExp && state.activeTab !== 'expense') {
+                state.activeTab = 'expense';
+                // 同步更新底部導覽列的顏色
+                ['expense', 'report', 'wish', 'settings'].forEach(t => {
+                    const el = document.getElementById(`tab-${t}`);
+                    if (el) el.className = `flex-1 flex flex-col items-center gap-1 transition-colors ${state.activeTab === t ? 'tab-active' : 'text-gray-400'}`;
+                });
+            }
+            closeModal(); 
+            renderContent(); 
+            showToast("已成功儲存並同步");
+        } catch (error) {
+            console.error("儲存失敗：", error);
+            showToast("儲存發生錯誤，請檢查輸入內容");
         }
+    }
 
         /**
          * 6. 其它功能
@@ -695,8 +879,32 @@ function renderPhotoWall(container) {
         }
         function handleEdit(e, type, id) { e.stopPropagation(); const list = type === 'expense' ? state.expenses : state.wishlist; const item = list.find(i => String(i.id) === String(id)); if (item) openAddModal(item); }
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
-        async function handleImage(input) { const file = input.files[0]; if (file) { const reader = new FileReader(); reader.onload = async (e) => { state.tempImage = await compressImage(e.target.result); document.getElementById('img-placeholder').innerHTML = `<img src="${state.tempImage}" class="w-full h-full object-cover">`; }; reader.readAsDataURL(file); } }
-        function buyWish(id) { const wish = state.wishlist.find(i => String(i.id) === String(id)); if (wish) { state.activeTab = 'expense'; openAddModal({ ...wish, qty: 1, category: '周邊商品', tags: ['願望達成'], arrivalStatus: '未到貨', paymentMethod: '待付款' }); } }
+        async function handleImage(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    // 壓縮圖片取得 Base64 (用於本地預覽)
+                    const compressedBase64 = await compressImage(e.target.result);
+                    document.getElementById('img-placeholder').innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-cover">`;
+                    
+                    // 將 Base64 轉換為 Blob 以便上傳 Storage
+                    const response = await fetch(compressedBase64);
+                    state.tempImageBlob = await response.blob(); 
+                    state.tempImage = null; // 清除舊的 Base64 儲存方式
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        function buyWish(id) { 
+            const wish = state.wishlist.find(i => String(i.id) === String(id)); 
+
+            if (wish) {
+                state.wishSourceId = String(id);
+                const transferData = { ...wish };
+                delete transferData.id;
+                openAddModal({ ...wish, qty: 1, category: '周邊商品', tags: ['願望達成'], arrivalStatus: '未到貨', paymentMethod: '待付款' }); 
+        } }
         function openLightbox(url, name, sub) { const overlay = document.getElementById('lightbox-overlay'); const img = document.getElementById('lightbox-img'); document.getElementById('lightbox-name').textContent = name; document.getElementById('lightbox-sub').textContent = sub; img.src = url; overlay.classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
 
