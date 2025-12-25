@@ -696,8 +696,7 @@
             const modalTitle = document.getElementById('modal-title');
             // 修改判斷邏輯：如果資料裡有 qty，或者目前確實在 expense 分頁，才顯示消費模式
             const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
-            //document.getElementById('modal-title').textContent = isWishMode ? (state.editingId ? "編輯心願" : "新增心願") : (state.editingId ? "編輯紀錄" : "新增消費");
-            // --- 標題判斷邏輯優化 ---
+         // --- 標題判斷邏輯優化 ---
             if (isWishMode) {
                 modalTitle.textContent = state.editingId ? "編輯心願" : "新增心願";
             } else {
@@ -757,8 +756,8 @@
                 const defaultTime = "12:00";
 
                 form.innerHTML = `<div class="space-y-4">
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預估價格</label><input type="number" id="m-price" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${wishCategories.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
@@ -777,7 +776,8 @@
     async function saveData() {
         try {
             const n = document.getElementById('m-t-l')?.value; 
-            const p = document.getElementById('m-u-p')?.value; 
+            const pVal = document.getElementById('m-u-p')?.value; 
+            const p = Number(pVal) || 0;
             if (!n) {
                 showToast("請輸入商品名稱");
                 return;
@@ -806,7 +806,7 @@
                 const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
                 const y = Number(dateParts[0]);
                 const m = Number(dateParts[1]);
-                const p = Number(document.getElementById('m-price').value) || 0;
+                const p = Number(document.getElementById('m-u-p').value) || 0;
                 const q = Number(document.getElementById('m-qty').value) || 1;
                 const payM = document.getElementById('m-pay-method')?.value || '待付款';
 
@@ -826,7 +826,7 @@
             } else { //心願模式
                 item = { 
                     id: state.editingId || String(Date.now()), name: n, 
-                    price: Number(document.getElementById('m-price').value) || 0, 
+                    price: p,
                     category: document.getElementById('m-wish-cat').value, 
                     releaseDate: document.getElementById('m-release-date').value, 
                     releaseTime: document.getElementById('m-release-time').value, 
