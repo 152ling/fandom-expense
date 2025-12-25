@@ -720,9 +720,9 @@
 
                 form.innerHTML = `
                     <div class="space-y-4">
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商品名稱</label><input type="text" id="m-name" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單價</label><input type="number" id="m-price" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label><input type="number" id="m-u-p"" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                             <div class="space-y-1">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase">數量</label>
                                 <select id="m-qty" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
@@ -776,8 +776,8 @@
 
     async function saveData() {
         try {
-            const n = document.getElementById('m-name')?.value; 
-            const p = document.getElementById('m-price')?.value; 
+            const n = document.getElementById('m-t-l')?.value; 
+            const p = document.getElementById('m-u-p')?.value; 
             if (!n) {
                 showToast("請輸入商品名稱");
                 return;
