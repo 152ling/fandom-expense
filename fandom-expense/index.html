@@ -362,7 +362,7 @@
 
         function renderExpenseList(container) {
             container.innerHTML = `
-                <div class="p-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
+                <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
@@ -392,7 +392,7 @@
             const isActive = state.selectedCategory === cat.id;
             return `
                 <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
-                            state.searchKeyword=''; // 關鍵修正：切換分類時清空標籤/關鍵字搜尋
+                            state.searchKeyword='';
                             renderTagAndCatBar(); 
                             renderExpenseListItems(document.getElementById('expense-list-items'))" 
                     class="chip ${isActive ? 'active-cat text-white' : ''}" 
@@ -405,10 +405,15 @@
         const tagBar = document.getElementById('tag-bar');
         if (!tagBar) return;
 
-        // 1. 根據目前選中的分類，篩選出該分類下的消費紀錄
-        const filteredExpensesForTags = state.selectedCategory 
-            ? state.expenses.filter(ex => ex.category === state.selectedCategory)
-            : state.expenses;
+        // 【核心修正點】：這裡要同時過濾 年份、月份 以及 分類
+        const filteredExpensesForTags = state.expenses.filter(ex => {
+            // 1. 檢查年份與月份是否符合目前的選擇
+            const dateMatch = (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth));
+            // 2. 檢查分類是否符合目前的選擇
+            const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
+            
+            return dateMatch && catMatch;
+        });
 
         // 2. 提取這些紀錄中不重複的標籤
         const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
@@ -930,44 +935,103 @@
             XLSX.writeFile(wb, `追星記帳_備份_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        function importFromExcel(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                    if (!workbook.SheetNames.includes("消費清單")) { showToast("找不到「消費清單」工作表"); return; }
-                    const worksheet = workbook.Sheets["消費清單"];
-                    const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    if (aoa.length < 1) { showToast("檔案為空"); return; }
-                    const fileHeaders = aoa[0].map(h => String(h || "").trim());
-                    const nameIdx = fileHeaders.indexOf("項目名稱");
-                    if (nameIdx === -1) { showToast("找不到「項目名稱」欄位"); return; }
-                    const importedData = [];
-                    for (let r = 1; r < aoa.length; r++) {
-                        const row = aoa[r]; if (!row[nameIdx]) continue;
-                        let item = { id: String(Date.now() + r), image: null };
-                        Object.keys(excelHeaderMap).forEach(engKey => {
-                            const chiKey = excelHeaderMap[engKey]; const colIdx = fileHeaders.indexOf(chiKey);
-                            let val = colIdx > -1 ? row[colIdx] : "";
-                            if (engKey === 'tags') item[engKey] = val ? String(val).split(',').map(t => t.trim()) : [];
-                            else if (['year', 'month', 'price', 'qty', 'paidAmount'].includes(engKey)) item[engKey] = Number(val) || 0;
-                            else item[engKey] = (val === undefined || val === null) ? "" : String(val);
-                        });
-                        item.total = Number(item.price) * Number(item.qty);
-                        importedData.push(item);
-                    }
-                    if (importedData.length > 0) {
-                        state.expenses = importedData;
-                        localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
-                        if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
-                        renderContent(); showToast(`匯入成功：共 ${importedData.length} 筆`);
-                    }
-                } catch (err) { showToast("檔案格式錯誤"); }
-            };
-            reader.readAsArrayBuffer(file);
-            input.value = "";
-        }
+    function importFromExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                if (!workbook.SheetNames.includes("消費清單")) {
+                    showToast("找不到「消費清單」工作表");
+                    return;
+                }
+
+                const worksheet = workbook.Sheets["消費清單"];
+                const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                if (aoa.length < 1) {
+                    showToast("檔案為空");
+                    return;
+                }
+
+                const fileHeaders = aoa[0].map(h => String(h || "").trim());
+                const nameIdx = fileHeaders.indexOf("項目名稱");
+                if (nameIdx === -1) {
+                    showToast("找不到「項目名稱」欄位");
+                    return;
+                }
+
+                // 準備預設值
+                const now = new Date();
+                const defaultYear = now.getFullYear();
+                const defaultMonth = now.getMonth();//前一個月
+
+                const importedData = [];
+
+                for (let r = 1; r < aoa.length; r++) {
+                    const row = aoa[r];
+                    if (!row[nameIdx]) continue; // 如果沒有項目名稱則跳過
+
+                    let item = { id: String(Date.now() + r), image: null };
+
+                    Object.keys(excelHeaderMap).forEach(engKey => {
+                        const chiKey = excelHeaderMap[engKey];
+                        const colIdx = fileHeaders.indexOf(chiKey);
+                        let val = colIdx > -1 ? row[colIdx] : undefined;
+
+                        // 檢查值是否有效（非空且非 undefined）
+                        const isEmpty = (val === undefined || val === null || String(val).trim() === "");
+
+                        if (engKey === 'tags') {
+                            item[engKey] = isEmpty ? [] : String(val).split(',').map(t => t.trim());
+                        } 
+                        else if (engKey === 'qty') {// 數量預設為 1
+                            item[engKey] = isEmpty ? 1 : (Number(val) || 1);
+                        } 
+                        else if (engKey === 'year') {// 年份預設為當前年份
+                            item[engKey] = isEmpty ? defaultYear : Number(val);
+                        } 
+                        else if (engKey === 'month') { // 月份預設為前一個月
+                            item[engKey] = isEmpty ? defaultMonth : Number(val);
+                        } 
+                        else if (engKey === 'category') { // 分類預設
+                            item[engKey] = isEmpty ? "專輯" : String(val).trim();
+                        } 
+                        else if (engKey === 'arrivalStatus') {// 到貨狀態預設
+                            item[engKey] = isEmpty ? "已到貨" : String(val).trim();
+                        } 
+                        else if (engKey === 'paymentMethod') { // 付款方式預設
+                            item[engKey] = isEmpty ? "匯款全額" : String(val).trim();
+                        } 
+                        else if (['price', 'paidAmount'].includes(engKey)) {// 金額類預設為 0
+                            item[engKey] = Number(val) || 0;
+                        } 
+                        else {// 其他字串欄位
+                            item[engKey] = isEmpty ? "" : String(val).trim();
+                        }
+                    });
+
+                    // 計算總額
+                    item.total = Number(item.price) * Number(item.qty);
+                    importedData.push(item);
+                }
+
+                if (importedData.length > 0) {
+                    state.expenses = importedData;
+                    localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+                    if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                    renderContent();
+                    showToast(`匯入成功：共 ${importedData.length} 筆`);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("檔案格式錯誤");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        input.value = "";
+    }
 
         window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); };
     </script>
