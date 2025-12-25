@@ -270,7 +270,7 @@
 
         const categories = [
             { id: '專輯', icon: '🎵', color: '#6366f1' },               // 靛藍 (Indigo) - 沉穩的音樂感
-            { id: '小卡', icon: '✨', color: '#f472b6' },               // 亮粉 (Pink) - 閃閃發光的收藏感
+            { id: '小卡', icon: '✨', color: '#EAB308' },               // 黃色 (Yellow) - 閃閃發光的收藏感
             { id: '演唱會 / 見面會門票', icon: '🎫', color: '#fb7185' },  // 珊瑚紅 (Rose) - 充滿熱情的現場感
             { id: '周邊商品', icon: '🧸', color: '#f59e0b' },           // 琥珀 (Amber) - 溫暖的物質感
             { id: '國際運費', icon: '📦', color: '#14b8a6' },           // 翠藍 (Teal) - 專業的物流感
@@ -739,7 +739,7 @@
                             <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔 例:SEVENTEEN,撒浪嘿" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="通路、oo代購、預計出貨等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
                         <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
