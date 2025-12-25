@@ -342,6 +342,12 @@
                 if (el) el.className = `flex-1 flex flex-col items-center gap-1 transition-colors ${tab === t ? 'tab-active' : 'text-gray-400'}`;
             });
             document.getElementById('fab').classList.toggle('hidden', tab === 'report' || tab === 'settings');
+            // 針對全域視窗與主要的內容容器進行捲動重設
+            window.scrollTo(0, 0); 
+            const container = document.getElementById('main-content');
+            if (container) {
+                container.scrollTop = 0;
+            }
             renderContent();
         }
 
@@ -437,11 +443,6 @@
         function renderExpenseListItems(container) {
             if(!container) return;
             const kw = state.searchKeyword.toLowerCase();
-            // const filtered = state.expenses.filter(ex => 
-            //     (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth)) && 
-            //     (ex.name.toLowerCase().includes(kw) || (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || (ex.remark && ex.remark.toLowerCase().includes(kw))) && 
-            //     (state.selectedCategory === '' || ex.category === state.selectedCategory)
-            // );
             const filtered = state.expenses.filter(ex => {
             // 1. 基本時間過濾
             const dateMatch = (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth));
@@ -515,9 +516,12 @@
                             <p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate || '未定'} ${item.releaseTime || ''}</p>
                         </div>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1">
-                        ${item.remark ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
-                    </div>
+                        ${item.remark ? `
+                            <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1">
+                                <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
+                                    <span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
+                                </div>
+                            </div>` : ''}
                 </div>`).join('')}</div></div>`;
         }
 
@@ -581,9 +585,9 @@
                     </div>
 
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">
-                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-indigo-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer"><div class="flex items-center gap-4 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
                 </div></div>`;
         }
         // --- 照片牆實作 ---
@@ -723,7 +727,7 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${categories.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
