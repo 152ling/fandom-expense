@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- PWA 相關標籤 -->
     <meta name="theme-color" content="#92A8D1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="追星記帳">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png">
-    <title>追星記帳 V11 - 完整功能版雲端登入</title>
+    <meta name="apple-mobile-web-app-title" content="追星錢包">
+    <link rel="manifest" href="./manifest.json">
+    <title>追星錢包-記錄你的追星消費</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -972,5 +971,13 @@
 
         window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); };
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+            .then(() => console.log('Service Worker registered'))
+            .catch(err => console.error('SW registration failed:', err));
+        }
+    </script>
+
 </body>
 </html>
