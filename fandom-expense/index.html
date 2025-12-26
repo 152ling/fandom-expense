@@ -141,16 +141,24 @@
         </div>
     </div>
 
-    <!-- 操作選單彈窗 -->
+    <!-- 消費清單操作選單彈窗 -->
     <div id="action-modal-overlay" onclick="closeActionModal()" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-end justify-center p-0">
         <div id="action-modal-container" onclick="event.stopPropagation()" class="bg-slate-100 w-full max-w-lg rounded-t-[2.5rem] overflow-hidden modal-enter p-8 space-y-4 shadow-2xl">
             <!-- 頂部裝飾條 -->
             <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4"></div>
             <div class="space-y-3">
+                <button id="action-convert-btn" onclick="triggerConvertToExpense()" class="hidden w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-slate-700 active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-4">
+                        <span>加入消費清單</span>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="12" y1="10" x2="18" y2="10"></line><line x1="15" y1="6" x2="15" y2="13"></line></svg>
+                    </div>
+                </button>
                 <!-- 編輯按鈕 -->
                 <button onclick="triggerEditFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-slate-700 active:scale-[0.98] transition-all">
                     <div class="flex items-center gap-4">
-                        <span>編輯消費</span>
+                        <span>編輯資料</span>
                     </div>
                     <div class="w-10 h-10 flex items-center justify-center ">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg>
@@ -160,7 +168,7 @@
                 <!-- 刪除按鈕 -->
                 <button onclick="triggerDeleteFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-red-500 active:scale-[0.98] transition-all">
                     <div class="flex items-center gap-4">
-                        <span>刪除消費</span>
+                        <span>刪除資料</span>
                     </div>
                      <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
@@ -545,38 +553,8 @@
                 }).join('');
             }
         }
-        function openActionModal(e, type, id) { //開啟選單
-            e.stopPropagation();
-            state.actionTarget = { type, id };
-            const overlay = document.getElementById('action-modal-overlay');
-            const container = document.getElementById('action-modal-container');
-            // 開啟前先清除所有殘留內聯樣式
-            container.style.transform = 'translateY(100%)';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-            overlay.classList.remove('hidden');
-            container.offsetHeight; 
-            
-            container.style.transform = 'translateY(0)';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-        }
 
-
-        // 從選單點擊「編輯」
-        function triggerEditFromAction() {
-            const { type, id } = state.actionTarget;
-            closeActionModal();
-            const list = type === 'expense' ? state.expenses : state.wishlist;
-            const item = list.find(i => String(i.id) === String(id));
-            if (item) openAddModal(item);
-        }
-        // 從選單點擊「刪除」
-        function triggerDeleteFromAction() {
-            const { type, id } = state.actionTarget;
-            closeActionModal();
-            state.deleteTarget = { type, id };
-            document.getElementById('delete-modal-overlay').classList.remove('hidden');
-        }
-        function renderExpenseListItems(container) {
+        function renderExpenseListItems(container) { //消費清單渲染
             if(!container) return;
             const kw = state.searchKeyword.toLowerCase();
             const filtered = state.expenses.filter(ex => {
@@ -661,7 +639,7 @@
                 </div>`;
             }).join('');
         }
-        function toggleAmountVisibility() {
+        function toggleAmountVisibility() { //隱藏金額
             state.hideAmount = !state.hideAmount; // 切換真假值
             localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount)); // 儲存偏好
             renderContent(); // 立即更新畫面
@@ -670,10 +648,10 @@
         function renderWishList(container) {
             container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-6 tracking-tight text-slate-800">願望清單</h2><div class="space-y-4 pb-12">${state.wishlist.length === 0 ? `<div class="text-center py-24 text-slate-300 font-bold">快許下新的願望吧！</div>` : state.wishlist.map(item => `
                 <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
-                    <div class="absolute top-4 right-4 flex gap-1 z-10">
-                        <button onclick="buyWish('${item.id}')" class="p-2 bg-brand/10 text-brand rounded-full hover:bg-brand hover:text-white transition-all">🛒</button>
-                        <button onclick="handleEdit(event, 'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-brand transition-all">✎</button>
-                        <button onclick="handleDelete(event, 'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-all">✕</button>
+                    <div class="absolute top-4 right-4 z-10">
+                        <button onclick="openActionModal(event,'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                        </button>
                     </div>
                     <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
                         ${item.image ? `<img src="${item.image}" loading="lazy" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
@@ -693,7 +671,7 @@
                 </div>`).join('')}</div></div>`;
         }
 
-        // --- 財務報表 (V6 樣式) ---
+        // --- 財務報表 ---
         function renderReport(container) {
             const rangeData = calculateReportRange();
             const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
@@ -708,23 +686,19 @@
                 ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalSpending.toLocaleString()}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
             if (totalSpending > 0) initChart(stats);
         }
-        /**
-         * 報表範圍切換 (月/半年/年)
-         */
+        /*** 報表範圍切換 (月/半年/年)*/
         function changeReportRange(range) {
             state.reportRange = range;
             state.reportOffset = 0; // 切換時重設偏移量
             renderContent();
         }
 
-        /**
-         * 報表時間軸前後移動
-         */
+        //報表時間軸前後移動
         function shiftRange(delta) {
             state.reportOffset += delta;
             renderContent();
         }
-
+        //設定
         function renderSettings(container) {
             const user = state.user;
             container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
@@ -758,10 +732,9 @@
                     <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
                 </div></div>`;
         }
-        // --- 照片牆實作 ---
+        //照片牆
         function renderPhotoWall(container) {
             const isWishWall = state.photoWallTab === 'wish';
-            
             // 根據標籤決定資料來源與分類清單
             const dataSource = isWishWall ? state.wishlist : state.expenses;
             const currentCats = isWishWall ? wishCategories : categories.map(c => c.id);
@@ -851,6 +824,110 @@
             if (amountContainer) {
                 amountContainer.classList.toggle('hidden', val !== '已付訂金');
             }
+        }
+        function openActionModal(e, type, id) {
+            e.stopPropagation();
+            state.actionTarget = { type, id };
+            
+            const convertBtn = document.getElementById('action-convert-btn');
+            if (convertBtn) {
+                // 如果點擊的是「心願清單 (wish)」，才顯示轉換按鈕
+                if (type === 'wish') {
+                    convertBtn.classList.remove('hidden');
+                } else {
+                    convertBtn.classList.add('hidden');
+                }
+            }
+            
+            // 呼叫動畫開啟
+            openModalAnimation('action-modal-overlay', 'action-modal-container');
+        }
+
+        function triggerEditFromAction() {
+            const { type, id } = state.actionTarget; closeActionModal();
+            const list = type === 'expense' ? state.expenses : state.wishlist;
+            const item = list.find(i => i.id === id);
+            if (item) openAddModal(item);
+        }
+
+        function triggerDeleteFromAction() {
+            const { type, id } = state.actionTarget; closeActionModal();
+            state.deleteTarget = { type, id };
+            document.getElementById('delete-modal-overlay').classList.remove('hidden');
+        }
+
+        function triggerConvertToExpense() {
+            const { id } = state.actionTarget; closeActionModal();
+            const wish = state.wishlist.find(w => w.id === id);
+            if(wish) {
+                state.wishSourceId = id;
+                openAddModal({ ...wish, qty: 1, category: '周邊商品', arrivalStatus: '未到貨', paymentMethod: '待付款' });
+            }
+        }
+        function openModalAnimation(overlayId, containerId) {
+            const overlay = document.getElementById(overlayId);
+            const container = document.getElementById(containerId);
+            if (!overlay || !container) return;
+            overlay.classList.remove('hidden');
+            container.style.transform = 'translateY(100%)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            container.offsetHeight; // force reflow
+            container.style.transform = 'translateY(0)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        }
+
+        function closeModalAnimation(overlayId, containerId) {
+            const overlay = document.getElementById(overlayId);
+            const container = document.getElementById(containerId);
+            if (!overlay || !container) return;
+            container.style.transform = 'translateY(100%)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                container.style.transform = ''; 
+            }, 300);
+        }
+
+        function closeModal() { closeModalAnimation('modal-overlay', 'modal-container'); }
+        function closeDeleteModal() { document.getElementById('delete-modal-overlay').classList.add('hidden'); }
+        function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
+
+        function bindSwipeToClose(handleId, containerId, overlayId, closeCallback) {
+            const handle = document.getElementById(handleId);
+            const container = document.getElementById(containerId);
+            const overlay = document.getElementById(overlayId);
+            if (!handle || !container || !overlay) return;
+
+            let startY = 0;
+            let dragging = false;
+
+            handle.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                dragging = true;
+                container.classList.add('dragging');
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!dragging) return;
+                const deltaY = e.touches[0].clientY - startY;
+                if (deltaY > 0) {
+                    container.style.transform = `translateY(${deltaY}px)`;
+                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${Math.max(0, 0.6 - (deltaY / 500))})`;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', (e) => {
+                if (!dragging) return;
+                dragging = false;
+                container.classList.remove('dragging');
+                const touchEndY = e.changedTouches[0].clientY;
+                const deltaY = touchEndY - startY;
+                if (deltaY > 120) closeCallback();
+                else {
+                    container.style.transform = 'translateY(0)';
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                }
+            });
         }
 
         /**
@@ -1069,21 +1146,7 @@
         /**
          * 6. 其它功能
          */
-        function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
-        function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
 
-        function closeModalAnimation(overlayId, containerId) {
-            const overlay = document.getElementById(overlayId);
-            const container = document.getElementById(containerId);
-            if (!overlay || !container) return;
-            container.style.transform = 'translateY(100%)';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-                container.style.transform = ''; 
-            }, 300);
-        }
-        function closeDeleteModal() { document.getElementById('delete-modal-overlay').classList.add('hidden'); }
         function handleDelete(e, type, id) { e.stopPropagation(); state.deleteTarget = { type, id }; document.getElementById('delete-modal-overlay').classList.remove('hidden'); }
         async function confirmDelete() { 
             const { type, id } = state.deleteTarget; const key = type === 'expense' ? 'expenses' : 'wishlist'; 
