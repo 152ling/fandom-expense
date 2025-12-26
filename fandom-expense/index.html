@@ -61,6 +61,15 @@
         .status-unArrived { background-color: #fee2e2; color: #ef4444; }
         .status-toShip { background-color: #fef3c7; color: #d97706; }
         .status-received { background-color: #dcfce7; color: #16a34a; }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield !important;
+            appearance: none !important;
+        }
 
         .chip {
             flex-shrink: 0; padding: 6px 14px; border-radius: 12px; font-size: 11px;
@@ -131,6 +140,36 @@
             </div>
         </div>
     </div>
+
+    <!-- 操作選單彈窗 -->
+    <div id="action-modal-overlay" onclick="closeActionModal()" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-end justify-center p-0">
+        <div id="action-modal-container" onclick="event.stopPropagation()" class="bg-slate-100 w-full max-w-lg rounded-t-[2.5rem] overflow-hidden modal-enter p-8 space-y-4 shadow-2xl">
+            <!-- 頂部裝飾條 -->
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4"></div>
+            <div class="space-y-3">
+                <!-- 編輯按鈕 -->
+                <button onclick="triggerEditFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-slate-700 active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-4">
+                        <span>編輯消費</span>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg>
+                    </div>
+                </button>
+                
+                <!-- 刪除按鈕 -->
+                <button onclick="triggerDeleteFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-red-500 active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-4">
+                        <span>刪除消費</span>
+                    </div>
+                     <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
+                    </div> 
+                </button>
+            </div>
+        </div>
+    </div>
+    
 
     <!-- 刪除確認 -->
     <div id="delete-modal-overlay" class="fixed inset-0 bg-black/70 hidden z-[100] flex items-center justify-center p-4">
@@ -255,15 +294,16 @@
             reportOffset: 0,
             searchKeyword: '',
             selectedCategory: '',
-            //wishPhotoCategory: '',
             photoFilterCat: '',
             editingId: null,
             deleteTarget: { type: null, id: null },
-            user: null
+            actionTarget: { type: null, id: null },
+            user: null,
+            hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
         };
 
         const excelHeaderMap = {
-            name: "項目名稱", price: "單價", qty: "數量", category: "分類",
+            name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
             year: "消費年份", month: "消費月份", platform: "收物平台",
             arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
         };
@@ -273,7 +313,6 @@
             { id: '小卡', icon: '✨', color: '#EAB308' },               // 黃色 (Yellow) - 閃閃發光的收藏感
             { id: '演唱會 / 見面會門票', icon: '🎫', color: '#fb7185' },  // 珊瑚紅 (Rose) - 充滿熱情的現場感
             { id: '周邊商品', icon: '🧸', color: '#f59e0b' },           // 琥珀 (Amber) - 溫暖的物質感
-            { id: '國際運費', icon: '📦', color: '#14b8a6' },           // 翠藍 (Teal) - 專業的物流感
             { id: '交通 / 住宿', icon: '✈️', color: '#60a5fa' },          // 天藍 (Sky) - 飛翔與旅遊感
             { id: '其他追星支出', icon: '🌈', color: '#94a3b8' }           // 冷灰 (Slate) - 中性且不搶戲
         ];
@@ -282,6 +321,50 @@
         const arrivalOptions = ['未到貨', '待出貨', '已取貨'];
         const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金'];
         let myChart = null;
+        /**滑動關閉編輯邏輯 */
+        let touchStartY = 0;
+        let isDragging = false;
+
+        function initSwipeToClose() {
+            const container = document.getElementById('action-modal-container');
+            const overlay = document.getElementById('action-modal-overlay');
+            
+            container.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                isDragging = true;
+                container.classList.add('dragging');
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - touchStartY;
+                
+                if (deltaY > 0) { // 只有向下劃時有反應
+                    container.style.transform = `translateY(${deltaY}px)`;
+                    // 背景透明度隨滑動距離變淡
+                    const opacity = Math.max(0, 0.6 - (deltaY / 500));
+                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`;
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                container.classList.remove('dragging');
+                
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - touchStartY;
+
+                if (deltaY > 120) { // 滑動門檻：120px
+                    closeActionModal();
+                } else {
+                    // 彈回原位
+                    container.style.transform = 'translateY(0)';
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                }
+            });
+        }
 
         /**
          * 2. 工具函式
@@ -312,16 +395,35 @@
             localStorage.setItem('fe_v11_theme', color);
         }
 
-        function compressImage(base64Str, maxWidth = 800) {
+        function compressImage(base64Str, maxWidth = 600) {
             return new Promise((resolve) => {
-                const img = new Image(); img.src = base64Str;
+                const img = new Image();
+                img.src = base64Str;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
-                    if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+
+                    // 1. 強制調整尺寸
+                    if (w > maxWidth) {
+                        h *= maxWidth / w;
+                        w = maxWidth;
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+
+                    const ctx = canvas.getContext('2d');
+                    // 2. 使用更平滑的縮放繪製
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // 3. 優先使用 webp 格式 (體積減少約 30%)，品質設為 0.4
+                    // 如果瀏覽器不支援 webp，它會自動退回到 image/jpeg
+                    let outputFormat = "image/webp";
+                    let quality = 0.4; 
+
+                    const compressedBase64 = canvas.toDataURL(outputFormat, quality);
+                    resolve(compressedBase64);
                 };
             });
         }
@@ -373,7 +475,10 @@
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
                             <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">${[2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}</select>
-                            <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}</select>
+                            <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
+                                <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
+                                ${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}
+                            </select>
                         </div>
                     </div>
                     <div class="relative mb-3">
@@ -390,62 +495,93 @@
         }
 
         function renderTagAndCatBar() {
-        const catBar = document.getElementById('cat-bar'); 
-        if (!catBar) return;
+            const catBar = document.getElementById('cat-bar'); 
+            if (!catBar) return;
 
-        // --- 第一層：分類 (Categories) 渲染 ---
-        catBar.innerHTML = categories.map(cat => {
-            const isActive = state.selectedCategory === cat.id;
-            return `
-                <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
-                            state.searchKeyword='';
-                            renderTagAndCatBar(); 
-                            renderExpenseListItems(document.getElementById('expense-list-items'))" 
-                    class="chip ${isActive ? 'active-cat text-white' : ''}" 
-                    style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
-                    ${cat.icon} ${cat.id.split(' ')[0]}
-                </div>`;
-        }).join('');
-
-        // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
-        const tagBar = document.getElementById('tag-bar');
-        if (!tagBar) return;
-
-        // 【核心修正點】：這裡要同時過濾 年份、月份 以及 分類
-        const filteredExpensesForTags = state.expenses.filter(ex => {
-            // 1. 檢查年份與月份是否符合目前的選擇
-            const dateMatch = (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth));
-            // 2. 檢查分類是否符合目前的選擇
-            const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
-            
-            return dateMatch && catMatch;
-        });
-
-        // 2. 提取這些紀錄中不重複的標籤
-        const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
-
-        // 3. 渲染標籤列
-        if (relevantTags.length === 0) {
-            tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
-        } else {
-            tagBar.innerHTML = relevantTags.map(tag => {
-                const isActive = state.searchKeyword === tag;
+            // --- 第一層：分類 (Categories) 渲染 ---
+            catBar.innerHTML = categories.map(cat => {
+                const isActive = state.selectedCategory === cat.id;
                 return `
-                    <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
+                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
+                                state.searchKeyword='';
                                 renderTagAndCatBar(); 
                                 renderExpenseListItems(document.getElementById('expense-list-items'))" 
-                        class="chip ${isActive ? 'active-tag' : ''}">
-                        #${tag}
+                        class="chip ${isActive ? 'active-cat text-white' : ''}" 
+                        style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
+                        ${cat.icon} ${cat.id.split(' ')[0]}
                     </div>`;
             }).join('');
+
+            // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
+            const tagBar = document.getElementById('tag-bar');
+            if (!tagBar) return;
+
+            // 【核心修正點】：這裡要同時過濾 年份、月份 以及 分類
+            const filteredExpensesForTags = state.expenses.filter(ex => {
+                // 1. 檢查年份與月份是否符合目前的選擇
+                const dateMatch = (Number(ex.year) === Number(state.filterYear) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth)));
+                // 2. 檢查分類是否符合目前的選擇
+                const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
+                
+                return dateMatch && catMatch;
+         });
+
+        // 2. 提取這些紀錄中不重複的標籤
+            const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
+
+            // 3. 渲染標籤列
+            if (relevantTags.length === 0) {
+                tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
+            } else {
+                tagBar.innerHTML = relevantTags.map(tag => {
+                    const isActive = state.searchKeyword === tag;
+                    return `
+                        <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
+                                    renderTagAndCatBar(); 
+                                    renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                            class="chip ${isActive ? 'active-tag' : ''}">
+                            #${tag}
+                        </div>`;
+                }).join('');
+            }
         }
-    }
+        function openActionModal(e, type, id) { //開啟選單
+            e.stopPropagation();
+            state.actionTarget = { type, id };
+            const overlay = document.getElementById('action-modal-overlay');
+            const container = document.getElementById('action-modal-container');
+            // 開啟前先清除所有殘留內聯樣式
+            container.style.transform = 'translateY(100%)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            overlay.classList.remove('hidden');
+            container.offsetHeight; 
+            
+            container.style.transform = 'translateY(0)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        }
+
+
+        // 從選單點擊「編輯」
+        function triggerEditFromAction() {
+            const { type, id } = state.actionTarget;
+            closeActionModal();
+            const list = type === 'expense' ? state.expenses : state.wishlist;
+            const item = list.find(i => String(i.id) === String(id));
+            if (item) openAddModal(item);
+        }
+        // 從選單點擊「刪除」
+        function triggerDeleteFromAction() {
+            const { type, id } = state.actionTarget;
+            closeActionModal();
+            state.deleteTarget = { type, id };
+            document.getElementById('delete-modal-overlay').classList.remove('hidden');
+        }
         function renderExpenseListItems(container) {
             if(!container) return;
             const kw = state.searchKeyword.toLowerCase();
             const filtered = state.expenses.filter(ex => {
             // 1. 基本時間過濾
-            const dateMatch = (Number(ex.year) === Number(state.filterYear) && Number(ex.month) === Number(state.filterMonth));
+            const dateMatch = (Number(ex.year) === Number(state.filterYear) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth)));
             
             // 2. 分類過濾
             const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
@@ -461,42 +597,74 @@
 
             return dateMatch && catMatch && keywordMatch;
         });
-            const total = filtered.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0);
-            
+            const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+            const totalDisplay = state.hideAmount ? '•••••' : `$ ${total.toLocaleString()}`;
+            const summaryLabel = state.filterMonth === 0 ? 'Yearly Cost' : 'Monthly Cost';
+
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
             
-            container.innerHTML = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6"><div><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider mb-1">Monthly Cost</p><h3 class="text-3xl font-black">$ ${total.toLocaleString()}</h3></div><p class="text-xs text-white/80 font-medium">${filtered.length} 項紀錄</p></div>` + 
-            filtered.sort((a,b) => b.id - a.id).map(item => {
+            container.innerHTML = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
+                <div>
+                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
+                        <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
+                                ${state.hideAmount ? 
+                                    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>` : 
+                                    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5 " stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`
+                                }
+                        </button></div>
+                    <h3 class="text-3xl font-black">${totalDisplay}</h3>
+                    </div>
+                    <p class="text-xs text-white/80 font-medium">${filtered.length} 項紀錄</p>
+                </div>` + 
+                filtered.sort((a, b) => {
+                    if (Number(b.month) !== Number(a.month)) {
+                        return Number(b.month) - Number(a.month);
+                    }
+                    return Number(b.id) - Number(a.id);
+                }).map(item => {
                 const catInfo = categories.find(c => c.id === item.category) || { icon: '🌈' };
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 return `<div class="bg-white rounded-3xl p-4 card-shadow relative overflow-hidden group">
-                    <div class="absolute top-4 right-4 flex gap-2 z-10">
-                        <button onclick="handleEdit(event, 'expense', '${item.id}')" class="action-btn p-2 bg-slate-50 text-slate-400 rounded-full shadow-sm hover:text-brand"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg></button>
-                        <button onclick="handleDelete(event, 'expense', '${item.id}')" class="action-btn p-2 bg-slate-50 text-slate-400 rounded-full shadow-sm hover:bg-red-50 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
+                    <div class="absolute top-4 right-4 z-10">
+                        <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                        </button>
                     </div>
                     <div class="flex gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">
-                        ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl">` : 
+                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl">` : 
                         `<div class="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand">${catInfo.icon} ${item.category}</span>
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
+                                 ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400">${item.month}月</span>` : ''}
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
                             ${item.remark ? `<div class="text-[10px] text-slate-400 mt-1"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
 
                             <div class="flex justify-between items-end mt-2">
                                 <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="bg-slate-50 text-slate-400 text-[9px] px-2 py-0.5 rounded-md">#${t}</span>`).join('')}</div>
-                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty}</p><p class="font-black text-lg leading-none">$${(Number(item.price) * Number(item.qty)).toLocaleString()}</p></div>
+                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p><p class="font-black text-lg leading-none">${state.hideAmount ? '•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1">
-                        <div class="text-[10px] text-slate-400"><span class="font-bold text-slate-500">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '匯款訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
-                        ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed"><span class="text-brand font-bold mr-1 opacity-70"></span>📍 ${item.platform}</div>` : ''}
-                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                            <div class="flex justify-between items-center">
+                                <div class="text-[10px] text-slate-400">
+                                    <span class="font-bold text-slate-500">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '已付訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
+                                    ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span class="opacity-70">運費:</span> $${item.shipping}</div>
+                                ` : ''}
+                            </div>
+                            ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>
+                            ` : ''}
+                        </div>
                 </div>`;
             }).join('');
+        }
+        function toggleAmountVisibility() {
+            state.hideAmount = !state.hideAmount; // 切換真假值
+            localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount)); // 儲存偏好
+            renderContent(); // 立即更新畫面
         }
 
         function renderWishList(container) {
@@ -508,7 +676,7 @@
                         <button onclick="handleDelete(event, 'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-all">✕</button>
                     </div>
                     <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
-                        ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                         <div class="flex-grow pr-24">
                             <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
                             <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
@@ -529,7 +697,7 @@
         function renderReport(container) {
             const rangeData = calculateReportRange();
             const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
-            const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
+            const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.total) || 0), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
             const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);
 
             container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
@@ -631,7 +799,7 @@
                         ${photos.length > 0 ? photos.map(item => `
                             <div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
                                 class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
-                                <img src="${item.image}" class="w-full h-full object-cover">
+                                <img src="${item.image}" loading="lazy" class="w-full h-full object-cover">
                             </div>
                         `).join('') : `
                             <div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
@@ -654,7 +822,7 @@
         // --- 外觀設定 ---
         function renderAppearanceView(container) {
             const presets = [
-                {name:'SVT', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
+                {name:'粉藍', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
                 {name:'幻紫', c:'#BB96FF'},
                 {name:'沁藍', c:'#69C4E0'},
                 {name:'螢綠', c:'#B6ED00'},
@@ -712,23 +880,31 @@
                     modalTitle.textContent = "新增消費";
                 }
             }
-            if (!isWishMode) {
+            if (!isWishMode) { //新增消費
                 const defaultMonthStr = String(state.filterMonth).padStart(2,'0');
-                const defaultDate = `${state.filterYear}-${defaultMonthStr}`;
+                const mStr = state.filterMonth === 0 
+                    ? String(new Date().getMonth() + 1).padStart(2, '0') // 如果是不限，用現在的月份
+                    : String(state.filterMonth).padStart(2, '0');        // 否則用選定的月份
+
+                const defaultDate = `${state.filterYear}-${mStr}`;
                 const isPaidDeposit = itemData?.paymentMethod === '已付訂金';
 
                 form.innerHTML = `
                     <div class="space-y-4">
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label><input type="number" id="m-u-p"" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1 relative" id="qty-combobox">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
+                                <div class="relative flex items-center">
+                                    <input type="number" id="m-qty" inputmode="numeric" value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
+                                    <div id="qty-toggle" class="absolute right-3 cursor-pointer text-slate-400"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
+                                </div>
+                                <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
+                            </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">數量</label>
-                                <select id="m-qty" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
-                                    ${Array.from({ length: 10 }, (_, i) => i + 1).map(num => 
-                                        `<option value="${num}" ${ (itemData?.qty || 1) == num ? 'selected' : '' }>${num}</option>`
-                                    ).join('')}
-                                </select>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase">運費</label>
+                                <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
@@ -739,7 +915,7 @@
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="one-time-code" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${arrivalOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                         </div>
-                        <!-- 付款方式與金額 -->
+                
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                             <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="one-time-code" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
@@ -749,6 +925,7 @@
                         <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
+                    initQtyPicker();
             } else {
                 // 願望模式 - 依照要求設定預設日期時間
                 const now = new Date();
@@ -772,7 +949,18 @@
             document.getElementById('modal-overlay').classList.remove('hidden');
             setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
         }
-
+    function initQtyPicker() { //數量選擇
+        const input = document.getElementById('m-qty');
+        const list = document.getElementById('qty-options');
+        const toggle = document.getElementById('qty-toggle');
+        const arrow = toggle.querySelector('svg');
+        list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-slate-50 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
+        const toggleShow = (show) => { list.classList.toggle('hidden', !show); arrow.style.transform = show ? 'rotate(180deg)' : 'rotate(0deg)'; };
+        input.addEventListener('focus', () => toggleShow(true));
+        toggle.onclick = (e) => { e.stopPropagation(); toggleShow(list.classList.contains('hidden')); };
+        list.querySelectorAll('li').forEach(li => { li.onclick = () => { input.value = li.dataset.val; toggleShow(false); }; });
+        document.addEventListener('click', (e) => { if (!document.getElementById('qty-combobox')?.contains(e.target)) toggleShow(false); }, { once: true });
+    }
     async function saveData() {
         try {
             const n = document.getElementById('m-t-l')?.value; 
@@ -782,10 +970,7 @@
                 showToast("請輸入商品名稱");
                 return;
             }
-            if (!p) {
-                showToast("請輸入單價");
-                return;
-            }
+
 
             const isExp = (state.activeTab === 'expense' || document.getElementById('m-qty'));
             const key = isExp ? 'expenses' : 'wishlist';
@@ -801,18 +986,19 @@
                 }
             }
             let item;
-            if (isExp) {
+            if (isExp) { //消費模式
                 const dateVal = document.getElementById('m-date').value;
                 const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
                 const y = Number(dateParts[0]);
                 const m = Number(dateParts[1]);
                 const p = Number(document.getElementById('m-u-p').value) || 0;
                 const q = Number(document.getElementById('m-qty').value) || 1;
+                const s = Number(document.getElementById('m-shipping').value) || 0;
                 const payM = document.getElementById('m-pay-method')?.value || '待付款';
 
                 item = { 
                     id: state.editingId || String(Date.now()), 
-                    name: n, price: p, qty: q, total: p * q, 
+                    name: n, price: p, qty: q,shipping: s, total: (p * q) + s, 
                     category: document.getElementById('m-cat').value, 
                     year: y, month: m,   image: finalImageUrl, 
                     platform: document.getElementById('m-platform').value || '', 
@@ -822,7 +1008,7 @@
                     tags: document.getElementById('m-tags').value.split(/[,，]/).map(t => t.trim()).filter(t => t), 
                     remark: document.getElementById('m-remark').value || '' ,
                 };
-                item.total = item.price * item.qty;
+                item.total = (item.price * item.qty) + item.shipping;
             } else { //心願模式
                 item = { 
                     id: state.editingId || String(Date.now()), name: n, 
@@ -884,6 +1070,19 @@
          * 6. 其它功能
          */
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+        function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
+
+        function closeModalAnimation(overlayId, containerId) {
+            const overlay = document.getElementById(overlayId);
+            const container = document.getElementById(containerId);
+            if (!overlay || !container) return;
+            container.style.transform = 'translateY(100%)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                container.style.transform = ''; 
+            }, 300);
+        }
         function closeDeleteModal() { document.getElementById('delete-modal-overlay').classList.add('hidden'); }
         function handleDelete(e, type, id) { e.stopPropagation(); state.deleteTarget = { type, id }; document.getElementById('delete-modal-overlay').classList.remove('hidden'); }
         async function confirmDelete() { 
@@ -897,16 +1096,18 @@
         async function handleImage(input) {
             const file = input.files[0];
             if (file) {
+                // 如果檔案大於 2MB，調低 maxWidth
+                const compressionWidth = file.size > 2 * 1024 * 1024 ? 500 : 800;
+                
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    // 壓縮圖片取得 Base64 (用於本地預覽)
-                    const compressedBase64 = await compressImage(e.target.result);
+                    // 傳入動態的 maxWidth
+                    const compressedBase64 = await compressImage(e.target.result, compressionWidth);
                     document.getElementById('img-placeholder').innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-cover">`;
                     
-                    // 將 Base64 轉換為 Blob 以便上傳 Storage
                     const response = await fetch(compressedBase64);
                     state.tempImageBlob = await response.blob(); 
-                    state.tempImage = null; // 清除舊的 Base64 儲存方式
+                    state.tempImage = null;
                 };
                 reader.readAsDataURL(file);
             }
@@ -1015,7 +1216,7 @@
                         else if (engKey === 'paymentMethod') { // 付款方式預設
                             item[engKey] = isEmpty ? "匯款全額" : String(val).trim();
                         } 
-                        else if (['price', 'paidAmount'].includes(engKey)) {// 金額類預設為 0
+                        else if (['price', 'paidAmount','shipping'].includes(engKey)) {// 金額類預設為 0
                             item[engKey] = Number(val) || 0;
                         } 
                         else {// 其他字串欄位
@@ -1024,7 +1225,7 @@
                     });
 
                     // 計算總額
-                    item.total = Number(item.price) * Number(item.qty);
+                    item.total =(Number(item.price) * Number(item.qty)) + Number(item.shipping);
                     importedData.push(item);
                 }
 
@@ -1044,7 +1245,7 @@
         input.value = "";
     }
 
-        window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); };
+        window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); initSwipeToClose(); };
     </script>
     <script>
         if ('serviceWorker' in navigator) {
