@@ -190,7 +190,37 @@
             </div>
         </div>
     </div>
+    <!-- 自訂漸層彈窗 -->
+    <div id="grad-modal" class="fixed inset-0 bg-black/70 hidden z-[110] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-center text-slate-800">設定自訂漸層</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">起始顏色 (HEX)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="g1-hex" placeholder="#000000" oninput="syncGradInput('g1')" 
+                            class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-xl px-3 py-2 text-sm font-mono outline-none">
+                        <input type="color" id="g1-picker" oninput="syncGradPicker('g1')" class="w-10 h-10 border-none bg-transparent cursor-pointer">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">結束顏色 (HEX)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="g2-hex" placeholder="#FF85D0" oninput="syncGradInput('g2')" 
+                            class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-xl px-3 py-2 text-sm font-mono outline-none">
+                        <input type="color" id="g2-picker" oninput="syncGradPicker('g2')" class="w-10 h-10 border-none bg-transparent cursor-pointer">
+                    </div>
+                </div>
+                <div id="grad-preview-box" class="w-full h-10 rounded-xl border border-slate-100 shadow-inner"></div>
+            </div>
 
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('grad-modal').classList.add('hidden')" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-slate-400">取消</button>
+                <button onclick="saveGrad()" class="bg-brand flex-[2] text-white py-3 rounded-xl shadow-lg font-bold">儲存並套用</button>
+            </div>
+        </div>
+    </div>
     <!-- 燈箱 -->
     <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
         <div class="relative w-full max-w-md">
@@ -421,19 +451,106 @@
             t.textContent = msg; t.classList.add("show");
             setTimeout(() => t.classList.remove("show"), 2000);
         }
+        //漸層工具
+        // 同步：輸入文字框 -> 色盤
+        function syncGradInput(id) {
+            const inputEl = document.getElementById(`${id}-hex`);
+            let hex = inputEl.value.trim();
 
+            // 1. 自動補井字號
+            if (hex.length > 0 && !hex.startsWith('#')) {
+                hex = '#' + hex;
+                inputEl.value = hex;
+            }
+
+            // 2. 正規表達式檢查：必須是 # 加上 6 位 0-9 或 A-F
+            const isValid = /^#[0-9A-F]{6}$/i.test(hex);
+
+            if (isValid) {
+                // 只有格式完全正確，才去改色盤的值和預覽
+                document.getElementById(`${id}-picker`).value = hex;
+                inputEl.style.borderColor = 'transparent'; // 移除紅框
+                updateGradPreview();
+            } else {
+                // 如果長度已經夠了(7碼)但格式不對，或是輸入中
+                // 我們不更新顏色，但可以給個視覺提示（例如邊框變淡紅）
+                if (hex.length >= 7) {
+                    inputEl.style.borderColor = '#ef4444'; // Tailwind 的 red-500
+                } else {
+                    inputEl.style.borderColor = 'transparent';
+                }
+            }
+        }
+
+        // 同步：色盤 -> 輸入文字框
+        function syncGradPicker(id) {
+            const val = document.getElementById(`${id}-picker`).value;
+            document.getElementById(`${id}-hex`).value = val.toUpperCase();
+            updateGradPreview();
+        }
+
+        // 更新預覽區
+        function updateGradPreview() {
+            const c1 = document.getElementById('g1-picker').value;
+            const c2 = document.getElementById('g2-picker').value;
+            document.getElementById('grad-preview-box').style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+        }
+
+        // 開啟並初始化彈窗
+        function openGradModal() {
+            // 1. 顯示彈窗
+            document.getElementById('grad-modal').classList.remove('hidden');
+            
+            // 2. 設定預設值 (避免沒抓到顏色時報錯)
+            let color1 = "#F7CAC9"; 
+            let color2 = "#92A8D1"; 
+
+            // 3. 根據目前的狀態 state.themeColor 解析顏色
+            if (state.themeColor.includes('gradient') && state.themeColor !== 'svt') {
+                // 如果是自訂漸層，用正則表達式抓取色碼
+                const matchedColors = state.themeColor.match(/#[A-Fa-f0-9]{3,6}/g);
+                if (matchedColors && matchedColors.length >= 2) {
+                    color1 = matchedColors[0];
+                    color2 = matchedColors[1];
+                }
+            } else if (state.themeColor === 'svt') {
+                color1 = "#F7CAC9";
+                color2 = "#92A8D1";
+            } else if (state.themeColor.startsWith('#')) {
+                // 如果是純色，起始設為該色，結束設為白色
+                color1 = state.themeColor;
+                color2 = "#FFFFFF";
+            }
+            document.getElementById('g1-hex').value = color1.toUpperCase();
+            document.getElementById('g1-picker').value = color1;
+            document.getElementById('g2-hex').value = color2.toUpperCase();
+            document.getElementById('g2-picker').value = color2;
+            updateGradPreview();
+        }
+
+        function saveGrad() {
+            const c1 = document.getElementById('g1-picker').value;
+            const c2 = document.getElementById('g2-picker').value;
+            const grad = `linear-gradient(135deg, ${c1}, ${c2})`;
+            applyTheme(grad);
+            document.getElementById('grad-modal').classList.add('hidden');
+            renderContent();
+            showToast("漸層已更新！");
+        }
+
+        // 修正後的 applyTheme
         function applyTheme(color) {
             state.themeColor = color;
             const root = document.documentElement;
-            const body = document.body;
-            body.classList.remove('dark-mode');
+            document.body.classList.remove('dark-mode');
+
             if (color === 'svt') {
                 root.style.setProperty('--brand-color', '#92A8D1');
                 root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)');
-            } else if (color === 'bp') {
-                root.style.setProperty('--brand-color', '#FF85D0');
-                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #000000 0%, #FF85D0 100%)');
-                body.classList.add('dark-mode');
+            } else if (color.includes('gradient')) {
+                root.style.setProperty('--brand-gradient', color);
+                const match = color.match(/#[A-Fa-f0-9]{6}/);
+                root.style.setProperty('--brand-color', match ? match[0] : '#92A8D1');
             } else {
                 root.style.setProperty('--brand-color', color);
                 root.style.setProperty('--brand-gradient', color);
@@ -520,7 +637,10 @@
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
-                            <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">${[2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}</select>
+                            <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
+                                <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
+                                ${[2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
+                            </select>
                             <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
                                 ${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}
@@ -539,15 +659,7 @@
             renderTagAndCatBar();
             renderExpenseListItems(document.getElementById('expense-list-items'));
         }
-        // function fillSearch(text) { 
-        //     const input = document.querySelector('input[placeholder*="搜尋"]');
-        //     if (input) {
-        //         input.value = text;          // 填入文字
-        //         state.searchKeyword = text;  // 同步狀態
-        //         // 直接觸發清單更新
-        //         renderExpenseListItems(document.getElementById('expense-list-items'));
-        //     }
-        // }
+
         function quickFilter(type, value) {
             const input = document.querySelector('input[placeholder*="搜尋"]');
             
@@ -585,9 +697,9 @@
 
             //同時過濾 年份、月份 以及 分類
             const filteredExpensesForTags = state.expenses.filter(ex => {
-                // 1. 檢查年份與月份是否符合目前的選擇
-                const dateMatch = (Number(ex.year) === Number(state.filterYear) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth)));
-                // 2. 檢查分類是否符合目前的選擇
+                // 1. 檢查年份與月份是否符合目前的選擇   
+                const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
+               // 2. 檢查分類是否符合目前的選擇
                 const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
                 
                 return dateMatch && catMatch;
@@ -618,8 +730,7 @@
             const kw = state.searchKeyword.toLowerCase();
             const filtered = state.expenses.filter(ex => {
             // 1. 基本時間過濾
-            const dateMatch = (Number(ex.year) === Number(state.filterYear) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth)));
-            
+            const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
             // 2. 分類過濾
             const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
             
@@ -636,7 +747,8 @@
             });
             const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${total.toLocaleString()}`;
-            const summaryLabel = state.filterMonth === 0 ? 'Yearly Cost' : 'Monthly Cost';
+            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? 'Yearly Cost' : 'Monthly Cost');
+
 
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
             
@@ -654,6 +766,9 @@
                     <p class="text-xs text-white/80 font-medium">${filtered.length} 項紀錄</p>
                 </div>` + 
                 filtered.sort((a, b) => {
+                    if (Number(b.year) !== Number(a.year)) {
+                        return Number(b.year) - Number(a.year);
+                    }
                     if (Number(b.month) !== Number(a.month)) {
                         return Number(b.month) - Number(a.month);
                     }
@@ -825,9 +940,9 @@
         //設定
         function renderSettings(container) {
             const user = state.user;
-            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
-                
-                <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4">
+            container.innerHTML = `
+            <div class="p-6 h-screen"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
+                <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4 ">
                     <div class="w-12 h-12 rounded-full overflow-hidden bg-slate-50 border-2 border-brand/20 flex items-center justify-center">
                         ${state.user 
                         ? `<img src="${state.user.photoURL}" class="w-full h-full object-cover" alt="使用者頭像">` 
@@ -864,7 +979,7 @@
                     <span class="text-[10px] text-slate-300">釋放空間</span>
                     </div>
                 </div>
-        
+                        
 
             </div>
                 `;
@@ -936,11 +1051,12 @@
                 {name:'幻紫', c:'#BB96FF'},
                 {name:'沁藍', c:'#69C4E0'},
                 {name:'螢綠', c:'#B6ED00'},
-                {name:'曜粉', c:'bp', g: 'linear-gradient(135deg, #000000 0%, #FF85D0 100%)'},
                 {name:'極光', c:'#6C3591'},
                 {name:'熠金', c:'#E2B216'}
             ];
             const currentHex = (state.themeColor && state.themeColor.startsWith('#')) ? state.themeColor : '';
+            const isCustomGrad = state.themeColor.includes('gradient') && state.themeColor !== 'svt';
+            const btnGrad = isCustomGrad ? state.themeColor : 'linear-gradient(135deg, #FEBEBE 0%,#85D0FF 100%)';
             container.innerHTML = `
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-8">
@@ -966,6 +1082,12 @@
                                         value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" 
                                         class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm">
                                     <span class="text-[10px] font-bold text-slate-400">滴管選色</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-2">
+                                    <div onclick="openGradModal()" 
+                                        class="color-preset flex items-center justify-center text-white text-[10px] font-bold ${state.themeColor.includes('gradient') && state.themeColor!=='svt'?'active':''}" 
+                                        style="background:white">🎨</div>
+                                    <span class="text-[10px] font-bold text-slate-400">自訂漸層</span>
                                 </div>
                             </div>
 
@@ -1477,7 +1599,7 @@
     }
     async function runStorageCleanup() {
         // 1. 詢問使用者
-        const confirmed = await askUser("啟動深層清理？", "系統將比對雲端多餘圖檔並刪除，這可能需要一點時間。請不用擔心!不會刪除現有圖檔", "🧹");
+        const confirmed = await askUser("啟動深層清理？", "正在優化雲端空間，安全移除重複或失效的圖檔。這需要一點時間，請放心，您的所有紀錄與相片都會妥善保留。", "🧹");
         if (!confirmed) return;
 
         showToast("正在掃描雲端檔案...");
