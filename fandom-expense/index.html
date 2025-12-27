@@ -206,8 +206,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
-
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
     const firebaseConfig = {
         apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
         authDomain: "fandom-expense.firebaseapp.com",
@@ -239,11 +238,30 @@
             if (!auth.currentUser) return null;
             try {
                 const fileRef = ref(storage, `users/${auth.currentUser.uid}/images/${fileName}`);
-                const snapshot = await uploadBytes(fileRef, blob);
+                
+                const metadata = {
+                    cacheControl: 'public, max-age=31536000', // 維持快取一年
+                    contentType: blob.type // <--- 這裡改為動態獲取，不管是 png, jpeg, webp 都會正確標記
+                };
+                
+                const snapshot = await uploadBytes(fileRef, blob, metadata);
                 return await getDownloadURL(snapshot.ref);
             } catch (e) {
                 console.error("Upload failed:", e);
                 return null;
+            }
+        },
+        deleteFile: async (url) => {
+            if (!url) return;
+            try {
+                // 在模組內部，ref 是可以被存取的
+                const fileRef = ref(storage, url);
+                await deleteObject(fileRef);
+                console.log("雲端檔案刪除成功");
+                return true;
+            } catch (e) {
+                console.error("雲端檔案刪除失敗:", e);
+                return false;
             }
         },
         sync: async (expenses, wishlist) => {
@@ -303,7 +321,6 @@
             selectedCategory: '',
             photoFilterCat: '',
             editingId: null,
-            deleteTarget: { type: null, id: null },
             actionTarget: { type: null, id: null },
             user: null,
             hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
@@ -324,9 +341,9 @@
             { id: '其他追星支出', icon: '🌈', color: '#94a3b8' }           // 冷灰 (Slate) - 中性且不搶戲
         ];
 
-        const wishCategories = ["專輯", "周邊", "娃娃", "小卡"];
+        const wishCategories = ["專輯", "周邊", "娃娃", "小卡","演唱會"];
         const arrivalOptions = ['未到貨', '待出貨', '已取貨'];
-        const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金'];
+        const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金'];
         let myChart = null;
         /**滑動關閉編輯邏輯 */
         let touchStartY = 0;
@@ -594,7 +611,7 @@
             );
 
             return dateMatch && catMatch && keywordMatch;
-        });
+            });
             const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${total.toLocaleString()}`;
             const summaryLabel = state.filterMonth === 0 ? 'Yearly Cost' : 'Monthly Cost';
@@ -696,29 +713,63 @@
         }
 
         function renderWishList(container) {
-            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black mb-6 tracking-tight text-slate-800">願望清單</h2><div class="space-y-4 pb-12">${state.wishlist.length === 0 ? `<div class="text-center py-24 text-slate-300 font-bold">快許下新的願望吧！</div>` : state.wishlist.map(item => `
-                <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
-                    <div class="absolute top-4 right-4 z-10">
-                        <button onclick="openActionModal(event,'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
-                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
-                        <div class="flex-grow pr-24">
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
-                            <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
-                            <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
-                            <p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate || '未定'} ${item.releaseTime || ''}</p>
-                        </div>
-                    </div>
-                        ${item.remark ? `
-                            <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1">
-                                <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
-                                    <span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
+            // 1. 根據目前選中的分類過濾清單
+            const filtered = state.selectedCategory === '' 
+                ? state.wishlist 
+                : state.wishlist.filter(item => item.category === state.selectedCategory);
+
+            container.innerHTML = `
+                <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
+                    <h2 class="text-2xl font-black mb-4 tracking-tight text-slate-800">願望清單</h2>
+                    <div id="wish-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-1"></div>
+                </div>
+
+                <div class="p-6 space-y-4 pb-12">
+                    ${filtered.length === 0 
+                        ? `<div class="text-center py-24 text-slate-300 font-bold">
+                            ${state.selectedCategory ? '此分類暫無願望' : '快許下新的願望吧！'}
+                        </div>` 
+                        : filtered.map(item => `
+                        <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
+                            <div class="absolute top-4 right-4 z-10">
+                                <button onclick="openActionModal(event,'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
+                                ${item.image ? `<img src="${item.image}" loading="lazy" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                                <div class="flex-grow pr-24">
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
+                                    <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
+                                    <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate || '未定'} ${item.releaseTime || ''}</p>
                                 </div>
-                            </div>` : ''}
-                </div>`).join('')}</div></div>`;
+                            </div>
+                            ${item.remark ? `
+                                <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1">
+                                    <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
+                                        <span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
+                                    </div>
+                                </div>` : ''}
+                        </div>`).join('')}
+                </div>`;
+
+            // 渲染完 HTML 後，填充分類列
+            renderWishCatBar();
+        }
+        function renderWishCatBar() { // 渲染分類按鈕
+            const bar = document.getElementById('wish-cat-bar');
+            if (!bar) return;
+            
+            bar.innerHTML = wishCategories.map(cat => {
+                const isActive = state.selectedCategory === cat;
+                return `
+                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat}'?'':'${cat}'); renderContent();"
+                        class="chip ${isActive ? 'active-tag' : ''}">
+                        ${cat}
+                    </div>
+                    `;
+            }).join('');
         }
 
         // --- 財務報表 ---
@@ -958,8 +1009,6 @@
 
         function triggerDeleteFromAction() {
             const { type, id } = state.actionTarget; closeActionModal();
-            state.deleteTarget = { type, id };
-            document.getElementById('delete-modal-overlay').classList.remove('hidden');
         }
 
         function triggerConvertToExpense() {
@@ -996,44 +1045,6 @@
 
         function closeModal() { closeModalAnimation('modal-overlay', 'modal-container'); }
         function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
-
-        function bindSwipeToClose(handleId, containerId, overlayId, closeCallback) {
-            const handle = document.getElementById(handleId);
-            const container = document.getElementById(containerId);
-            const overlay = document.getElementById(overlayId);
-            if (!handle || !container || !overlay) return;
-
-            let startY = 0;
-            let dragging = false;
-
-            handle.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                dragging = true;
-                container.classList.add('dragging');
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (!dragging) return;
-                const deltaY = e.touches[0].clientY - startY;
-                if (deltaY > 0) {
-                    container.style.transform = `translateY(${deltaY}px)`;
-                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${Math.max(0, 0.6 - (deltaY / 500))})`;
-                }
-            }, { passive: true });
-
-            window.addEventListener('touchend', (e) => {
-                if (!dragging) return;
-                dragging = false;
-                container.classList.remove('dragging');
-                const touchEndY = e.changedTouches[0].clientY;
-                const deltaY = touchEndY - startY;
-                if (deltaY > 120) closeCallback();
-                else {
-                    container.style.transform = 'translateY(0)';
-                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-                }
-            });
-        }
 
         /**
          * 5. 數據處理
@@ -1260,12 +1271,22 @@
 
             if (confirmed) {
                 const key = type === 'expense' ? 'expenses' : 'wishlist';
+                // 2. 找到要刪除的那筆資料，檢查是否有圖片
+                const itemToDelete = state[key].find(i => String(i.id) === String(id));
+        
+                // window.cloud.deleteFile刪除storage資料
+                if (itemToDelete && itemToDelete.image) {
+                    await window.cloud.deleteFile(itemToDelete.image);
+                }
+
+                // 4. 刪除本地與雲端的文字紀錄
                 state[key] = state[key].filter(i => String(i.id) !== String(id));
                 localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
                 
                 if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                
                 renderContent();
-                showToast("已成功刪除");
+                showToast("已成功刪除紀錄");
             }
         }
 
@@ -1275,7 +1296,7 @@
             closeActionModal(); // 先關閉操作選單
             await handleDelete(null, type, id); // 直接呼叫剛剛寫好的 handleDelete
         }
-        function handleEdit(e, type, id) { e.stopPropagation(); const list = type === 'expense' ? state.expenses : state.wishlist; const item = list.find(i => String(i.id) === String(id)); if (item) openAddModal(item); }
+      
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
         async function handleImage(input) {
             const file = input.files[0];
@@ -1296,15 +1317,6 @@
                 reader.readAsDataURL(file);
             }
         }
-        function buyWish(id) { 
-            const wish = state.wishlist.find(i => String(i.id) === String(id)); 
-
-            if (wish) {
-                state.wishSourceId = String(id);
-                const transferData = { ...wish };
-                delete transferData.id;
-                openAddModal({ ...wish, qty: 1, category: '周邊商品', tags: ['願望達成'], arrivalStatus: '未到貨', paymentMethod: '待付款' }); 
-        } }
         function openLightbox(url, name, sub) { const overlay = document.getElementById('lightbox-overlay'); const img = document.getElementById('lightbox-img'); document.getElementById('lightbox-name').textContent = name; document.getElementById('lightbox-sub').textContent = sub; img.src = url; overlay.classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
 
