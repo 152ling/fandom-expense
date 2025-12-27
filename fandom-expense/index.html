@@ -206,7 +206,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
     const firebaseConfig = {
         apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
         authDomain: "fandom-expense.firebaseapp.com",
@@ -262,6 +262,28 @@
             } catch (e) {
                 console.error("雲端檔案刪除失敗:", e);
                 return false;
+            }
+        },
+        cleanupOrphanedFiles: async (activeUrls) => {
+            if (!auth.currentUser) return;
+            try {
+                const listRef = ref(storage, `users/${auth.currentUser.uid}/images/`);
+                const res = await listAll(listRef);
+                
+                let deleteCount = 0;
+                for (const itemRef of res.items) {
+                    // 取得該檔案的下載網址來做比對
+                    const downloadUrl = await getDownloadURL(itemRef);
+                    if (!activeUrls.includes(downloadUrl)) {
+                        await deleteObject(itemRef);
+                        deleteCount++;
+                        console.log(`已清理孤兒檔案: ${itemRef.name}`);
+                    }
+                }
+                return deleteCount;
+            } catch (e) {
+                console.error("清理失敗:", e);
+                return -1;
             }
         },
         sync: async (expenses, wishlist) => {
@@ -832,7 +854,20 @@
                     <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
-                </div></div>`;
+                    <div onclick="runStorageCleanup()" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer">
+                    <div class="flex items-center gap-4 text-brand">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/>
+                        </svg>
+                        <span class="font-bold text-slate-700">清理冗餘圖檔</span>
+                    </div>
+                    <span class="text-[10px] text-slate-300">釋放空間</span>
+                    </div>
+                </div>
+        
+
+            </div>
+                `;
         }
         //照片牆
         function renderPhotoWall(container) {
@@ -969,7 +1004,7 @@
         // --- 數據備份 ---
         function renderBackupView(container) {
             container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
-                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料。</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
+                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料。<br>注意:匯入後會覆蓋現有資料並清除圖片。</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
         }
 
 
@@ -1274,7 +1309,7 @@
                 // 2. 找到要刪除的那筆資料，檢查是否有圖片
                 const itemToDelete = state[key].find(i => String(i.id) === String(id));
         
-                // window.cloud.deleteFile刪除storage資料
+                // 用window.cloud.deleteFile刪除storage資料
                 if (itemToDelete && itemToDelete.image) {
                     await window.cloud.deleteFile(itemToDelete.image);
                 }
@@ -1290,11 +1325,11 @@
             }
         }
 
-        // 如果你在 Action Menu 裡也有刪除按鈕，記得同步更新：
+        
         async function triggerDeleteFromAction() {
             const { type, id } = state.actionTarget;
             closeActionModal(); // 先關閉操作選單
-            await handleDelete(null, type, id); // 直接呼叫剛剛寫好的 handleDelete
+            await handleDelete(null, type, id);
         }
       
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
@@ -1343,7 +1378,7 @@
             XLSX.writeFile(wb, `追星記帳_備份_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-    function importFromExcel(input) {
+        function importFromExcel(input) {
         const file = input.files[0];
         if (!file) return;
 
@@ -1439,6 +1474,30 @@
         };
         reader.readAsArrayBuffer(file);
         input.value = "";
+    }
+    async function runStorageCleanup() {
+        // 1. 詢問使用者
+        const confirmed = await askUser("啟動深層清理？", "系統將比對雲端多餘圖檔並刪除，這可能需要一點時間。請不用擔心!不會刪除現有圖檔", "🧹");
+        if (!confirmed) return;
+
+        showToast("正在掃描雲端檔案...");
+
+        // 2. 收集目前所有紀錄中正在使用的圖片網址
+        const activeUrls = [
+            ...state.expenses.map(ex => ex.image),
+            ...state.wishlist.map(w => w.image)
+        ].filter(url => url); // 移除空值
+
+        // 3. 執行清理
+        const count = await window.cloud.cleanupOrphanedFiles(activeUrls);
+
+        if (count > 0) {
+            showToast(`清理完成！共刪除了 ${count} 個冗餘圖檔`);
+        } else if (count === 0) {
+            showToast("雲端非常整潔，沒有需要清理的檔案");
+        } else {
+            showToast("清理過程發生錯誤");
+        }
     }
 
         window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); initSwipeToClose(); };
