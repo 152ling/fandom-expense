@@ -178,24 +178,12 @@
         </div>
     </div>
     
-
-    <!-- 刪除確認 -->
-    <div id="delete-modal-overlay" class="fixed inset-0 bg-black/70 hidden z-[100] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xs rounded-3xl overflow-hidden p-6 text-center shadow-2xl scale-95">
-            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">確定要刪除嗎？</h3>
-            <p class="text-sm text-gray-400 mb-6">紀錄刪除後將無法恢復。</p>
-            <div class="flex gap-3">
-                <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
-                <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定刪除</button>
-            </div>
-        </div>
-    </div>
-     <!-- 顯示金額確認 -->
+     <!-- 通用確認彈窗 -->
     <div id="common-confirm-overlay" class="fixed inset-0 bg-black/70 hidden z-[110] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-xs rounded-3xl overflow-hidden p-6 text-center shadow-2xl scale-95">
-            <h3 id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">確定要顯示金額嗎？</h3>
-            <p id="confirm-desc" class="text-sm text-gray-400 mb-6">顯示後將可直接查看消費總額。</p>
+            <div id="confirm-icon" class="w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
+            <h3 id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">確定要刪除嗎？</h3>
+            <p id="confirm-desc" class="text-sm text-gray-400 mb-6">紀錄刪除後將無法恢復。</p>
             <div class="flex gap-3">
                 <button id="confirm-btn-cancel" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
                 <button id="confirm-btn-ok" class="bg-brand flex-1 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定</button>
@@ -672,12 +660,21 @@
             }).join('');
         }
         // 通用確認工具，會回傳 true 或 false
-        function askUser(title, desc) {
+
+        function askUser(title, desc, icon = '💸') {
             const overlay = document.getElementById('common-confirm-overlay');
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-desc').textContent = desc;
-            //document.getElementById('confirm-icon').textContent = icon;
+            document.getElementById('confirm-icon').textContent = icon;
             
+            // 根據圖示自動調整背景色（如果是垃圾桶就變紅色系，否則用品牌色）
+            const iconBg = document.getElementById('confirm-icon');
+            if (icon === '🗑️') {
+                iconBg.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            } else {
+                iconBg.className = "w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            }
+
             overlay.classList.remove('hidden');
 
             return new Promise((resolve) => {
@@ -998,7 +995,6 @@
         }
 
         function closeModal() { closeModalAnimation('modal-overlay', 'modal-container'); }
-        function closeDeleteModal() { document.getElementById('delete-modal-overlay').classList.add('hidden'); }
         function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
 
         function bindSwipeToClose(handleId, containerId, overlayId, closeCallback) {
@@ -1255,13 +1251,29 @@
         /**
          * 6. 其它功能
          */
+        // 點擊刪除按鈕觸發
+        async function handleDelete(e, type, id) {
+            if (e) e.stopPropagation();
+            
+            // 使用通用工具
+            const confirmed = await askUser("確定要刪除嗎？", "紀錄刪除後將無法恢復。", "🗑️");
 
-        function handleDelete(e, type, id) { e.stopPropagation(); state.deleteTarget = { type, id }; document.getElementById('delete-modal-overlay').classList.remove('hidden'); }
-        async function confirmDelete() { 
-            const { type, id } = state.deleteTarget; const key = type === 'expense' ? 'expenses' : 'wishlist'; 
-            state[key] = state[key].filter(i => String(i.id) !== String(id)); 
-            localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
-            if (window.cloud) window.cloud.sync(state.expenses, state.wishlist); closeDeleteModal(); renderContent(); 
+            if (confirmed) {
+                const key = type === 'expense' ? 'expenses' : 'wishlist';
+                state[key] = state[key].filter(i => String(i.id) !== String(id));
+                localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
+                
+                if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                renderContent();
+                showToast("已成功刪除");
+            }
+        }
+
+        // 如果你在 Action Menu 裡也有刪除按鈕，記得同步更新：
+        async function triggerDeleteFromAction() {
+            const { type, id } = state.actionTarget;
+            closeActionModal(); // 先關閉操作選單
+            await handleDelete(null, type, id); // 直接呼叫剛剛寫好的 handleDelete
         }
         function handleEdit(e, type, id) { e.stopPropagation(); const list = type === 'expense' ? state.expenses : state.wishlist; const item = list.find(i => String(i.id) === String(id)); if (item) openAddModal(item); }
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
