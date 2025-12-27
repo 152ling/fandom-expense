@@ -191,12 +191,23 @@
             </div>
         </div>
     </div>
+     <!-- 顯示金額確認 -->
+    <div id="common-confirm-overlay" class="fixed inset-0 bg-black/70 hidden z-[110] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl overflow-hidden p-6 text-center shadow-2xl scale-95">
+            <h3 id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">確定要顯示金額嗎？</h3>
+            <p id="confirm-desc" class="text-sm text-gray-400 mb-6">顯示後將可直接查看消費總額。</p>
+            <div class="flex gap-3">
+                <button id="confirm-btn-cancel" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
+                <button id="confirm-btn-ok" class="bg-brand flex-1 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 燈箱 -->
     <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
         <div class="relative w-full max-w-md">
             <img id="lightbox-img" src="" class="w-full h-auto rounded-3xl shadow-2xl">
-            <div id="lightbox-info" class="absolute bottom-[-60px] left-0 right-0 text-white text-center">
+            <div id="lightbox-info" class="absolute bottom-5 left-0 right-0 text-white text-center">
                 <p id="lightbox-name" class="font-black text-lg"></p>
                 <p id="lightbox-sub" class="text-white/60 text-xs"></p>
             </div>
@@ -501,7 +512,29 @@
             renderTagAndCatBar();
             renderExpenseListItems(document.getElementById('expense-list-items'));
         }
+        // function fillSearch(text) { 
+        //     const input = document.querySelector('input[placeholder*="搜尋"]');
+        //     if (input) {
+        //         input.value = text;          // 填入文字
+        //         state.searchKeyword = text;  // 同步狀態
+        //         // 直接觸發清單更新
+        //         renderExpenseListItems(document.getElementById('expense-list-items'));
+        //     }
+        // }
+        function quickFilter(type, value) {
+            const input = document.querySelector('input[placeholder*="搜尋"]');
+            
+            if (type === 'category') {
+                state.selectedCategory = value;
+            } else {
+                state.searchKeyword = value;
+                if (input) input.value = value;
+            }
 
+            // 執行渲染：更新分類列與清單內容
+            renderTagAndCatBar(); 
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
         function renderTagAndCatBar() {
             const catBar = document.getElementById('cat-bar'); 
             if (!catBar) return;
@@ -511,7 +544,6 @@
                 const isActive = state.selectedCategory === cat.id;
                 return `
                     <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
-                                state.searchKeyword='';
                                 renderTagAndCatBar(); 
                                 renderExpenseListItems(document.getElementById('expense-list-items'))" 
                         class="chip ${isActive ? 'active-cat text-white' : ''}" 
@@ -524,7 +556,7 @@
             const tagBar = document.getElementById('tag-bar');
             if (!tagBar) return;
 
-            // 【核心修正點】：這裡要同時過濾 年份、月份 以及 分類
+            //同時過濾 年份、月份 以及 分類
             const filteredExpensesForTags = state.expenses.filter(ex => {
                 // 1. 檢查年份與月份是否符合目前的選擇
                 const dateMatch = (Number(ex.year) === Number(state.filterYear) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth)));
@@ -608,13 +640,13 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                         </button>
                     </div>
-                    <div class="flex gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">
-                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl">` : 
+                    <div class="flex gap-4" >
+                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
                         `<div class="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand">${catInfo.icon} ${item.category}</span>
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
+                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${catInfo.color}1A; color: ${catInfo.color};">${catInfo.icon} ${item.category}</span>
+                                <span onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
                                  ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400">${item.month}月</span>` : ''}
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
@@ -639,10 +671,31 @@
                 </div>`;
             }).join('');
         }
-        function toggleAmountVisibility() { //隱藏金額
-            state.hideAmount = !state.hideAmount; // 切換真假值
-            localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount)); // 儲存偏好
-            renderContent(); // 立即更新畫面
+        // 通用確認工具，會回傳 true 或 false
+        function askUser(title, desc) {
+            const overlay = document.getElementById('common-confirm-overlay');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-desc').textContent = desc;
+            //document.getElementById('confirm-icon').textContent = icon;
+            
+            overlay.classList.remove('hidden');
+
+            return new Promise((resolve) => {
+                document.getElementById('confirm-btn-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
+                document.getElementById('confirm-btn-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
+            });
+        }
+
+        // 顯示/隱藏金額函數
+        async function toggleAmountVisibility() {
+            // 關鍵邏輯：如果是 true (要顯示)，就等待彈窗回傳。如果使用者按取消 (!true)，就中斷
+            if (state.hideAmount && !(await askUser("確定要顯示金額嗎？", "顯示後將可查看完整的消費明細與總計。"))) {
+                return;
+            }
+            // 真正的切換動作
+            state.hideAmount = !state.hideAmount;
+            localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount));
+            renderContent();
         }
 
         function renderWishList(container) {
@@ -676,14 +729,15 @@
             const rangeData = calculateReportRange();
             const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
             const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.total) || 0), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
-            const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);
+            const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);//金額計算
+            const totalDisplay = state.hideAmount ? '•••' : `${totalSpending.toLocaleString()}`; //金額顯示
 
             container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
                 <div class="flex flex-col gap-4 mb-8">
                     <div class="flex bg-slate-200/50 p-1 rounded-2xl">${['month', '6months', 'year'].map(r => `<button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange===r?'active':''}">${r==='month'?'月':r==='year'?'年':'近 6 個月'}</button>`).join('')}</div>
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow"><button onclick="shiftRange(-1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><span class="text-sm font-black text-slate-700">${rangeData.label}</span><button onclick="shiftRange(1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button></div>
                 </div>
-                ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalSpending.toLocaleString()}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
+                ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalDisplay}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
             if (totalSpending > 0) initChart(stats);
         }
         /*** 報表範圍切換 (月/半年/年)*/
@@ -803,10 +857,65 @@
                 {name:'極光', c:'#6C3591'},
                 {name:'熠金', c:'#E2B216'}
             ];
-            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2></div>
-                <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800"><h3 class="text-sm font-bold text-slate-600 mb-6 tracking-wide">選擇主題色</h3><div class="grid grid-cols-4 gap-y-8 gap-x-4 place-items-center mb-10">
-                ${presets.map(p => `<div class="flex flex-col items-center gap-2"><div onclick="applyTheme('${p.c}');renderContent()" class="color-preset ${state.themeColor===p.c?'active':''}" style="background:${p.g || p.c}"></div><span class="text-[10px] font-bold text-slate-400">${p.name}</span></div>`).join('')}
-                <div class="flex flex-col items-center gap-2"><input type="color" onchange="applyTheme(this.value);renderContent()" value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm"><span class="text-[10px] font-bold text-slate-400">自選</span></div></div></div></div>`;
+            const currentHex = (state.themeColor && state.themeColor.startsWith('#')) ? state.themeColor : '';
+            container.innerHTML = `
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-8">
+                            <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                            </button>
+                            <h2 class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2>
+                        </div>
+                        
+                        <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800">
+                            <h3 class="text-sm font-bold text-slate-600 mb-6 tracking-wide">選擇預設主題</h3>
+                            <div class="grid grid-cols-4 gap-y-8 gap-x-4 place-items-center mb-10">
+                                ${presets.map(p => `
+                                    <div class="flex flex-col items-center gap-2">
+                                        <div onclick="applyTheme('${p.c}');renderContent()" 
+                                            class="color-preset ${state.themeColor===p.c?'active':''}" 
+                                            style="background:${p.g || p.c}"></div>
+                                        <span class="text-[10px] font-bold text-slate-400">${p.name}</span>
+                                    </div>
+                                `).join('')}
+                                <div class="flex flex-col items-center gap-2">
+                                    <input type="color" onchange="applyTheme(this.value);renderContent()" 
+                                        value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" 
+                                        class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm">
+                                    <span class="text-[10px] font-bold text-slate-400">滴管選色</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 pt-6 border-t border-slate-50">
+                                <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">輸入自訂色碼</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" id="custom-hex-input" placeholder="#RRGGBB" 
+                                        value="${currentHex}"
+                                        class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-2xl px-4 py-3 text-sm outline-none font-mono text-slate-700">
+                                    <button onclick="applyHexColor()" 
+                                            class="bg-brand text-white font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">
+                                        套用
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-slate-300 mt-2 ml-1">請輸入包含 # 的六位數色碼，例如 #92A8D1</p>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+        function applyHexColor() {
+            const hexInput = document.getElementById('custom-hex-input');
+            const color = hexInput.value.trim();
+            
+            // 驗證格式是否為有效的 Hex 色碼 (例如 #FFFFFF 或 #FFF)
+            const isHex = /^#([A-Fa-f0-9]{3}){1,2}$/.test(color);
+            
+            if (isHex) {
+                applyTheme(color);
+                renderContent();
+                showToast("已更換自訂主題色！");
+            } else {
+                showToast("格式錯誤！請輸入如 #92A8D1 的色碼");
+            }
         }
 
         // --- 數據備份 ---
