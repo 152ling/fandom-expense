@@ -238,14 +238,13 @@
             </div>
         </div>
     </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
     const firebaseConfig = {
-        apiKey: "AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
+        apiKey:"AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
         authDomain: "fandom-expense.firebaseapp.com",
         projectId: "fandom-expense",
         storageBucket: "fandom-expense.firebasestorage.app",
@@ -464,26 +463,20 @@
         function syncGradInput(id) {
             const inputEl = document.getElementById(`${id}-hex`);
             let hex = inputEl.value.trim();
-
             // 1. 自動補井字號
             if (hex.length > 0 && !hex.startsWith('#')) {
                 hex = '#' + hex;
                 inputEl.value = hex;
             }
-
-            // 2. 正規表達式檢查：必須是 # 加上 6 位 0-9 或 A-F
             const isValid = /^#[0-9A-F]{6}$/i.test(hex);
 
             if (isValid) {
-                // 只有格式完全正確，才去改色盤的值和預覽
                 document.getElementById(`${id}-picker`).value = hex;
                 inputEl.style.borderColor = 'transparent'; // 移除紅框
                 updateGradPreview();
-            } else {
-                // 如果長度已經夠了(7碼)但格式不對，或是輸入中
-                // 我們不更新顏色，但可以給個視覺提示（例如邊框變淡紅）
+            } else {// 如果長度已經夠了(7碼)但格式不對，或是輸入中
                 if (hex.length >= 7) {
-                    inputEl.style.borderColor = '#ef4444'; // Tailwind 的 red-500
+                    inputEl.style.borderColor = '#ef4444'; 
                 } else {
                     inputEl.style.borderColor = 'transparent';
                 }
@@ -1321,12 +1314,22 @@
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                             <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="one-time-code" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label><input type="text" id="m-tags" autocomplete="one-time-code" autocorrect="off" value="${itemData?.tags?.join(', ') || ''}" placeholder="用逗號分隔 例:SEVENTEEN,撒浪嘿" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800"></div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label>
+                            <div class="relative">
+                                <div id="m-tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border-2 border-transparent focus-within:border-brand min-h-[46px] items-center transition-all">
+                                    <input type="text" id="m-tag-input" autocomplete="off" placeholder="用逗號分隔標籤 例如:SEVENTEEN,撒浪嘿" class="flex-1 bg-transparent outline-none text-sm text-gray-800 min-w-[120px]">
+                                </div>
+                                <ul id="m-tag-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
+                            </div>
+                        </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
                         <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
                     initQtyPicker();
+                    window.getSmartTags = initSmartTags(itemData?.tags || []);
+                        
             } else {
                 // 願望模式 - 依照要求設定預設日期時間
                 const now = new Date();
@@ -1387,6 +1390,7 @@
                 }
             }
             let item;
+            const tags = window.getSmartTags ? window.getSmartTags() : [];
             if (isExp) { //消費模式
                 const dateVal = document.getElementById('m-date').value;
                 const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
@@ -1396,6 +1400,7 @@
                 const q = Number(document.getElementById('m-qty').value) || 1;
                 const s = Number(document.getElementById('m-shipping').value) || 0;
                 const payM = document.getElementById('m-pay-method')?.value || '待付款';
+                
 
                 item = { 
                     id: state.editingId || String(Date.now()), 
@@ -1406,7 +1411,7 @@
                     arrivalStatus: document.getElementById('m-status').value, 
                     paymentMethod: payM,
                     paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : 0,
-                    tags: document.getElementById('m-tags').value.split(/[,，]/).map(t => t.trim()).filter(t => t), 
+                    tags:tags,
                     remark: document.getElementById('m-remark').value || '' ,
                 };
                 item.total = (item.price * item.qty) + item.shipping;
@@ -1586,7 +1591,15 @@
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
             const headers = Object.values(excelHeaderMap);
-            const rows = state.expenses.map(i => { return Object.keys(excelHeaderMap).map(engKey => { let val = i[engKey]; if (engKey === 'tags' && Array.isArray(val)) return val.join(','); return (val !== undefined && val !== null) ? val : ""; }); });
+            //const rows = state.expenses.map(i => { return Object.keys(excelHeaderMap).map(engKey => { let val = i[engKey]; if (engKey === 'tags' && Array.isArray(val)) return val.join(','); return (val !== undefined && val !== null) ? val : ""; }); });
+            const rows = state.expenses.map(i => { 
+                return Object.keys(excelHeaderMap).map(engKey => { 
+                    let val = i[engKey]; 
+                    // 如果欄位是標籤且為陣列，則用逗號合併為字串
+                    if (engKey === 'tags' && Array.isArray(val)) return val.join(', '); 
+                    return (val !== undefined && val !== null) ? val : ""; 
+                }); 
+            });
             const wsExp = XLSX.utils.aoa_to_sheet([headers, ...rows]);
             XLSX.utils.book_append_sheet(wb, wsExp, "消費清單");
             XLSX.writeFile(wb, `追星記帳_備份_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -1727,6 +1740,97 @@
 
         window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); initSwipeToClose(); };
     </script>
+    <script>// 定義預設標籤
+        const PREDEFINED_TAGS = ["待二補", "不須二補", "線上購買", "線下購買", "SEVENTEEN"];
+        // 初始化智慧標籤
+        function initSmartTags(initialTags = []) {
+            const container = document.getElementById('m-tag-container');
+            const input = document.getElementById('m-tag-input');
+            const suggestionsList = document.getElementById('m-tag-suggestions');
+            if (!container || !input) return () => [];
+
+            let selectedTags = Array.isArray(initialTags) ? [...initialTags] : [];
+
+            const renderChips = () => {
+                container.querySelectorAll('.tag-chip').forEach(el => el.remove());
+                selectedTags.forEach((tag, index) => {
+                    const chip = document.createElement('div');
+                    chip.className = 'tag-chip flex items-center bg-slate-100 text-brand px-2 py-1 rounded-lg text-xs font-bold';
+                    chip.innerHTML = `${tag}<span class="ml-1 cursor-pointer hover:text-red-500" onclick="event.stopPropagation(); window.removeSmartTag(${index})">✕</span>`;
+                    container.insertBefore(chip, input);
+                });
+            };
+
+            window.removeSmartTag = (index) => {
+                selectedTags.splice(index, 1);
+                renderChips();
+            };
+
+            const addSmartTag = (content) => {
+                const clean = content.replace(/[,，]/g, '').trim();
+                if (clean && !selectedTags.includes(clean)) {
+                    selectedTags.push(clean);
+                    renderChips();
+                }
+                input.value = '';
+                suggestionsList.classList.add('hidden');
+            };
+
+            window.addSmartTagByClick = (val) => addSmartTag(val);
+            // 監聽輸入行為：處理逗號與建議清單
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                // 1. 偵測逗號自動加入
+                if (val.endsWith(',') || val.endsWith('，')) {
+                    addSmartTag(val);
+                    return;
+                }
+                // 2. 顯示建議清單 (PREDEFINED_TAGS 邏輯)
+                const query = val.trim();
+                if (!query) {
+                    suggestionsList.classList.add('hidden');
+                    return;
+                }
+                const dynamicPool = [...new Set(state.expenses.flatMap(ex => ex.tags || []))];
+                // 合併預設標籤與從消費紀錄中提取的標籤
+                const combinedPool = [...new Set([...PREDEFINED_TAGS, ...dynamicPool])];
+                const matches = combinedPool.filter(t => 
+                    t.toLowerCase().includes(query.toLowerCase()) && !selectedTags.includes(t)
+                );
+                if (matches.length > 0) {  
+                    suggestionsList.innerHTML = matches.map(m => {
+                        const isDynamic = !PREDEFINED_TAGS.includes(m);
+                        return `<li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-slate-50 last:border-0 font-medium flex justify-between items-center" onclick="window.addSmartTagByClick('${m}')">
+                            <span>${m.replace(new RegExp(`(${query})`, 'gi'), `<span class="text-brand font-bold">$1</span>`)}</span>
+                            ${isDynamic ? '<span class="text-[9px] text-slate-300 italic">已使用過</span>' : ''}
+                        </li>`;
+                    }).join('');
+                    suggestionsList.classList.remove('hidden');
+                } else {
+                    suggestionsList.classList.add('hidden');
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSmartTag(input.value);
+                } else if (e.key === 'Backspace' && !input.value && selectedTags.length > 0) {
+                    selectedTags.pop();
+                    renderChips();
+                }
+            });
+            // 點擊外部關閉建議
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) suggestionsList.classList.add('hidden');
+            });
+
+            renderChips();
+            return () => selectedTags; 
+        }
+
+   
+        </script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./service-worker.js')
