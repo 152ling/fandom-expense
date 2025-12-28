@@ -295,6 +295,7 @@
                 return await getDownloadURL(snapshot.ref);
             } catch (e) {
                 console.error("Upload failed:", e);
+                showToast("雲端上傳失敗，請檢查網路或手機權限",e);
                 return null;
             }
         },
@@ -1516,20 +1517,61 @@
       
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
         async function handleImage(input) {
+            if (!state.user) {
+                showToast("請先登入以開啟圖片上傳功能☁️");
+                input.value = "";
+                return;
+            }
             const file = input.files[0];
+            if (!file) return;
+            // 2. 檢查是否為圖片格式 (保險起見)
+            if (!file.type.startsWith('image/')) {
+                showToast("請選擇正確的圖片檔案格式");
+                input.value = ""; // 清空選取，避免殘留錯誤檔案
+                return;
+            }
+            // 3. 檢查檔案大小 (超過 15MB 預警)
+            if (file.size > 15 * 1024 * 1024) {
+                showToast("圖片太大囉！請選擇較小的照片");
+                input.value = "";
+                return;
+            }
             if (file) {
-                // 如果檔案大於 2MB，調低 maxWidth
-                const compressionWidth = file.size > 2 * 1024 * 1024 ? 500 : 800;
-                
                 const reader = new FileReader();
+                // 檔案讀取失敗的處理
+                reader.onerror = () => {
+                    showToast("檔案讀取發生錯誤，請重試");
+                    input.value = "";
+                };
                 reader.onload = async (e) => {
-                    // 傳入動態的 maxWidth
-                    const compressedBase64 = await compressImage(e.target.result, compressionWidth);
-                    document.getElementById('img-placeholder').innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-cover">`;
-                    
-                    const response = await fetch(compressedBase64);
-                    state.tempImageBlob = await response.blob(); 
-                    state.tempImage = null;
+                    try {
+                        const compressionWidth = file.size > 2 * 1024 * 1024 ? 500 : 800;
+                        const compressedBase64 = await compressImage(e.target.result, compressionWidth);
+                        
+                        if (!compressedBase64) throw new Error("壓縮失敗");
+
+                        // 更新 UI 預覽
+                        const placeholder = document.getElementById('img-placeholder');
+                        if (placeholder) {
+                            placeholder.innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-cover">`;
+                        }
+
+                        // 將 Base64 轉換為 Blob 準備上傳
+                        const response = await fetch(compressedBase64);
+                        if (!response.ok) throw new Error("轉換失敗");
+                        
+                        state.tempImageBlob = await response.blob(); 
+                        state.tempImage = null; // 清除舊網址紀錄
+                        showToast("圖片上傳成功");
+
+                    } catch (error) {
+                        console.error("Image processing error:", error);
+                        showToast("圖片處理失敗，請換一張試試");
+                        // 重置狀態
+                        state.tempImageBlob = null;
+                        document.getElementById('img-placeholder').innerHTML = `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`;
+                        input.value = "";
+                    }
                 };
                 reader.readAsDataURL(file);
             }
