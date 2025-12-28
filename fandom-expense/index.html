@@ -196,23 +196,13 @@
     <!-- 自訂漸層彈窗 -->
     <div id="grad-modal" class="fixed inset-0 bg-black/70 hidden z-[110] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl">
-            <h3 class="text-lg font-bold mb-4 text-center text-slate-800">設定自訂漸層</h3>
+            <h3 class="text-lg font-bold text-center text-slate-800">設定自訂漸層</h3>
+            <p class="text-[10px] font-bold text-slate-400 mb-4 text-center">若使用深色模式，建議將淺色設為起始值</p>
             
             <div class="space-y-4 mb-6">
                 <div class="space-y-1">
                     <div class="flex items-center gap-1 mb-1">
                         <label class="text-[10px] font-bold text-slate-400 uppercase">起始顏色 (HEX)</label>
-                        
-                        <div class="relative group flex items-center w-8 h-8">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300 cursor-help hover:text-slate-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-
-                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 p-2 bg-slate-700 text-white text-[10px] rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center leading-relaxed z-50">
-                                若使用深色模式，建議將淺色設為起始值。
-                                <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                            </div>
-                        </div>
                     </div>
                     <div class="flex gap-2">
                         <input type="text" id="g1-hex" placeholder="#000000" oninput="syncGradInput('g1')" 
