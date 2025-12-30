@@ -664,7 +664,7 @@
                         <div class="flex gap-2 text-gray-800">
                             <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
-                                ${[2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
+                                ${[2020,2021,2022,2023,2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
                             </select>
                             <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
