@@ -441,7 +441,7 @@
         }
 
         const excelHeaderMap = {
-            name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
+            type: "收支類型",name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
             year: "消費年份", month: "消費月份", platform: "收物平台",
             arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
         };
@@ -1519,7 +1519,8 @@
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
                     initQtyPicker();
-                    setTempType(itemData?.type || 'expense');
+                    const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
+                    setTempType(currentType);
                     window.getSmartTags = initSmartTags(itemData?.tags || []);
                         
             } else {
@@ -1601,7 +1602,7 @@
                 const q = Number(document.getElementById('m-qty').value) || 1;
                 const s = Number(document.getElementById('m-shipping').value) || 0;
                 const payM = document.getElementById('m-pay-method')?.value || '待付款';
-                
+                const totalPrice = (p * q) + s;
 
                 item = { 
                     id: state.editingId || String(Date.now()), 
@@ -1613,7 +1614,7 @@
                     platform: document.getElementById('m-platform').value || '', 
                     arrivalStatus: document.getElementById('m-status').value, 
                     paymentMethod: payM,
-                    paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : 0,
+                    paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : totalPrice,
                     tags:tags,
                     remark: document.getElementById('m-remark').value || '' ,
                     
@@ -1800,8 +1801,16 @@
             const rows = state.expenses.map(i => { 
                 return Object.keys(excelHeaderMap).map(engKey => { 
                     let val = i[engKey]; 
+                    if (engKey === 'type') {
+                        return (val === 'income') ? '售出' : '支出';
+                    }
                     // 如果欄位是標籤且為陣列，則用逗號合併為字串
                     if (engKey === 'tags' && Array.isArray(val)) return val.join(', '); 
+                    if (engKey === 'paidAmount') {
+                        if (i.paymentMethod !== '已付訂金') {
+                            return i.total;
+                        }
+                    };
                     return (val !== undefined && val !== null) ? val : ""; 
                 }); 
             });
@@ -1868,8 +1877,15 @@
 
                         // 檢查值是否有效（非空且非 undefined）
                         const isEmpty = (val === undefined || val === null || String(val).trim() === "");
-
-                        if (engKey === 'tags') {
+                        if (engKey === 'type') {
+                            const typeStr = String(val || "").trim();
+                            if (typeStr === '售出' || typeStr === 'income') {
+                                item[engKey] = 'income';
+                            } else {
+                                item[engKey] = 'expense';
+                            }
+                        }
+                        else if (engKey === 'tags') {
                             item[engKey] = isEmpty ? [] : String(val).split(',').map(t => t.trim());
                         } 
                         else if (engKey === 'qty') {// 數量預設為 1
@@ -1878,7 +1894,7 @@
                         else if (engKey === 'year') {// 年份預設為當前年份
                             item[engKey] = isEmpty ? defaultYear : Number(val);
                         } 
-                        else if (engKey === 'month') { // 月份預設為前一個月
+                        else if (engKey === 'month') { // 無月份則預設為前一個月
                             item[engKey] = isEmpty ? defaultMonth : Number(val);
                         } 
                         else if (engKey === 'category') { // 分類預設
@@ -1897,9 +1913,10 @@
                             item[engKey] = isEmpty ? "" : String(val).trim();
                         }
                     });
-
-                    // 計算總額
                     item.total =(Number(item.price) * Number(item.qty)) + Number(item.shipping);
+                    if (item.paymentMethod !== '已付訂金') {
+                        item.paidAmount = item.total; // 非訂金制則視為全額付清
+                    }
                     importedData.push(item);
                 }
 
@@ -1908,7 +1925,7 @@
                     localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
                     if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
                     renderContent();
-                    showToast(`匯入成功：共 ${importedData.length} 筆，請查看上個月的消費清單`);
+                    showToast(`匯入成功：共 ${importedData.length} 筆，若無填寫日期請查看上個月的消費清單`);
                 }
             } catch (err) {
                 console.error(err);
