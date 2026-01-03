@@ -1783,10 +1783,20 @@
             }
             const file = input.files[0];
             if (!file) return;
-            // 2. 檢查是否為圖片格式 (保險起見)
-            if (!file.type.startsWith('image/')) {
-                showToast("請選擇正確的圖片檔案格式");
-                input.value = ""; // 清空選取，避免殘留錯誤檔案
+            showToast("正在讀取圖片...");
+        // 2. 處理 file.type 為空的情況 (針對部分 Android/OPPO 系統)
+            let isImage = false;
+            if (file.type) {
+                isImage = file.type.startsWith('image/');
+            } else {
+                // 如果系統沒給 MIME type，改用副檔名判斷 (防呆)
+                const ext = file.name.split('.').pop().toLowerCase();
+                isImage = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext);
+            }
+
+            if (!isImage) {
+                showToast("不支援的檔案格式，請選擇圖片檔");
+                input.value = ""; // 清空選取
                 return;
             }
             // 3. 檢查檔案大小 (超過 15MB 預警)
