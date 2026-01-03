@@ -22,6 +22,7 @@
             --app-bg: #f8fafc;
             --card-bg: #ffffff;
             --income-color: #10b981;
+            --income-bg-soft: #ecfdf5; /* 亮色模式下的綠 */
             --income-bg: #ecfdf5;
             --text-main: #1e293b;
             --text-sub: #64748b;
@@ -36,6 +37,7 @@
             --text-sub: #94a3b8;
             --border-color: #2d2d2d;
             --income-bg: #326a63;
+            --income-bg-soft: rgba(16, 185, 129, 0.1); /* 深色模式下用 10% 的品牌綠 */
             --hover-bg: #363636;
         }
         /* 修正 iOS input 寬度與原生樣式 */
@@ -862,7 +864,7 @@
                 }).map(item => {
                 const catInfo = categories.find(c => c.id === item.category) || { icon: '🌈' };
                 const isIncome = item.type === 'income';
-                const cardBg = isIncome ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-transparent';
+                const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 return `<div class="${cardBg} rounded-3xl p-4 card-shadow relative overflow-hidden group">
                     <div class="absolute top-4 right-4 z-10">
@@ -1127,21 +1129,6 @@
 
             if (stats.length > 0) initChart(stats);
         }
-        // function renderReport(container) {
-        //     const rangeData = calculateReportRange();
-        //     const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
-        //     const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.total) || 0), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
-        //     const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);//金額計算
-        //     const totalDisplay = state.hideAmount ? '•••' : `${totalSpending.toLocaleString()}`; //金額顯示
-
-        //     container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
-        //         <div class="flex flex-col gap-4 mb-8">
-        //             <div class="flex bg-slate-200/50 p-1 rounded-2xl">${['month', '6months', 'year'].map(r => `<button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange===r?'active':''}">${r==='month'?'月':r==='year'?'年':'近 6 個月'}</button>`).join('')}</div>
-        //             <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow"><button onclick="shiftRange(-1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><span class="text-sm font-black text-slate-700">${rangeData.label}</span><button onclick="shiftRange(1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button></div>
-        //         </div>
-        //         ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalDisplay}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
-        //     if (totalSpending > 0) initChart(stats);
-        // }
         /*** 報表範圍切換 (月/半年/年)*/
         function changeReportRange(range) {
             state.reportRange = range;
