@@ -26,6 +26,17 @@
             --text-main: #1e293b;
             --text-sub: #64748b;
             --border-color: #f1f5f9;
+            --hover-bg: #eeeeef;
+        }
+
+        body.dark-mode {
+            --app-bg: #1a1a1a;
+            --card-bg: #282828;
+            --text-main: #ffffffe8;
+            --text-sub: #94a3b8;
+            --border-color: #2d2d2d;
+            --income-bg: #326a63;
+            --hover-bg: #363636;
         }
         /* 修正 iOS input 寬度與原生樣式 */
         input[type="month"], 
@@ -37,16 +48,6 @@
             width: 100%;
             background-color: var(--card-bg);
         }
-
-        body.dark-mode {
-            --app-bg: #1a1a1a;
-            --card-bg: #282828;
-            --text-main: #ffffffe8;
-            --text-sub: #94a3b8;
-            --border-color: #2d2d2d;
-            --income-bg: #326a63;
-        }
-
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: var(--app-bg);
@@ -59,7 +60,9 @@
         .text-brand { color: var(--brand-color) !important; }
         .text-income { color: var(--income-color) !important; }
         .tab-active { color: var(--brand-color) !important; font-weight: 900; }
-        
+        .custom-hover:hover {
+            background-color: var(--hover-bg) !important;
+        }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
@@ -1180,10 +1183,10 @@
                     </div>
 
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">
-                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
-                    <div onclick="runStorageCleanup()" class="flex items-center justify-between p-5 hover:bg-slate-50 cursor-pointer">
+                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+                    <div onclick="runStorageCleanup()" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                     <div class="flex items-center gap-4 text-brand">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/>
@@ -1585,6 +1588,15 @@
             let finalImageUrl = state.tempImage; // 如果是編輯模式且沒換圖，保留原網址
             if (state.tempImageBlob) {
                 showToast("正在上傳圖片...");
+                if (state.editingId) { // 檢查：如果是「編輯模式」，且原本就有圖片網址，則先刪除舊圖
+                    const oldItem = state[key].find(i => String(i.id) === state.editingId);
+                    if (oldItem && oldItem.image) {
+                        // 異步刪除舊圖，不卡住上傳流程
+                        window.cloud.deleteFile(oldItem.image).then(res => {
+                            console.log("舊圖片已清理:", oldItem.image);
+                        });
+                    }
+                }
                 const fileName = `${Date.now()}.jpg`;
                 const uploadedUrl = await window.cloud.uploadFile(state.tempImageBlob, fileName);
                 if (uploadedUrl) {
