@@ -21,21 +21,9 @@
             --brand-gradient: linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%);
             --app-bg: #f8fafc;
             --card-bg: #ffffff;
-            --income-color: #10b981;
-            --income-bg: #ecfdf5;
             --text-main: #1e293b;
             --text-sub: #64748b;
             --border-color: #f1f5f9;
-        }
-        /* 修正 iOS input 寬度與原生樣式 */
-        input[type="month"], 
-        input[type="date"] {
-            -webkit-appearance: none; /* 移除 iOS 預設外觀 */
-            appearance: none;
-            min-height: 44px;
-            display: block;
-            width: 100%;
-            background-color: var(--card-bg);
         }
 
         body.dark-mode {
@@ -44,7 +32,6 @@
             --text-main: #ffffffe8;
             --text-sub: #94a3b8;
             --border-color: #2d2d2d;
-            --income-bg: #326a63;
         }
 
         body {
@@ -57,7 +44,6 @@
 
         .bg-brand { background: var(--brand-gradient) !important; }
         .text-brand { color: var(--brand-color) !important; }
-        .text-income { color: var(--income-color) !important; }
         .tab-active { color: var(--brand-color) !important; font-weight: 900; }
         
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
@@ -71,13 +57,9 @@
 
         .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
         body.dark-mode .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
-        
-        .type-switcher button.active { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: var(--brand-color); }
-        .type-switcher button.active.income { color: var(--income-color); }
 
         .status-unArrived { background-color: #fee2e2; color: #ef4444; }
         .status-toShip { background-color: #fef3c7; color: #d97706; }
-        .status-soldout { background-color: #ffffff; color: #10b981; }
         .status-received { background-color: #dcfce7; color: #16a34a; }
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -102,14 +84,12 @@
         .photo-tab.active { border-bottom: 3px solid var(--brand-color); color: var(--brand-color); font-weight: 900; }
 
         body.dark-mode .bg-white { background-color: var(--card-bg) !important; }
-        body.dark-mode .bg-emerald-50{background-color: var(--income-bg) !important;}
-        body.dark-mode .text-slate-800, body.dark-mode .text-gray-800{ color: #ffffffe8 !important; }
-        body.dark-mode .text-slate-700, body.dark-mode .text-gray-700,body.dark-mode .text-slate-400,body.dark-mode .text-emerald-400  { color: #e9e9e9 !important; }
+        body.dark-mode .text-slate-800, body.dark-mode .text-gray-800 { color: #ffffffe8 !important; }
+        body.dark-mode .text-slate-700, body.dark-mode .text-gray-700,body.dark-mode .text-slate-400 { color: #e9e9e9 !important; }
         body.dark-mode .text-slate-500 { color: #fcfcfc !important; }
         body.dark-mode .bg-slate-100 { background-color: #1a1a1a !important; }
         body.dark-mode .bg-slate-50 { background-color: #363636 !important; }
         body.dark-mode .border-gray-100 { border-color: #282828 !important; }
-        body.dark-mode .bg-emerald-100{background-color: #a8d8b9 !important;}
 
         #toast {
             visibility: hidden; min-width: 200px; background-color: rgba(30, 41, 59, 0.95);
@@ -387,7 +367,6 @@
             subPage: null,
             photoWallTab: 'purchased',
             themeColor: localStorage.getItem('fe_v11_theme') || 'svt', 
-            tempType: 'expense',
             expenses: JSON.parse(localStorage.getItem('fe_v11_expenses')) || [],
             tempImage: null,     // 用來存既有的圖片網址 (URL)
             tempImageBlob: null, // 用來存新選取的圖片檔案 (Blob)
@@ -404,36 +383,7 @@
             actionTarget: { type: null, id: null },
             user: null,
             hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
-            reportType: 'expense',
         };
-        function setTempType(type) { //切換消費/售出
-            state.tempType = type;
-            const isExp = type === 'expense';
-            const btnExp = document.getElementById('btn-type-exp');
-            const btnInc = document.getElementById('btn-type-inc');
-            if(btnExp && btnInc) {
-                btnExp.className = `flex-1 py-2 text-xs font-bold rounded-xl transition-all ${isExp ? 'active shadow-sm' : 'text-slate-400'}`;
-                btnInc.className = `flex-1 py-2 text-xs font-bold rounded-xl transition-all ${!isExp ? 'active shadow-sm income' : 'text-slate-400'}`;
-            }
-            const shippingFee = document.getElementById('shipping-fee');
-            const shippingPay = document.getElementById('shipping-payment');
-            const shippingState = document.getElementById('shipping-state');
-            const statusSelect = document.getElementById('m-status');
-            if (statusSelect) {
-                const optionsToShow = isExp  ? arrivalOptions.filter(o => o !== '已售出') : ['已售出'];
-                statusSelect.innerHTML = optionsToShow.map(o => `<option value="${o}">${o}</option>`).join('');
-                if (!isExp) { statusSelect.value = '已售出'; }
-            }
-           if (isExp) {
-                shippingFee.classList.remove('hidden');
-                shippingState.classList.remove('hidden');
-                shippingPay.classList.remove('hidden');
-            } else {
-                shippingFee.classList.add('hidden');
-                shippingState.classList.add('hidden');
-                shippingPay.classList.add('hidden');
-            }
-        }
 
         const excelHeaderMap = {
             name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
@@ -450,8 +400,8 @@
             { id: '其他追星支出', icon: '🌈', color: '#94a3b8' }           // 冷灰 (Slate) - 中性且不搶戲
         ];
 
-        const wishCategories = ["專輯", "周邊商品", "娃娃", "小卡","演唱會 / 見面會門票"];
-        const arrivalOptions = ['未到貨', '待出貨', '已取貨','已售出'];
+        const wishCategories = ["專輯", "周邊", "娃娃", "小卡","演唱會"];
+        const arrivalOptions = ['未到貨', '待出貨', '已取貨'];
         const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金'];
         let myChart = null;
         /**滑動關閉編輯邏輯 */
@@ -611,6 +561,7 @@
                 targetDark = localStorage.getItem('fe_v11_darkMode') === 'true';
             }
 
+            // 儲存狀態並套用 class
             localStorage.setItem('fe_v11_darkMode', targetDark);
             if (targetDark) {
                 body.classList.add('dark-mode');
@@ -668,7 +619,6 @@
         function getStatusClass(s) {
             if (s === '未到貨') return 'status-unArrived';
             if (s === '待出貨') return 'status-toShip';
-            if (s === '已售出') return 'status-soldout';
             return 'status-received';
         }
 
@@ -714,7 +664,7 @@
                         <div class="flex gap-2 text-gray-800">
                             <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
-                               ${[2020,2021,2022,2023,2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
+                                ${[2020,2021,2022,2023,2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
                             </select>
                             <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
@@ -820,13 +770,9 @@
 
             return dateMatch && catMatch && keywordMatch;
             });
-            //const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
-            //const total = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
-            const totalExp = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
-            const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
-            const netTotal = totalExp - totalInc;
-            const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
-            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
+            const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+            const totalDisplay = state.hideAmount ? '•••••' : `$ ${total.toLocaleString()}`;
+            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? 'Yearly Cost' : 'Monthly Cost');
 
 
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
@@ -842,11 +788,7 @@
                         </button></div>
                     <h3 class="text-3xl font-black">${totalDisplay}</h3>
                     </div>
-                    <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: $${totalExp.toLocaleString()}</p>` : ''}
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
-                        <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
-                    </div>
+                    <p class="text-xs text-white/80 font-medium">${filtered.length} 項紀錄</p>
                 </div>` + 
                 filtered.sort((a, b) => {
                     if (Number(b.year) !== Number(a.year)) {
@@ -858,10 +800,8 @@
                     return Number(b.id) - Number(a.id);
                 }).map(item => {
                 const catInfo = categories.find(c => c.id === item.category) || { icon: '🌈' };
-                const isIncome = item.type === 'income';
-                const cardBg = isIncome ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-transparent';
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
-                return `<div class="${cardBg} rounded-3xl p-4 card-shadow relative overflow-hidden group">
+                return `<div class="bg-white rounded-3xl p-4 card-shadow relative overflow-hidden group">
                     <div class="absolute top-4 right-4 z-10">
                         <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
@@ -869,7 +809,7 @@
                     </div>
                     <div class="flex gap-4" >
                         ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
-                        `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
+                        `<div class="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
                                 <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${catInfo.color}1A; color: ${catInfo.color};">${catInfo.icon} ${item.category}</span>
@@ -885,16 +825,16 @@
                             </div>
                         </div>
                     </div>
-                    ${!isIncome ? ` 
                     <div class="mt-4 pt-3 border-t border-slate-100">
                             <div class="flex justify-between items-center">
                                 <div class="text-[10px] text-slate-400">
                                     <span class="font-bold text-brand">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '已付訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
                                     ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span class="opacity-70">運費:</span> $${item.shipping}</div>
                                 ` : ''}
-                                </div>
-                            ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>` : ''}
-                    </div>` : ''}
+                            </div>
+                            ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>
+                            ` : ''}
+                        </div>
                 </div>`;
             }).join('');
         }
@@ -928,6 +868,7 @@
             if (state.hideAmount && !(await askUser("確定要顯示金額嗎？", "顯示後將可查看完整的消費明細與總計。"))) {
                 return;
             }
+            // 真正的切換動作
             state.hideAmount = !state.hideAmount;
             localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount));
             renderContent();
@@ -994,151 +935,21 @@
         }
 
         // --- 財務報表 ---
-        function changeReportType(type) {
-            state.reportType = type;
-            renderContent(); // 重新渲染報表
-        }
         function renderReport(container) {
             const rangeData = calculateReportRange();
-            
-            // 1. 過濾出該時段的所有紀錄
-            const periodRecords = state.expenses.filter(ex => {
-                const d = new Date(ex.year, ex.month - 1);
-                return d >= rangeData.start && d <= rangeData.end;
-            });
+            const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
+            const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.total) || 0), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
+            const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);//金額計算
+            const totalDisplay = state.hideAmount ? '•••' : `${totalSpending.toLocaleString()}`; //金額顯示
 
-            // 2. 基本金額計算
-            const totalExp = periodRecords.filter(i => i.type !== 'income').reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-            const totalInc = periodRecords.filter(i => i.type === 'income').reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-            const netBalance = totalExp - totalInc;
-
-            // 3. 判斷目前的報表模式 (expense / income / net)
-            const reportMode = (totalInc > 0) ? (state.reportType || 'expense') : 'expense';
-            let stats = [];
-            let chartTitle = "";
-            let centerAmount = 0;
-
-            if (reportMode === 'net') {
-                // --- 淨支出模式：顯示 支出 vs 收入 的對比 ---
-                chartTitle = "淨支出";
-                centerAmount = netBalance;
-                stats = [
-                    { id: '總支出', amount: totalExp, color: '#92A8D1', icon: '💸' },
-                    { id: '總收入', amount: totalInc, color: '#10b981', icon: '💰' }
-                ].filter(s => s.amount > 0);
-            } else {
-                // --- 支出或收入模式：顯示詳細分類 ---
-                const isInc = reportMode === 'income';
-                const targetRecords = periodRecords.filter(i => (isInc ? i.type === 'income' : i.type !== 'income'));
-                chartTitle = isInc ? "總收入" : "總支出";
-                centerAmount = isInc ? totalInc : totalExp;
-                
-                stats = categories.map(cat => ({
-                    ...cat,
-                    amount: targetRecords
-                        .filter(ex => ex.category === cat.id)
-                        .reduce((sum, item) => sum + (Number(item.total) || 0), 0)
-                })).filter(s => s.amount > 0).sort((a, b) => b.amount - a.amount);
-            }
-
-            const formatAmt = (num) => state.hideAmount ? '•••' : num.toLocaleString();
-            
-            container.innerHTML = `
-                <div class="p-6">
-                    <h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
-                    
-                    <div class="flex flex-col gap-4 mb-8">
-                        <div class="flex bg-slate-200/50 p-1 rounded-2xl">
-                            ${['month', '6months', 'year'].map(r => `
-                                <button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange === r ? 'active' : ''}">
-                                    ${r === 'month' ? '月' : r === 'year' ? '年' : '近 6 個月'}
-                                </button>
-                            `).join('')}
-                        </div>
-                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow">
-                            <button onclick="shiftRange(-1)" class="p-2 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
-                            <span class="text-sm font-black text-slate-700">${rangeData.label}</span>
-                            <button onclick="shiftRange(1)" class="p-2 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button>
-                        </div>
-                    </div>
-                    ${totalInc > 0 ? `
-                        <div class="grid grid-cols-3 gap-3 mb-8">
-                            <div onclick="changeReportType('expense')" 
-                                class="cursor-pointer transition-all ${reportMode === 'expense' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'expense' ? 'text-white' : 'text-slate-400'} uppercase mb-1">總支出</p>
-                                <p class="text-sm font-black ${reportMode === 'expense' ? 'text-white' : 'text-slate-700'}">$${formatAmt(totalExp)}</p>
-                            </div>
-                            <div onclick="changeReportType('income')" 
-                                class="cursor-pointer transition-all ${reportMode === 'income' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'} uppercase mb-1">總收入</p>
-                                <p class="text-sm font-black ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'}">+$${formatAmt(totalInc)}</p>
-                            </div>
-                            <div onclick="changeReportType('net')" 
-                                class="cursor-pointer transition-all ${reportMode === 'net' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'net' ? 'text-white' : 'text-slate-400'} uppercase mb-1">淨支出</p>
-                                <p class="text-sm font-black ${reportMode === 'net' ? 'text-white' : 'text-slate-700'}">$${formatAmt(netBalance)}</p>
-                            </div>
-                        </div>
-                    ` : ``
-                    }
-
-                    ${stats.length > 0 ? `
-                        <div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative">
-                            <div class="w-full max-w-[240px] mx-auto relative">
-                                <canvas id="donutChart"></canvas>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${chartTitle}</span>
-                                    <span class="text-xl font-black text-slate-800">$${formatAmt(centerAmount)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">
-                                ${reportMode === 'net' ? '收支平衡分析' : (reportMode === 'income' ? '收入來源排名' : '支出佔比排名')}
-                            </h3>
-                            ${stats.map(s => { 
-                                const p = ((s.amount / (reportMode === 'net' ? (totalExp + totalInc) : centerAmount)) * 100).toFixed(1); 
-                                return `
-                                    <div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}">
-                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div>
-                                        <div class="flex-grow">
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-bold text-slate-700">${s.id}</span>
-                                                <span class="text-xs font-black text-slate-400">${p} %</span>
-                                            </div>
-                                            <div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden">
-                                                <div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div>
-                                            </div>
-                                        </div>
-                                        <div class="text-right flex-shrink-0 font-black text-slate-800">$${formatAmt(s.amount)}</div>
-                                    </div>`; 
-                            }).join('')}
-                        </div>
-                    ` : `
-                        <div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">
-                            目前時段尚無數據可分析
-                        </div>
-                    `}
-                </div>`;
-
-            if (stats.length > 0) initChart(stats);
+            container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
+                <div class="flex flex-col gap-4 mb-8">
+                    <div class="flex bg-slate-200/50 p-1 rounded-2xl">${['month', '6months', 'year'].map(r => `<button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange===r?'active':''}">${r==='month'?'月':r==='year'?'年':'近 6 個月'}</button>`).join('')}</div>
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow"><button onclick="shiftRange(-1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><span class="text-sm font-black text-slate-700">${rangeData.label}</span><button onclick="shiftRange(1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button></div>
+                </div>
+                ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalDisplay}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
+            if (totalSpending > 0) initChart(stats);
         }
-        // function renderReport(container) {
-        //     const rangeData = calculateReportRange();
-        //     const filteredExpenses = state.expenses.filter(ex => { const d = new Date(ex.year, ex.month - 1); return d >= rangeData.start && d <= rangeData.end; });
-        //     const stats = categories.map(cat => ({ ...cat, amount: filteredExpenses.filter(ex => ex.category === cat.id).reduce((sum, item) => sum + (Number(item.total) || 0), 0) })).filter(s => s.amount > 0).sort((a,b) => b.amount - a.amount);
-        //     const totalSpending = stats.reduce((sum, s) => sum + s.amount, 0);//金額計算
-        //     const totalDisplay = state.hideAmount ? '•••' : `${totalSpending.toLocaleString()}`; //金額顯示
-
-        //     container.innerHTML = `<div class="p-6"><h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
-        //         <div class="flex flex-col gap-4 mb-8">
-        //             <div class="flex bg-slate-200/50 p-1 rounded-2xl">${['month', '6months', 'year'].map(r => `<button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange===r?'active':''}">${r==='month'?'月':r==='year'?'年':'近 6 個月'}</button>`).join('')}</div>
-        //             <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow"><button onclick="shiftRange(-1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><span class="text-sm font-black text-slate-700">${rangeData.label}</span><button onclick="shiftRange(1)" class="p-2 text-slate-400 hover:text-brand transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button></div>
-        //         </div>
-        //         ${totalSpending > 0 ? `<div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative"><div class="w-full max-w-[240px] mx-auto relative"><canvas id="donutChart"></canvas><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">總支出</span><span class="text-xl font-black text-slate-800">$${totalDisplay}</span></div></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">支出佔比排名</h3>${stats.map(s => { const p = ((s.amount / totalSpending) * 100).toFixed(1); return `<div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div><div class="flex-grow"><div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-slate-700">${s.id}</span><span class="text-xs font-black text-slate-400">${p}%</span></div><div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div></div></div><div class="text-right flex-shrink-0 font-black text-slate-800">$${s.amount.toLocaleString()}</div></div>` }).join('')}</div>` : `<div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">目前尚無分析資料</div>`}</div>`;
-        //     if (totalSpending > 0) initChart(stats);
-        // }
         /*** 報表範圍切換 (月/半年/年)*/
         function changeReportRange(range) {
             state.reportRange = range;
@@ -1406,13 +1217,7 @@
             const wish = state.wishlist.find(w => w.id === id);
             if(wish) {
                 state.wishSourceId = id;
-                const categoryMap = { //因為原本願望分類跟消費分類不一致
-                    '周邊': '周邊商品',
-                    '演唱會': '演唱會 / 見面會門票',
-                    '娃娃': '周邊商品'
-                };
-                const targetCategory = categoryMap[wish.category] || wish.category || '周邊商品';
-                openAddModal({ ...wish,id: null, qty: 1, category: targetCategory, arrivalStatus: '未到貨', paymentMethod: '待付款' });
+                openAddModal({ ...wish, qty: 1, category: '周邊商品', arrivalStatus: '未到貨', paymentMethod: '待付款' });
             }
         }
         function openModalAnimation(overlayId, containerId) {
@@ -1439,7 +1244,7 @@
             }, 300);
         }
 
-        function closeModal() {state.wishSourceId = null; closeModalAnimation('modal-overlay', 'modal-container'); }
+        function closeModal() { closeModalAnimation('modal-overlay', 'modal-container'); }
         function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
 
         /**
@@ -1463,33 +1268,27 @@
                     modalTitle.textContent = "加入消費清單";
                 } else if (state.editingId) {
                     // 2. 編輯現有消費紀錄
-                    modalTitle.textContent = "編輯紀錄";
+                    modalTitle.textContent = "編輯消費";
                 } else {
                     // 3. 一般新增消費
-                    modalTitle.textContent = "新增紀錄";
+                    modalTitle.textContent = "新增消費";
                 }
             }
             if (!isWishMode) { //新增消費
                 const defaultMonthStr = String(state.filterMonth).padStart(2,'0');
-                const yStr = state.filterYear === 0 ? String(new Date().getFullYear()) : String(state.filterYear);//如果年分選不限的時候新增
-                const mStr = state.filterMonth === 0  ? String(new Date().getMonth() + 1).padStart(2, '0'): String(state.filterMonth).padStart(2, '0'); 
-                const defaultDate = `${yStr}-${mStr}`;
+                const mStr = state.filterMonth === 0 
+                    ? String(new Date().getMonth() + 1).padStart(2, '0') // 如果是不限，用現在的月份
+                    : String(state.filterMonth).padStart(2, '0');        // 否則用選定的月份
+
+                const defaultDate = `${state.filterYear}-${mStr}`;
                 const isPaidDeposit = itemData?.paymentMethod === '已付訂金';
-                const filteredOptions = state.tempType === 'expense' ? arrivalOptions.filter(o => o !== '已售出') : ['已售出'];
-                const isConvertingWish = state.wishSourceId !== null;//是否為心願清單進來的
+
                 form.innerHTML = `
                     <div class="space-y-4">
-                        <div id="type-switcher" class="flex bg-slate-100 p-1 rounded-2xl mb-6 type-switcher">
-                            <button type="button" onclick="setTempType('expense')" id="btn-type-exp" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all active shadow-sm">支出</button>
-                            <button type="button" onclick="setTempType('income')" id="btn-type-inc" ${isConvertingWish ? 'disabled' : ''} class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-400">售出</button>
-                        </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
-                        <div class="flex gap-4">
-                            <div class="flex-1 space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
-                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
-                            </div>
-                            <div class="flex-1 space-y-1 relative" id="qty-combobox">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1 relative" id="qty-combobox">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
                                 <div class="relative flex items-center">
                                     <input type="number" id="m-qty" inputmode="numeric" value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
@@ -1497,7 +1296,7 @@
                                 </div>
                                 <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
                             </div>
-                            <div class="flex-1 space-y-1" id="shipping-fee">
+                            <div class="space-y-1">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase">運費</label>
                                 <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
@@ -1506,12 +1305,12 @@
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${categories.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
                             <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
-                        <div class="flex gap-4" id="shipping-state">
-                            <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="one-time-code" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
-                            <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${filteredOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="one-time-code" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${arrivalOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                         </div>
                 
-                        <div class="grid grid-cols-2 gap-4" id="shipping-payment">
+                        <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                             <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="one-time-code" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
@@ -1529,7 +1328,6 @@
                         <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
                     </div>`;
                     initQtyPicker();
-                    setTempType(itemData?.type || 'expense');
                     window.getSmartTags = initSmartTags(itemData?.tags || []);
                         
             } else {
@@ -1606,9 +1404,7 @@
 
                 item = { 
                     id: state.editingId || String(Date.now()), 
-                    type: state.tempType || 'expense', // expense 或 income
-                    name: n, price: p, qty: q,shipping: s, 
-                    total: state.tempType === 'income' ? (p * q) : (p * q + s), 
+                    name: n, price: p, qty: q,shipping: s, total: (p * q) + s, 
                     category: document.getElementById('m-cat').value, 
                     year: y, month: m,   image: finalImageUrl, 
                     platform: document.getElementById('m-platform').value || '', 
@@ -1617,8 +1413,6 @@
                     paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : 0,
                     tags:tags,
                     remark: document.getElementById('m-remark').value || '' ,
-                    
-                   
                 };
                 item.total = (item.price * item.qty) + item.shipping;
             } else { //心願模式
@@ -1909,7 +1703,7 @@
                     localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
                     if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
                     renderContent();
-                    showToast(`匯入成功：共 ${importedData.length} 筆，請查看上個月的消費清單`);
+                    showToast(`匯入成功：共 ${importedData.length} 筆`);
                 }
             } catch (err) {
                 console.error(err);
