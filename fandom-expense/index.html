@@ -169,7 +169,7 @@
         </div>
     </div>
 
-    <!-- 消費清單操作選單彈窗 -->
+    <!-- 操作選單共用彈窗 -->
     <div id="action-modal-overlay" onclick="closeActionModal()" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-end justify-center p-0">
         <div id="action-modal-container" onclick="event.stopPropagation()" class="bg-slate-100 w-full max-w-lg rounded-t-[2.5rem] overflow-hidden modal-enter p-8 space-y-4 shadow-2xl">
             <!-- 頂部裝飾條 -->
@@ -192,7 +192,6 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2"/></svg>
                     </div>
                 </button>
-                
                 <!-- 刪除按鈕 -->
                 <button onclick="triggerDeleteFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-red-500 active:scale-[0.98] transition-all">
                     <div class="flex items-center gap-4">
@@ -201,6 +200,17 @@
                      <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
                     </div> 
+                </button>
+                <!-- 複製按鈕 -->
+                <button onclick="triggerCopyFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-slate-700 active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-4">
+                        <span>複製並新增</span>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
                 </button>
             </div>
         </div>
@@ -1364,7 +1374,7 @@
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
-                { version: 'v5.0', date: '2026.01.04', updates: ['新增「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性'] },
+                { version: 'v5.0', date: '2026.01.04', updates: ['新增「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性','新增「複製並新增」功能：快速記錄相似支出或重複品項'] },
                 { version: 'v4.0', date: '2025.12.29', updates: ['智慧標籤建議，快速完成分類', '自訂主題漸層與深色模式', '清除冗餘圖檔，提升整體效能'] },
                 { version: 'v3.0', date: '2025.12.27', updates: ['金額隱藏功能，看不見代表沒有花', '新增運費欄位，消費紀錄更完整', '外觀設定支援自行輸入色碼'] },
                 { version: 'v2.0', date: '2025.12.25', updates: ['支援同時過濾年份、月份與分類', '優化圖片壓縮算法', '優化 Excel 匯入流程，支援預設值'] },
@@ -1381,7 +1391,7 @@
                     </div>
                     
                     <div class="flex flex-col items-center mb-10">
-                        <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4 rotate-3">💎</div>
+                        <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
                         <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 5.0</p>
                     </div>
@@ -1405,7 +1415,7 @@
 
                     <div class="mt-8 border-t border-slate-50 text-center">
                         <p class="text-[9px] text-slate-300 font-medium">Made for Fans , by fan. </p>
-                        <p class="text-[8px] text-slate-200 mt-1 uppercase tracking-widest">©2026 bobi_9yu </p>
+                        <p class="text-[8px] text-slate-300 mt-1 uppercase tracking-widest">©2026 bobi_9yu </p>
                     </div>
                 </div>
             `;
@@ -1420,7 +1430,7 @@
                 amountContainer.classList.toggle('hidden', val !== '已付訂金');
             }
         }
-        function openActionModal(e, type, id) {
+        function openActionModal(e, type, id) { //共用編輯彈窗
             e.stopPropagation();
             state.actionTarget = { type, id };
             
@@ -1445,8 +1455,25 @@
             if (item) openAddModal(item);
         }
 
-        function triggerDeleteFromAction() {
+        function triggerDeleteFromAction() { 
             const { type, id } = state.actionTarget; closeActionModal();
+        }
+        function triggerCopyFromAction() {
+            const { type, id } = state.actionTarget; 
+            closeActionModal();
+            //根據類型（消費或願望）找到原始資料
+            const list = type === 'expense' ? state.expenses : state.wishlist;
+            const originalItem = list.find(i => String(i.id) === String(id));
+            if (originalItem) {
+                const copiedData = { 
+                    ...originalItem, 
+                    id: null,
+                    //year: now.getFullYear(),   // 自動設為今年 在看使用上需不需要
+                    //month: now.getMonth() + 1  // 自動設為今月
+                };
+                openAddModal(copiedData);
+                showToast("已載入複製資料，修改後請儲存");
+            }
         }
 
         function triggerConvertToExpense() {
