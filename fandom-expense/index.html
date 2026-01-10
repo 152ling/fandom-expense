@@ -278,6 +278,9 @@
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+    import { initializeApp } from 'firebase/app'
+    import { getAnalytics } from 'firebase/analytics'
+    import { getCrashlytics } from 'firebase/crashlytics'
     const firebaseConfig = {
         apiKey:"AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
         authDomain: "fandom-expense.firebaseapp.com",
@@ -290,6 +293,8 @@
 
     const appId = 'fandom-expense-v11'; 
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app)
+    const crashlytics = getCrashlytics(app)
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
@@ -390,6 +395,14 @@
         }
         renderContent();
     });
+    window.onerror = function (message, source, lineno, colno, error) {
+        if (error) {
+            crashlytics.recordError(error)
+        }
+    }
+    window.addEventListener('unhandledrejection', event => {
+        crashlytics.recordError(event.reason)
+    })
 </script>
 
 
@@ -1808,7 +1821,14 @@
                 return;
             }
             const file = input.files[0];
-            if (!file) return;
+            if (!file) {
+            crashlytics.log('Image picker returned empty file')
+            crashlytics.recordError(
+                new Error('Image selection failed on device')
+            )
+            showToast('圖片取得失敗')
+            return
+            }
             showToast("正在讀取圖片...");
         // 2. 處理 file.type 為空的情況 (針對部分 Android/OPPO 系統)
             let isImage = false;
