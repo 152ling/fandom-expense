@@ -1828,12 +1828,12 @@
             }
             const file = input.files[0];
             if (!file) {
-            crashlytics.log('Image picker returned empty file')
-            crashlytics.recordError(
-                new Error('Image selection failed on device')
-            )
-            showToast('圖片取得失敗')
-            return
+                reportEvent('image_picker_error', {
+                    reason: 'empty_file',
+                    userAgent: navigator.userAgent
+                })
+                showToast('圖片取得失敗');
+                return;
             }
             showToast("正在讀取圖片...");
         // 2. 處理 file.type 為空的情況 (針對部分 Android/OPPO 系統)
