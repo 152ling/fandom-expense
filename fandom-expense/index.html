@@ -48,7 +48,7 @@
             min-height: 44px;
             display: block;
             width: 100%;
-            background-color: var(--card-bg);
+            background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
         }
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -842,6 +842,7 @@
             const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const netTotal = totalExp - totalInc;
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
+            const totalExpDisplay= state.hideAmount ? '•••••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
 
 
@@ -859,7 +860,7 @@
                     <h3 class="text-3xl font-black">${totalDisplay}</h3>
                     </div>
                     <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: $${totalExp.toLocaleString()}</p>` : ''}
+                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: $${totalExpDisplay}</p>` : ''}
                         ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
                         <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
                     </div>
@@ -1216,7 +1217,7 @@
             const currentCats = isWishWall ? wishCategories : categories.map(c => c.id);
 
             // 取得有照片的資料並過濾分類
-            let photos = dataSource.filter(i => i.image);
+            let photos = dataSource.filter(i => i.image && i.type !== 'income');
             if (state.photoFilterCat && state.photoFilterCat !== '') {
                 photos = photos.filter(p => p.category === state.photoFilterCat);
             }
@@ -1600,8 +1601,8 @@
                             </div>
                         </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
-                        <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
-                        <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
+                        <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
+                        <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                     </div>`;
                     initQtyPicker();
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
@@ -1623,8 +1624,8 @@
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
                     </div>
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
-                    <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed rounded-3xl h-24 flex items-center justify-center cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-xs font-bold font-bold">上傳相片</span>`}</div>
-                    <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
+                    <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
+                    <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                 </div>`;
             }
                         
@@ -1702,8 +1703,6 @@
                     paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : totalPrice,
                     tags:tags,
                     remark: document.getElementById('m-remark').value || '' ,
-                    
-                   
                 };
                 item.total = (item.price * item.qty) + item.shipping;
             } else { //心願模式
