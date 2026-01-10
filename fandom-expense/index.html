@@ -278,9 +278,8 @@
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
-    import { initializeApp } from 'firebase/app'
-    import { getAnalytics } from 'firebase/analytics'
-    import { getCrashlytics } from 'firebase/crashlytics'
+    import { getAnalytics,logEvent } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+
     const firebaseConfig = {
         apiKey:"AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
         authDomain: "fandom-expense.firebaseapp.com",
@@ -293,8 +292,7 @@
 
     const appId = 'fandom-expense-v11'; 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app)
-    const crashlytics = getCrashlytics(app)
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
@@ -396,13 +394,21 @@
         renderContent();
     });
     window.onerror = function (message, source, lineno, colno, error) {
-        if (error) {
-            crashlytics.recordError(error)
+        reportEvent('js_error', {
+            message: String(message),
+            source,
+            lineno,
+            colno
+        });
+    };
+    function reportEvent(name, params = {}) {
+        if (!analytics) return;
+        try {
+            logEvent(analytics, name, params);
+        } catch (e) {
+            console.warn('Analytics logEvent failed', e);
         }
     }
-    window.addEventListener('unhandledrejection', event => {
-        crashlytics.recordError(event.reason)
-    })
 </script>
 
 
