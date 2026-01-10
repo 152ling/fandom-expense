@@ -13,6 +13,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script
+    src="https://browser.sentry-cdn.com/10.0.0/bundle.tracing.replay.min.js"
+    crossorigin="anonymous"
+    ></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         
@@ -287,7 +291,21 @@
         appId: "1:275234127604:web:af62f27f272290236ae8a1",
         measurementId: "G-4QE8P5ZDQ6"
     };
-
+    Sentry.init({
+        dsn: "https://4ef39aa735491530687c0791f746fb24@o4510685144285184.ingest.us.sentry.io/4510685146251264",
+        integrations: [
+            Sentry.browserTracingIntegration(),
+            Sentry.replayIntegration({
+            // Replay 的隱私設定
+            maskAllText: true,
+            blockAllMedia: true,
+            }),
+        ],
+        // 建議將採樣率設為 1.0 (100%) 來捕捉那個特定的 OPPO 錯誤
+        tracesSampleRate: 1.0,
+        replaysSessionSampleRate: 0, // 正常使用時不錄製 
+        replaysOnErrorSampleRate: 1.0, //「發生錯誤」時，才回溯錄製錯誤前 1 分鐘的畫面
+    });
     const appId = 'fandom-expense-v11'; 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -320,6 +338,10 @@
             } catch (e) {
                 console.error("Upload failed:", e);
                 showToast("雲端上傳失敗，請檢查網路或手機權限",e);
+                Sentry.captureException(e, {
+                    tags: { service: "firebase_storage" },
+                    extra: { fileName, errorCode: e.code }
+                });
                 return null;
             }
         },
@@ -381,12 +403,15 @@
         state.user = (user && !user.isAnonymous) ? user : null;
         if (state.user) {
             const data = await window.cloud.pull();
+            Sentry.setUser({ id: user.uid, email: user.email });
             if (data) {
                 state.expenses = data.expenses || state.expenses;
                 state.wishlist = data.wishlist || state.wishlist;
                 localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
                 localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
             }
+        }else {
+            Sentry.setUser(null);
         }
         renderContent();
     });
@@ -1600,8 +1625,8 @@
                             </div>
                         </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
-                        <div onclick="document.getElementById('m-img').click()" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
-                        <input type="file" id="m-img" accept="image/*" class="hidden" onchange="handleImage(this)">
+                        <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
+                        <input type="file" id="m-img" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;" onchange="handleImage(this)">
                     </div>`;
                     initQtyPicker();
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
@@ -1803,6 +1828,8 @@
       
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
         async function handleImage(input) {
+            Sentry.captureMessage("Debug: OPPO 使用者點擊並觸發了 handleImage", "info"); //
+            alert("手機已接收到圖片選取");
             if (!state.user) {
                 showToast("請先登入以開啟圖片上傳功能☁️");
                 input.value = "";
@@ -1811,6 +1838,12 @@
             const file = input.files[0];
             if (!file) return;
             showToast("正在讀取圖片...");
+            Sentry.setContext("file_info", {
+                type: file.type,
+                size: file.size,
+                extension: file.name.split('.').pop()
+            });
+
         // 2. 處理 file.type 為空的情況 (針對部分 Android/OPPO 系統)
             let isImage = false;
             if (file.type) {
@@ -1867,6 +1900,19 @@
                         state.tempImageBlob = null;
                         document.getElementById('img-placeholder').innerHTML = `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`;
                         input.value = "";
+                        //記錄錯誤
+                        Sentry.captureException(error, {
+                            extra: {
+                                fileName: file.name,
+                                fileSize: file.size,
+                                fileType: file.type,
+                                userAgent: navigator.userAgent, // 紀錄瀏覽器資訊
+                                step: "handleImage_main_loop"
+                            },
+                            tags: {
+                                device_model: "OPPO_Reno12_Investigation" // 貼上標籤方便篩選
+                            }
+                        });
                     }
                 };
                 reader.readAsDataURL(file);
