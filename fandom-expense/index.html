@@ -842,7 +842,7 @@
             const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const netTotal = totalExp - totalInc;
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
-            const totalExpDisplay= state.hideAmount ? '•••••' : `$ ${totalExp.toLocaleString()}`;
+            const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
 
 
@@ -860,7 +860,7 @@
                     <h3 class="text-3xl font-black">${totalDisplay}</h3>
                     </div>
                     <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: $${totalExpDisplay}</p>` : ''}
+                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: ${totalExpDisplay}</p>` : ''}
                         ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
                         <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
                     </div>
