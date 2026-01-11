@@ -124,11 +124,19 @@
             transition: all 0.3s;
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
+        /* 切換開關樣式 */
+        .inline-switcher {
+            display: flex; background: #f1f5f9; padding: 2px; border-radius: 10px;
+        }
+        .dark-mode .inline-switcher { background: #1a1a1a; }
+        .inline-switcher button { padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; transition: all 0.2s; }
+        .inline-switcher button.active { background: white; color: var(--brand-color); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .dark-mode .inline-switcher button.active { background: #334155; color: white; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-32"></main>
+    <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-20 sm:pb-36"></main>
     <div id="toast">提示訊息</div>
     <button id="fab" onclick="openAddModal()" class="bg-brand fixed bottom-28 right-6 w-14 h-14 text-white rounded-full flex items-center justify-center text-3xl shadow-lg z-40 transition-transform active:scale-90">＋</button>
 
@@ -439,6 +447,8 @@
             user: null,
             hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
             reportType: 'expense',
+            categorySet: 'categories',//kpop/acgn
+            WishcategorySet:'wishCategories'
         };
         function setTempType(type) { //切換消費/售出
             state.tempType = type;
@@ -476,22 +486,51 @@
         };
 
         const categories = [
-            { id: '專輯', icon: '🎵', color: '#6366f1' },               // 靛藍 (Indigo) - 沉穩的音樂感
-            { id: '小卡', icon: '✨', color: '#EAB308' },               // 黃色 (Yellow) - 閃閃發光的收藏感
-            { id: '演唱會 / 見面會門票', icon: '🎫', color: '#fb7185' },  // 珊瑚紅 (Rose) - 充滿熱情的現場感
-            { id: '周邊商品', icon: '🧸', color: '#f59e0b' },           // 琥珀 (Amber) - 溫暖的物質感
-            { id: '交通 / 住宿', icon: '✈️', color: '#60a5fa' },          // 天藍 (Sky) - 飛翔與旅遊感
-            { id: '其他追星支出', icon: '🌈', color: '#94a3b8' }           // 冷灰 (Slate) - 中性且不搶戲
+            { id: '專輯', icon: '🎵', color: '#6366f1' },            
+            { id: '小卡', icon: '✨', color: '#eab308' },               
+            { id: '演唱會 / 見面會門票', icon: '🎫', color: '#f43f5e' },  
+            { id: '周邊商品', icon: '💍', color: '#0ea5e9' },     
+            { id: '娃娃', icon: '🧸', color: '#f97316' },               
+            { id: '會員費', icon: '🫧', color: '#8b5cf6' },             
+            { id: '交通 / 住宿', icon: '✈️', color: '#10b981' },          
+            { id: '其他追星支出', icon: '🌈', color: '#64748b' }           
         ];
 
+        const categoriesACGN = [
+            { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        // 靛藍：閱讀感
+            { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          // 琥珀黃：展示物
+            { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          // 紫色：收藏感
+            { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       // 粉紅：平面視覺
+            { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        // 藍色：小物定位
+            { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          // 橘色：實體重量
+            { id: '一番賞', icon: '🎯', color: '#eab308' },               // 金黃：抽獎命運
+            { id: '聯名服飾', icon: '👕', color: '#22c55e' },             // 綠色：穿戴類
+            { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, // 紅色：體驗型
+            { id: '其他支出', icon: '📦', color: '#64748b' }              // 灰色：收納盒
+        ];
         const wishCategories = ["專輯", "周邊商品", "娃娃", "小卡","演唱會 / 見面會門票"];
+        const wishCategoriesACGN = ["漫畫 / 輕小說", "立牌 / 吊飾", "小卡 / 色紙","明信片 / 海報","徽章 / 壓克力","公仔 / 娃娃","其他周邊"];
         const arrivalOptions = ['未到貨', '待出貨', '已取貨','已售出'];
         const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金'];
         let myChart = null;
         /**滑動關閉編輯邏輯 */
         let touchStartY = 0;
         let isDragging = false;
-
+        // 取得當前組別的分類陣列
+        function getCurrentCategories() {
+            return state.categorySet === 'categories' ? categories : categoriesACGN;
+        }
+        function getCurrentWishCategories() {
+            return state.WishcategorySet === 'wishCategories' ? wishCategories : wishCategoriesACGN;
+        }
+        function switchCatSet(setName) {
+            state.categorySet = setName;
+            if(setName =='categories'){state.WishcategorySet = wishCategories;}else{state.WishcategorySet = wishCategoriesACGN;}
+            state.selectedCategory = ''; // 切換組別時重設選擇
+            localStorage.setItem('fe_cat_set', setName);
+            renderContent();
+            showToast(`已切換至 ${setName === 'categories' ? 'KPOP分類' : 'ACGN分類'}`);
+        }
         function initSwipeToClose() {
             const container = document.getElementById('action-modal-container');
             const overlay = document.getElementById('action-modal-overlay');
@@ -787,9 +826,9 @@
         function renderTagAndCatBar() {
             const catBar = document.getElementById('cat-bar'); 
             if (!catBar) return;
-
+            const currentCats = getCurrentCategories();
             // --- 第一層：分類 (Categories) 渲染 ---
-            catBar.innerHTML = categories.map(cat => {
+            catBar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat.id;
                 return `
                     <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
@@ -893,7 +932,8 @@
                     }
                     return Number(b.id) - Number(a.id);
                 }).map(item => {
-                const catInfo = categories.find(c => c.id === item.category) || { icon: '🌈' };
+                const allCats = [...categories, ...categoriesACGN];
+                const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
                 const isIncome = item.type === 'income';
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
@@ -1016,9 +1056,10 @@
         }
         function renderWishCatBar() { // 渲染分類按鈕
             const bar = document.getElementById('wish-cat-bar');
+            const currentCats = getCurrentWishCategories();
             if (!bar) return;
             
-            bar.innerHTML = wishCategories.map(cat => {
+            bar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat;
                 return `
                     <div onclick="state.selectedCategory=(state.selectedCategory==='${cat}'?'':'${cat}'); renderContent();"
@@ -1036,11 +1077,14 @@
         }
         function renderReport(container) {
             const rangeData = calculateReportRange();
-            
+            const currentCats = getCurrentCategories();
+            const currentCatIds = currentCats.map(c => c.id);
             // 1. 過濾出該時段的所有紀錄
             const periodRecords = state.expenses.filter(ex => {
                 const d = new Date(ex.year, ex.month - 1);
-                return d >= rangeData.start && d <= rangeData.end;
+                const dateMatch = d >= rangeData.start && d <= rangeData.end;
+                const categoryMatch = currentCatIds.includes(ex.category);
+                return dateMatch && categoryMatch;
             });
 
             // 2. 基本金額計算
@@ -1068,8 +1112,8 @@
                 const targetRecords = periodRecords.filter(i => (isInc ? i.type === 'income' : i.type !== 'income'));
                 chartTitle = isInc ? "總收入" : "總支出";
                 centerAmount = isInc ? totalInc : totalExp;
-                
-                stats = categories.map(cat => ({
+                const currentCats = getCurrentCategories();
+                stats = currentCats.map(cat => ({
                     ...cat,
                     amount: targetRecords
                         .filter(ex => ex.category === cat.id)
@@ -1199,7 +1243,6 @@
                         : `<button onclick="window.cloud.login()" class="text-xs bg-brand text-white font-bold px-4 py-2 rounded-xl shadow-md active:scale-95 transition-transform">登入</button>`}
                     </div>
                     </div>
-
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">
                     <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
@@ -1210,18 +1253,23 @@
                                 <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/>
                             </svg>
                             <span class="font-bold text-slate-700">清理冗餘圖檔</span>
-                        </div>
-                        <span class="text-[10px] text-slate-300">釋放空間</span>
-                    </div>
-                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
+                        </div><span>▶</span>
+                    </div>                
+                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <span class="font-bold text-slate-700">版本說明</span>
-                        </div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v5.0</span><span>▶</span></div>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v6.0</span><span>▶</span></div>
                     </div>
+                    <div class="flex items-center justify-between p-5 ">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16m-7 6h7" stroke-width="2.5" stroke-linecap="round"/></svg>
+                            <span class="font-bold text-slate-700">帳本分類模式</span>
+                        </div>
+                        <div class="inline-switcher">
+                            <button onclick="switchCatSet('categories')" class="${state.categorySet === 'categories' ? 'active' : ''}">KPOP</button>
+                            <button onclick="switchCatSet('categoriesACGN')" class="${state.categorySet === 'categoriesACGN' ? 'active' : ''}">ACGN</button>
+                        </div>
+                    </div>   
                 </div>
                         
 
@@ -1233,7 +1281,9 @@
             const isWishWall = state.photoWallTab === 'wish';
             // 根據標籤決定資料來源與分類清單
             const dataSource = isWishWall ? state.wishlist : state.expenses;
-            const currentCats = isWishWall ? wishCategories : categories.map(c => c.id);
+            const BuyCats = getCurrentCategories();
+            const WishCats = getCurrentWishCategories();
+            const currentCats = isWishWall ? WishCats : BuyCats.map(c => c.id);
 
             // 取得有照片的資料並過濾分類
             let photos = dataSource.filter(i => i.image && i.type !== 'income');
@@ -1394,7 +1444,8 @@
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
-                { version: 'v5.0', date: '2026.01.04', updates: ['新增「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性','新增「複製並新增」功能，快速記錄相似支出'] },
+                { version: 'v6.0', date: '2026.01.11', updates: ['全面升級「帳本分類模式」，專為 KPOP 與 ACGN 消費情境設計','目前財務報表僅支援查看各帳本金額無法合併查看']},
+                { version: 'v5.0', date: '2026.01.04', updates: ['「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性','「複製並新增」功能，快速記錄相似支出'] },
                 { version: 'v4.0', date: '2025.12.29', updates: ['智慧標籤建議，快速完成分類', '自訂主題漸層與深色模式', '清除冗餘圖檔，提升整體效能'] },
                 { version: 'v3.0', date: '2025.12.27', updates: ['金額隱藏功能，看不見代表沒有花', '新增運費欄位，消費紀錄更完整', '外觀設定支援自行輸入色碼'] },
                 { version: 'v2.0', date: '2025.12.25', updates: ['支援同時過濾年份、月份與分類', '優化圖片壓縮算法', '優化 Excel 匯入流程，支援預設值'] },
@@ -1504,7 +1555,6 @@
                 const categoryMap = { //因為原本願望分類跟消費分類不一致
                     '周邊': '周邊商品',
                     '演唱會': '演唱會 / 見面會門票',
-                    '娃娃': '周邊商品'
                 };
                 const targetCategory = categoryMap[wish.category] || wish.category || '周邊商品';
                 openAddModal({ ...wish,id: null, qty: 1, category: targetCategory, arrivalStatus: '未到貨', paymentMethod: '待付款' });
@@ -1572,6 +1622,20 @@
                 const isPaidDeposit = itemData?.paymentMethod === '已付訂金';
                 const filteredOptions = state.tempType === 'expense' ? arrivalOptions.filter(o => o !== '已售出') : ['已售出'];
                 const isConvertingWish = state.wishSourceId !== null;//是否為心願清單進來的
+                const currentCats = getCurrentCategories();
+                let dropdownOptions = [...currentCats];
+                if (itemData) {
+                    // 檢查編輯中項目的分類是否在目前的清單中
+                    const exists = currentCats.some(c => c.id === itemData.category);
+                    if (!exists) {
+                        // 如果不在（跨組編輯），從所有分類中找出該分類並強制補進下拉選單
+                        const allCats = [...categories, ...categoriesACGN];
+                        const originalCat = allCats.find(c => c.id === itemData.category);
+                        if (originalCat) {
+                            dropdownOptions.unshift(originalCat); // 補在最前面
+                        }
+                    }
+                }
                 form.innerHTML = `
                     <div class="space-y-4">
                         <div id="type-switcher" class="flex bg-slate-100 p-1 rounded-2xl mb-6 type-switcher">
@@ -1598,7 +1662,7 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${categories.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
+                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
                             <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="flex gap-4" id="shipping-state">
@@ -1633,11 +1697,22 @@
                 const now = new Date();
                 const today = now.toISOString().split('T')[0];
                 const defaultTime = "12:00";
-
+                const currentCats = getCurrentWishCategories();
+                let dropdownOptions = [...currentCats];
+                if (itemData) {
+                    const exists = currentCats.includes(itemData.category);//願望清單直接比對字串
+                    if (!exists) {
+                        const allWishPool = [...wishCategories, ...wishCategoriesACGN]; 
+                        const originalCat = allWishPool.find(c => c === itemData.category);
+                        if (originalCat) {
+                            dropdownOptions.unshift(originalCat); 
+                        }
+                    }
+                }
                 form.innerHTML = `<div class="space-y-4">
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${wishCategories.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
@@ -1828,10 +1903,7 @@
             }
             const file = input.files[0];
             if (!file) {
-                reportEvent('image_picker_error', {
-                    reason: 'empty_file',
-                    userAgent: navigator.userAgent
-                })
+                reportEvent('image_picker_error', {reason: 'empty_file',userAgent: navigator.userAgent})
                 showToast('圖片取得失敗');
                 return;
             }
