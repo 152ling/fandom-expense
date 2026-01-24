@@ -448,7 +448,10 @@
             hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
             reportType: 'expense',
             categorySet: 'categories',//kpop/acgn
-            WishcategorySet:'wishCategories'
+            WishcategorySet:'wishCategories',
+            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05 },
+            rateStatusText: '匯率已就緒',
+            enableExchange :false
         };
         function setTempType(type) { //切換消費/售出
             state.tempType = type;
@@ -481,7 +484,7 @@
 
         const excelHeaderMap = {
             type: "收支類型",name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
-            year: "消費年份", month: "消費月份", platform: "收物平台",
+            year: "消費年份", month: "消費月份",day:"消費日期", platform: "收物平台",
             arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
         };
 
@@ -776,6 +779,7 @@
                 else if (state.subPage === 'appearance') renderAppearanceView(container);
                 else if (state.subPage === 'photowall') renderPhotoWall(container);
                 else if (state.subPage === 'version') renderVersionView(container);
+                else if (state.subPage === 'accountConfig') renderAccountConfig(container);
                 else renderSettings(container);
             }
         }
@@ -904,7 +908,7 @@
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
 
 
-            if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">目前沒有紀錄唷</div>`; return; }
+            if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`; return; }
             
             container.innerHTML = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
                 <div>
@@ -923,15 +927,12 @@
                         <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
                     </div>
                 </div>` + 
-                filtered.sort((a, b) => {
-                    if (Number(b.year) !== Number(a.year)) {
-                        return Number(b.year) - Number(a.year);
-                    }
-                    if (Number(b.month) !== Number(a.month)) {
-                        return Number(b.month) - Number(a.month);
-                    }
-                    return Number(b.id) - Number(a.id);
-                }).map(item => {
+                filtered.sort((a, b) => 
+                    Number(b.year) - Number(a.year) ||
+                    Number(b.month) - Number(a.month) ||
+                    Number(b.day  || 1) - Number(a.day  || 1) || //沒有日期就預設1號
+                    Number(b.id) - Number(a.id) //先比年月日在比id順序
+                ).map(item => {
                 const allCats = [...categories, ...categoriesACGN];
                 const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
                 const isIncome = item.type === 'income';
@@ -1254,22 +1255,23 @@
                             </svg>
                             <span class="font-bold text-slate-700">清理冗餘圖檔</span>
                         </div><span>▶</span>
-                    </div>                
+                    </div>  
+                    <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="font-bold text-slate-700">帳本與功能設定</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-300 font-bold">${state.categorySet === 'categories' ? 'KPOP' : 'ACGN'}${state.enableExchange ? ' / 匯率開' : ''}</span>
+                            <span>▶</span>
+                        </div>
+                    </div>              
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v6.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v7.0</span><span>▶</span></div>
                     </div>
-                    <div class="flex items-center justify-between p-5 ">
-                        <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16m-7 6h7" stroke-width="2.5" stroke-linecap="round"/></svg>
-                            <span class="font-bold text-slate-700">帳本分類模式</span>
-                        </div>
-                        <div class="inline-switcher">
-                            <button onclick="switchCatSet('categories')" class="${state.categorySet === 'categories' ? 'active' : ''}">KPOP</button>
-                            <button onclick="switchCatSet('categoriesACGN')" class="${state.categorySet === 'categoriesACGN' ? 'active' : ''}">ACGN</button>
-                        </div>
-                    </div>   
+
                 </div>
                         
 
@@ -1290,6 +1292,12 @@
             if (state.photoFilterCat && state.photoFilterCat !== '') {
                 photos = photos.filter(p => p.category === state.photoFilterCat);
             }
+            photos.sort((a, b) => 
+                Number(b.year) - Number(a.year) ||
+                Number(b.month) - Number(a.month) ||
+                Number(b.day || 1) - Number(a.day || 1) ||
+                Number(b.id) - Number(a.id)
+            );
 
             container.innerHTML = `
                 <div class="p-6">
@@ -1441,9 +1449,117 @@
             container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
                 <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料<br>⚠️匯入後會覆蓋現有資料並清除圖片</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
         }
+        // --- 帳本與功能設定 ---
+        function renderAccountConfig(container) {
+        container.innerHTML = `
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold text-xl">◀</button>
+                    <h2 class="text-2xl font-black tracking-tight text-slate-800">帳本與功能</h2>
+                </div>
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl p-6 card-shadow">
+                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 tracking-widest">帳本分類模式</h3>
+                        <div class="flex bg-slate-100 p-1 rounded-2xl">
+                            <button onclick="switchCatSet('categories')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categories' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">KPOP 模式</button>
+                            <button onclick="switchCatSet('categoriesACGN')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categoriesACGN' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">ACGN 模式</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-6 card-shadow flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-500">開啟匯率換算工具</h3>
+                            <p class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
+                            <p class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
+                        </div>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" onchange="toggleExchange(this.checked)" ${state.enableExchange ? 'checked' : ''}>
+                            <div class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer 
+                                                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
+                                                    after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
+                                                    after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all 
+                                                    peer-checked:bg-slate-700"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>`;
+        }
+        function toggleExchange(val) {
+            state.enableExchange = val;
+            localStorage.setItem('fe_v11_enableExchange', JSON.stringify(val));
+            if(val) fetchRates();
+            showToast(val ? "已開啟換算工具" : "已關閉換算工具");
+        }
+     // 快取獲取匯率
+        async function fetchRates() {
+            if (!state.enableExchange) return;
+            const CACHE_KEY = 'fandom_rates_data';
+            const CACHE_TIME_KEY = 'fandom_rates_timestamp';
+            const ONE_DAY = 5 * 24 * 60 * 60 * 1000; // 5天的毫秒數
+
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+            const now = Date.now();
+
+            // 如果有快取且未過期，直接使用
+            if (cachedData && cachedTime && (now - cachedTime < ONE_DAY)) {
+                state.rates = JSON.parse(cachedData);
+                state.rateStatusText = "匯率已就緒 (快取)";
+                console.log("Using cached rates from:", new Date(parseInt(cachedTime)).toLocaleString());
+                return;
+            }
+
+            // 否則，向網路請求新的匯率
+            state.rateStatusText = "正在更新最新匯率...";
+            updateRateUI();
+            try {
+                const res = await fetch('https://v6.exchangerate-api.com/v6/50ae63bdd687e4ec0781ce85/latest/TWD');
+                const data = await res.json();
+                if (data?.rates) {
+                    const newRates = {
+                        USD: 1 / data.rates.USD,
+                        KRW: 1 / data.rates.KRW,
+                        JPY: 1 / data.rates.JPY,
+                        CNY: 1 / data.rates.CNY,
+                        HKD: 1 / data.rates.HKD
+                    };
+                    // 更新狀態並存入本地儲存
+                    state.rates = newRates;
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(newRates));
+                    localStorage.setItem(CACHE_TIME_KEY, now.toString());
+                    state.rateStatusText = "匯率已更新(網路)";
+                    console.log("Rates updated from API");
+                }
+            } catch (e) {
+                console.warn("API 抓取失敗，使用預設值或舊快取");
+                if (cachedData) state.rates = JSON.parse(cachedData);
+                state.rateStatusText = "匯率連線失敗，使用離線數據";
+            }
+            updateRateUI();
+        }
+        // 更新介面上的文字 (若元素存在)
+        function updateRateUI() {
+            const tag = document.getElementById('rate-tag');
+            if (tag) tag.innerText = state.rateStatusText;
+        }
+        function convertCurrency() {
+            const currency = document.getElementById('currency-select').value;
+            const amount = parseFloat(document.getElementById('foreign-amount').value);
+            const priceInput = document.getElementById('m-u-p');
+            const rateTag = document.getElementById('rate-tag');
+
+            if (!amount) return;
+
+            const rate = state.rates[currency];
+            const result = Math.round(amount * rate);
+            
+            priceInput.value = result;
+            rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} TWD`;
+            rateTag.classList.add('text-indigo-400');
+        }
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                { version: 'v7.0', date: '2026.01.24', updates: ['匯率換算工具，啟用後支援外幣金額與原幣別紀錄','新增日期功能，保持記帳順序不被打亂']},
                 { version: 'v6.0', date: '2026.01.11', updates: ['全面升級「帳本分類模式」，專為 KPOP 與 ACGN 消費情境設計','目前財務報表僅支援查看各帳本金額無法合併查看']},
                 { version: 'v5.0', date: '2026.01.04', updates: ['「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性','「複製並新增」功能，快速記錄相似支出'] },
                 { version: 'v4.0', date: '2025.12.29', updates: ['智慧標籤建議，快速完成分類', '自訂主題漸層與深色模式', '清除冗餘圖檔，提升整體效能'] },
@@ -1464,7 +1580,7 @@
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 5.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 7.0</p>
                     </div>
 
                     <div class="space-y-6">
@@ -1618,7 +1734,8 @@
                 const defaultMonthStr = String(state.filterMonth).padStart(2,'0');
                 const yStr = state.filterYear === 0 ? String(new Date().getFullYear()) : String(state.filterYear);//如果年分選不限的時候新增
                 const mStr = state.filterMonth === 0  ? String(new Date().getMonth() + 1).padStart(2, '0'): String(state.filterMonth).padStart(2, '0'); 
-                const defaultDate = `${yStr}-${mStr}`;
+                const dStr = state.filterDay == null || state.filterDay === 0 ? '01' : String(state.filterDay).padStart(2, '0');
+                const defaultDate = `${yStr}-${mStr}-${dStr}`;
                 const isPaidDeposit = itemData?.paymentMethod === '已付訂金';
                 const filteredOptions = state.tempType === 'expense' ? arrivalOptions.filter(o => o !== '已售出') : ['已售出'];
                 const isConvertingWish = state.wishSourceId !== null;//是否為心願清單進來的
@@ -1661,9 +1778,36 @@
                                 <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                         </div>
+                    
+                        ${state.enableExchange ?`
+                            <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
+                                <div class="flex justify-between items-end ml-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
+                                    <span id="rate-tag" class="text-[9px] text-slate-300 italic">正在載入匯率...</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
+                                        <select id="currency-select" class="bg-transparent border-none py-4 pl-4 pr-1 text-xs font-bold text-slate-300 focus:ring-0 appearance-none">
+                                            <option value="KRW" ${itemData?.currency === 'KRW' ? 'selected' : ''}>KRW</option>
+                                            <option value="JPY" ${itemData?.currency === 'JPY' ? 'selected' : ''}>JPY</option>
+                                            <option value="CNY" ${itemData?.currency === 'CNY' ? 'selected' : ''}>CNY</option>
+                                            <option value="USD" ${itemData?.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                            <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
+                                        </select>
+                                        <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
+                                        <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-active:scale-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
-                            <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月</label><input type="month" id="m-date" value="${itemData?.year ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date"     value="${itemData?.year && itemData?.month ? 
+                                `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="flex gap-4" id="shipping-state">
                             <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="one-time-code" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
@@ -1687,6 +1831,7 @@
                         <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                         <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                     </div>`;
+                    if(state.enableExchange) {updateRateUI();}
                     initQtyPicker();
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
                     setTempType(currentType);
@@ -1712,6 +1857,31 @@
                 form.innerHTML = `<div class="space-y-4">
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                        ${state.enableExchange ?`
+                            <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
+                                <div class="flex justify-between items-end ml-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
+                                    <span id="rate-tag" class="text-[9px] text-slate-300 italic">正在載入匯率...</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
+                                        <select id="currency-select" class="bg-transparent border-none py-4 pl-4 pr-1 text-xs font-bold text-slate-300 focus:ring-0 appearance-none">
+                                            <option value="KRW" ${itemData?.currency === 'KRW' ? 'selected' : ''}>KRW</option>
+                                            <option value="JPY" ${itemData?.currency === 'JPY' ? 'selected' : ''}>JPY</option>
+                                            <option value="CNY" ${itemData?.currency === 'CNY' ? 'selected' : ''}>CNY</option>
+                                            <option value="USD" ${itemData?.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                            <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
+                                        </select>
+                                        <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
+                                        <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-active:scale-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
@@ -1721,6 +1891,7 @@
                     <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                     <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                 </div>`;
+                if(state.enableExchange) {updateRateUI();}
             }
                         
             document.getElementById('modal-overlay').classList.remove('hidden');
@@ -1773,24 +1944,36 @@
             }
             let item;
             const tags = window.getSmartTags ? window.getSmartTags() : [];
+            let c, pf;
+            if(state.enableExchange){
+                c = document.getElementById('currency-select').value;
+                pf = Number(document.getElementById('foreign-amount')?.value);
+            }else{
+                c='KRW';
+                pf= 0;
+            }
             if (isExp) { //消費模式
                 const dateVal = document.getElementById('m-date').value;
                 const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
                 const y = Number(dateParts[0]);
                 const m = Number(dateParts[1]);
+                const d = Number(dateParts[2]);
                 const p = Number(document.getElementById('m-u-p').value) || 0;
                 const q = Number(document.getElementById('m-qty').value) || 1;
                 const s = Number(document.getElementById('m-shipping').value) || 0;
+
                 const payM = document.getElementById('m-pay-method')?.value || '待付款';
                 const totalPrice = (p * q) + s;
 
                 item = { 
                     id: state.editingId || String(Date.now()), 
                     type: state.tempType || 'expense', // expense 或 income
-                    name: n, price: p, qty: q,shipping: s, 
+                    name: n, price: p, qty: q,shipping: s,
+                    currency: c,foreign_amount: pf || '', 
                     total: state.tempType === 'income' ? (p * q) : (p * q + s), 
                     category: document.getElementById('m-cat').value, 
-                    year: y, month: m,   image: finalImageUrl, 
+                    year: y, month: m,day:d || 1,
+                    image: finalImageUrl, 
                     platform: document.getElementById('m-platform').value || '', 
                     arrivalStatus: document.getElementById('m-status').value, 
                     paymentMethod: payM,
@@ -1803,6 +1986,7 @@
                 item = { 
                     id: state.editingId || String(Date.now()), name: n, 
                     price: p,
+                    currency: c,foreign_amount: pf || '',
                     category: document.getElementById('m-wish-cat').value, 
                     releaseDate: document.getElementById('m-release-date').value, 
                     releaseTime: document.getElementById('m-release-time').value, 
@@ -1990,11 +2174,20 @@
             const wb = XLSX.utils.book_new();
             const headers = Object.values(excelHeaderMap);
             //const rows = state.expenses.map(i => { return Object.keys(excelHeaderMap).map(engKey => { let val = i[engKey]; if (engKey === 'tags' && Array.isArray(val)) return val.join(','); return (val !== undefined && val !== null) ? val : ""; }); });
-            const rows = state.expenses.map(i => { 
+            const sortedExpenses = [...state.expenses].sort((a, b) =>
+                Number(a.year) - Number(b.year) ||
+                Number(a.month) - Number(b.month) ||
+                Number((a.day ?? 1)) - Number((b.day ?? 1)) ||
+                Number(a.id) - Number(b.id)
+            );
+            const rows = sortedExpenses.map(i => { 
                 return Object.keys(excelHeaderMap).map(engKey => { 
                     let val = i[engKey]; 
                     if (engKey === 'type') {
                         return (val === 'income') ? '售出' : '支出';
+                    }
+                    if (engKey === 'day' && val == null) {
+                        val=1;
                     }
                     // 如果欄位是標籤且為陣列，則用逗號合併為字串
                     if (engKey === 'tags' && Array.isArray(val)) return val.join(', '); 
@@ -2053,6 +2246,7 @@
                 const now = new Date();
                 const defaultYear = now.getFullYear();
                 const defaultMonth = now.getMonth();//前一個月
+                const defaultDay = 1;
 
                 const importedData = [];
 
@@ -2088,6 +2282,9 @@
                         } 
                         else if (engKey === 'month') { // 無月份則預設為前一個月
                             item[engKey] = isEmpty ? defaultMonth : Number(val);
+                        } 
+                        else if (engKey === 'day') {
+                            item[engKey] = isEmpty ? defaultDay : Number(val);
                         } 
                         else if (engKey === 'category') { // 分類預設
                             item[engKey] = isEmpty ? "專輯" : String(val).trim();
@@ -2152,7 +2349,7 @@
         }
     }
 
-        window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); initSwipeToClose(); };
+        window.onload = () => { applyTheme(state.themeColor); switchTab('expense'); initSwipeToClose(); if (state.enableExchange){fetchRates()};};
     </script>
     <script>// 定義預設標籤
         const PREDEFINED_TAGS = ["待二補", "不須二補", "線上購買", "線下購買", "SEVENTEEN"];
