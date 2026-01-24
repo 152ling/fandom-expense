@@ -451,7 +451,8 @@
             WishcategorySet:'wishCategories',
             rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05 },
             rateStatusText: '匯率已就緒',
-            enableExchange :false
+            enableExchange :false,
+            defaultCurrency:'TWD'
         };
         function setTempType(type) { //切換消費/售出
             state.tempType = type;
@@ -1465,28 +1466,53 @@
                             <button onclick="switchCatSet('categoriesACGN')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categoriesACGN' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">ACGN 模式</button>
                         </div>
                     </div>
-                    <div class="bg-white rounded-3xl p-6 card-shadow flex items-center justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-500">開啟匯率換算工具</h3>
-                            <p class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
-                            <p class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
+                    <div class="bg-white rounded-3xl p-6 card-shadow">
+                        <div class="flex items-center justify-between ${state.enableExchange ? 'mb-6 border-b border-slate-50' : ''}">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-500 tracking-widest">開啟匯率換算工具</h3>
+                                <p class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
+                                <p class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" onchange="toggleExchange(this.checked)" ${state.enableExchange ? 'checked' : ''}>
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-slate-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                            </label>
                         </div>
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer" onchange="toggleExchange(this.checked)" ${state.enableExchange ? 'checked' : ''}>
-                            <div class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer 
-                                                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
-                                                    after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
-                                                    after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all 
-                                                    peer-checked:bg-slate-700"></div>
-                        </label>
+                     ${state.enableExchange ? `
+                    <div class="animate-enter">
+                        <h3 class="text-xs  text-slate-400 mb-4 tracking-widest uppercase">預設記帳幣別</h3>
+                        <div class="relative">
+                            <select onchange="updateDefaultCurrency(this.value)" class="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none border-2 border-transparent focus:border-brand appearance-none">
+                                <option value="TWD" ${state.defaultCurrency === 'TWD' ? 'selected' : ''}>TWD - 新台幣</option>
+                                <option value="HKD" ${state.defaultCurrency === 'HKD' ? 'selected' : ''}>HKD - 港幣</option>
+                                <option value="USD" ${state.defaultCurrency === 'USD' ? 'selected' : ''}>USD - 美金</option>
+                                <option value="JPY" ${state.defaultCurrency === 'JPY' ? 'selected' : ''}>JPY - 日圓</option>
+                                <option value="KRW" ${state.defaultCurrency === 'KRW' ? 'selected' : ''}>KRW - 韓幣</option>
+                                <option value="CNY" ${state.defaultCurrency === 'CNY' ? 'selected' : ''}>CNY - 人民幣</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 px-1">更改此處將會影響匯率換算的基準幣別。</p>
+                    </div>
+                    ` : ''}
                     </div>
                 </div>
             </div>`;
         }
+        function updateDefaultCurrency(val) {
+            state.defaultCurrency = val;
+            localStorage.setItem('fe_v11_defaultCurrency', val);
+            localStorage.removeItem('fandom_rates_timestamp'); //清除原本快取
+            fetchRates(); 
+            showToast(`預設幣別已更改為 ${val}`);
+            renderContent();
+        }
+
         function toggleExchange(val) {
             state.enableExchange = val;
-            localStorage.setItem('fe_v11_enableExchange', JSON.stringify(val));
-            if(val) fetchRates();
+            localStorage.setItem('fe_v11_enableExchange', val);
+            if (val) fetchRates();
+            renderContent(); // 重新渲染以實現 toggle 效果
             showToast(val ? "已開啟換算工具" : "已關閉換算工具");
         }
      // 快取獲取匯率
@@ -1494,14 +1520,14 @@
             if (!state.enableExchange) return;
             const CACHE_KEY = 'fandom_rates_data';
             const CACHE_TIME_KEY = 'fandom_rates_timestamp';
-            const ONE_DAY = 5 * 24 * 60 * 60 * 1000; // 5天的毫秒數
+            const FIVE_DAY = 5 * 24 * 60 * 60 * 1000; // 5天的毫秒數
 
             const cachedData = localStorage.getItem(CACHE_KEY);
             const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
             const now = Date.now();
 
             // 如果有快取且未過期，直接使用
-            if (cachedData && cachedTime && (now - cachedTime < ONE_DAY)) {
+            if (cachedData && cachedTime && (now - cachedTime < FIVE_DAY)) {
                 state.rates = JSON.parse(cachedData);
                 state.rateStatusText = "匯率已就緒 (快取)";
                 console.log("Using cached rates from:", new Date(parseInt(cachedTime)).toLocaleString());
@@ -1512,15 +1538,17 @@
             state.rateStatusText = "正在更新最新匯率...";
             updateRateUI();
             try {
-                const res = await fetch('https://v6.exchangerate-api.com/v6/50ae63bdd687e4ec0781ce85/latest/TWD');
+                const base = state.defaultCurrency || 'TWD';
+                const res = await fetch(`https://v6.exchangerate-api.com/v6/50ae63bdd687e4ec0781ce85/latest/${base}`);
                 const data = await res.json();
-                if (data?.rates) {
+                if (data?.conversion_rates) {
                     const newRates = {
-                        USD: 1 / data.rates.USD,
-                        KRW: 1 / data.rates.KRW,
-                        JPY: 1 / data.rates.JPY,
-                        CNY: 1 / data.rates.CNY,
-                        HKD: 1 / data.rates.HKD
+                        KRW: 1 / data.conversion_rates.KRW,
+                        JPY: 1 / data.conversion_rates.JPY,
+                        CNY: 1 / data.conversion_rates.CNY,
+                        USD: 1 / data.conversion_rates.USD,
+                        HKD: 1 / data.conversion_rates.HKD,
+                        TWD: 1 / data.conversion_rates.TWD
                     };
                     // 更新狀態並存入本地儲存
                     state.rates = newRates;
@@ -1529,8 +1557,12 @@
                     state.rateStatusText = "匯率已更新(網路)";
                     console.log("Rates updated from API");
                 }
+                else {
+                    if (cachedData) state.rates = JSON.parse(cachedData);
+                    state.rateStatusText = "匯率連線失敗，使用離線數據";
+                }
             } catch (e) {
-                console.warn("API 抓取失敗，使用預設值或舊快取");
+                console.warn("API 抓取失敗，使用預設值或舊快取",e);
                 if (cachedData) state.rates = JSON.parse(cachedData);
                 state.rateStatusText = "匯率連線失敗，使用離線數據";
             }
@@ -1541,7 +1573,7 @@
             const tag = document.getElementById('rate-tag');
             if (tag) tag.innerText = state.rateStatusText;
         }
-        function convertCurrency() {
+        function convertCurrency() { //匯率換算
             const currency = document.getElementById('currency-select').value;
             const amount = parseFloat(document.getElementById('foreign-amount').value);
             const priceInput = document.getElementById('m-u-p');
@@ -1553,8 +1585,8 @@
             const result = Math.round(amount * rate);
             
             priceInput.value = result;
-            rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} TWD`;
-            rateTag.classList.add('text-indigo-400');
+            rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} ${state.defaultCurrency}`;
+            rateTag.classList.add('text-brand');
         }
         // --- 版本說明 ---
         function renderVersionView(container) { 
@@ -1781,9 +1813,9 @@
                     
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
-                                <div class="flex justify-between items-end ml-1">
+                                <div class="flex justify-between items-end">
                                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
-                                    <span id="rate-tag" class="text-[9px] text-slate-300 italic">正在載入匯率...</span>
+                                    <span id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
