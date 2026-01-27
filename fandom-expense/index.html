@@ -472,13 +472,23 @@
                 statusSelect.innerHTML = optionsToShow.map(o => `<option value="${o}">${o}</option>`).join('');
                 //if (!isExp) { statusSelect.value = '已售出'; }
                 //編輯時補回原本的狀態
-                if (state.editingId !== null) {
-                    const item = state.expenses.find(e => e.id === state.editingId);
-                    if (item?.arrivalStatus) {
-                    statusSelect.value = item.arrivalStatus;
+                if (!isExp) {
+                    // 售出模式
+                    if (state.editingId !== null) {
+                        const item = state.expenses.find(e => e.id === state.editingId);
+                        statusSelect.value = '已售出';
+                    } else {
+                        statusSelect.value = '已售出';
                     }
-                } else if (!isExp) {
-                    statusSelect.value = '已售出';
+                } else if (state.editingId !== null) {
+                    // 消費模式，編輯時還原原本狀態
+                    const item = state.expenses.find(e => e.id === state.editingId);
+                   // if (item?.arrivalStatus) statusSelect.value = item.arrivalStatus;
+                   if (item?.arrivalStatus) {
+                        // 如果原本是已售出切換回消費模式，改成未到貨
+                        statusSelect.value = item.arrivalStatus === '已售出' ? '未到貨' : item.arrivalStatus;
+                    }
+                    
                 }
             }
            if (isExp) {
@@ -487,7 +497,7 @@
                 shippingPay.classList.remove('hidden');
             } else {
                 shippingFee.classList.add('hidden');
-                shippingState.classList.add('hidden');
+                //shippingState.classList.add('hidden');
                 shippingPay.classList.add('hidden');
             }
         }
