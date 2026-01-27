@@ -470,7 +470,16 @@
             if (statusSelect) {
                 const optionsToShow = isExp  ? arrivalOptions.filter(o => o !== '已售出') : ['已售出'];
                 statusSelect.innerHTML = optionsToShow.map(o => `<option value="${o}">${o}</option>`).join('');
-                if (!isExp) { statusSelect.value = '已售出'; }
+                //if (!isExp) { statusSelect.value = '已售出'; }
+                //編輯時補回原本的狀態
+                if (state.editingId !== null) {
+                    const item = state.expenses.find(e => e.id === state.editingId);
+                    if (item?.arrivalStatus) {
+                    statusSelect.value = item.arrivalStatus;
+                    }
+                } else if (!isExp) {
+                    statusSelect.value = '已售出';
+                }
             }
            if (isExp) {
                 shippingFee.classList.remove('hidden');
