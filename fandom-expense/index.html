@@ -13,6 +13,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         
@@ -132,6 +133,15 @@
         .inline-switcher button { padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; transition: all 0.2s; }
         .inline-switcher button.active { background: white; color: var(--brand-color); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .dark-mode .inline-switcher button.active { background: #334155; color: white; }
+
+        /* 分享卡渲染區專用樣式：固定寬度與隱藏 */
+        #share-capture-zone {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 800px;
+        }
+
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -281,6 +291,60 @@
             </div>
         </div>
     </div>
+    <!-- 分享圖片預覽彈窗 -->
+    <div id="share-modal" class="fixed inset-0 bg-black/90 hidden z-[100] flex flex-col items-center justify-center p-6 overflow-y-scroll" onclick="this.classList.add('hidden')">
+        <div class="w-full max-w-sm relative" onclick="event.stopPropagation()">
+            
+            <button onclick="drawShareCard(true)" class="absolute -top-12 right-0 text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <span>重新生成</span>
+            </button>
+
+            <div id="share-result-container" class="rounded-[2.5rem] overflow-hidden shadow-2xl bg-white min-h-[400px] flex items-center justify-center">
+                <div class="p-10 text-center">
+                    <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic leading-loose">Preparing 1080p Assets...</p>
+                </div>
+            </div>
+            <div class="mt-8 flex gap-3 w-full">
+                <button onclick="document.getElementById('share-modal').classList.add('hidden')" class="flex-1 bg-white/10 text-white font-bold py-4 rounded-2xl">返回</button>
+                <button id="download-trigger" class="flex-[1.5] bg-brand text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest italic">Save to Album</button>
+            </div>
+        </div>
+    </div>
+        <!-- 分享卡捕捉區域 (隱藏在視窗外) -->
+    <div id="share-capture-zone">
+        <div id="share-card" class="relative w-[1080px] h-[1920px] rounded-[60px] overflow-hidden bg-gradient-to-br from-[#F7CAC9] to-[#92A8D1] text-white flex flex-col">
+            <!-- 裝飾元素 -->
+            <div class="absolute -top-[300px] -right-[300px] w-[700px] h-[700px] rounded-full bg-white/10"></div>
+            <div class="absolute -bottom-[200px] -left-[200px] w-[500px] h-[500px] rounded-full bg-white/10"></div>
+
+            <div class="relative px-[100px] pt-[150px] flex-grow">
+                <!-- 標題區域 -->
+                <div id="share-title" class="text-[120px] font-black leading-none tracking-tighter italic">2026.01</div>
+                <div class="mt-4 text-[26px] tracking-[0.4em] opacity-60 font-black uppercase">MONTHLY ASSET ARCHIVE</div>
+
+                <!-- 總額區域 -->
+                <div class="mt-[80px]">
+                    <div class="text-[40px] font-bold opacity-70 tracking-widest uppercase mb-4">Total Expenditure</div>
+                    <div id="share-total" class="text-[40px] font-black leading-none tracking-tighter">$0</div>
+                </div>
+
+                <!-- 照片九宮格 (確保固定高度與格子間距) -->
+                <div id="share-photo-grid" class="mt-[120px] grid grid-cols-3 gap-[30px]">
+                    <!-- JS 動態插入 9 個格子 -->
+                </div>
+            </div>
+
+            <!-- 底部浮水印 -->
+            <div class="relative pb-[120px] text-center px-[100px]">
+                <div class="w-full h-px bg-white/20 mb-12"></div>
+                <div class="text-[50px] font-black tracking-[0.1em] uppercase">FANDOM WALLET</div>
+                <div class="mt-3 text-[24px] opacity-50 tracking-[0.1em] font-medium italic">RECORD YOUR PASSION, ARCHIVE YOUR LOVE.</div>
+            </div>
+        </div>
+    </div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
@@ -809,6 +873,9 @@
                 <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
+                        <button onclick="drawShareCard()" class=" w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30 hover:bg-white/40 transition-all active:scale-90">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6L15.316 8.684m.684 6.316a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                        </button>
                         <div class="flex gap-2 text-gray-800">
                             <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
@@ -965,7 +1032,7 @@
                         </button>
                     </div>
                     <div class="flex gap-4" >
-                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
+                        ${item.image ? `<img src="${item.image}" crossorigin="anonymous"  loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
                         `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
@@ -2500,6 +2567,145 @@
             .catch(err => console.error('SW registration failed:', err));
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 
+    <script>
+        const base64Cache = new Map();
+        const finalCardCache = new Map();
+
+        /** * 1. 圖片處理：縮圖快取 */
+        async function getSafeBase64(url) {
+            if (!url) return null;
+            if (base64Cache.has(url)) return base64Cache.get(url);
+            
+            try {
+                if (url.startsWith('data:')) return url;
+                const response = await fetch(url, { mode: 'cors' });
+                if (!response.ok) throw new Error('Fetch failed');
+                const blob = await response.blob();
+                const shrunkBase64 = await shrinkImage(blob, 400); 
+                base64Cache.set(url, shrunkBase64);
+                return shrunkBase64;
+            } catch (err) {
+                console.warn("讀取失敗:", url);
+                return null; 
+            }
+        }
+
+        function shrinkImage(blob, targetSize) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(blob);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const scale = targetSize / Math.max(img.width, img.height);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const result = canvas.toDataURL('image/jpeg', 0.8);
+                    URL.revokeObjectURL(img.src);
+                    resolve(result);
+                };
+            });
+        }
+
+        /**
+         * 2. 生成分享卡 (智慧快取優化版)
+         * @param {boolean} force - 是否強制清除快取並重新繪製
+         */
+        async function drawShareCard(force = false) {
+            const modal = document.getElementById('share-modal');
+            const resultBox = document.getElementById('share-result-container');
+            const grid = document.getElementById('share-photo-grid');
+            
+            // A. 計算資料指紋 (Fingerprint)
+            const currentMonthItems = state.expenses.filter(ex => ex.type !== 'income' && ex.year === state.filterYear && ex.month === state.filterMonth);
+            const total = currentMonthItems.reduce((s, i) => s + (Number(i.total || i.amount) || 0), 0);
+            const photoItems = currentMonthItems.filter(i => i.image).slice(0, 9);
+            
+            // 關鍵優化：Cache Key 包含圖片 URL，網址一換快取就自動失效
+            const imagesFingerprint = photoItems.map(i => i.image).join('|');
+            const cacheKey = `${state.filterYear}-${state.filterMonth}-${currentMonthItems.length}-${total}-${imagesFingerprint}`;
+
+            // B. 處理強制重繪
+            if (force) finalCardCache.delete(cacheKey);
+
+            // C. 檢查快取
+            if (finalCardCache.has(cacheKey)) {
+                const cachedDataUrl = finalCardCache.get(cacheKey);
+                modal.classList.remove('hidden');
+                resultBox.innerHTML = `<img src="${cachedDataUrl}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
+                
+                document.getElementById('download-trigger').onclick = () => {
+                    const link = document.createElement('a');
+                    link.download = `Report_${state.filterYear}_${state.filterMonth}.png`;
+                    link.href = cachedDataUrl;
+                    link.click();
+                };
+                return;
+            }
+
+            // D. 繪製流程
+            modal.classList.remove('hidden');
+            resultBox.innerHTML = `
+                <div class="p-10 text-center">
+                    <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic">生成圖片中...</p>
+                    <p class="text-slate-400 text-xs tracking-widest ">初次載入可能會花5~10秒</p>
+                </div>`;
+
+            const base64Photos = await Promise.all(photoItems.map(async (item) => {
+                return await getSafeBase64(item.image);
+            }));
+            // 更新 DOM 內容
+            document.getElementById('share-title').textContent = `${state.filterYear}.${String(state.filterMonth).padStart(2, '0')}`;
+            document.getElementById('share-total').textContent = `$${total.toLocaleString()}`;
+            
+            // 強制填充至 9 個格子，不足的留白
+            grid.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const b64 = base64Photos[i];
+                const slot = document.createElement('div');
+                // 格子間距與圓角放大以匹配 1080p
+                slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
+                if (b64) {
+                    slot.innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
+                } else {
+                    // 剩餘留白處理 (顯示透明背景 Slot)
+                    slot.innerHTML = `<div class="w-full h-full"></div>`;
+                }
+                grid.appendChild(slot);
+            }
+
+            requestAnimationFrame(async () => {
+                try {
+                    const node = document.getElementById('share-card');
+                    // 執行擷取，pixelRatio 設為 1 因為 DOM 已經是 1080px
+                    const dataUrl = await htmlToImage.toPng(node, { 
+                        width: 1080, 
+                        height: 1920,
+                        pixelRatio: 1, 
+                        cacheBust: false 
+                    });
+                    
+                    finalCardCache.set(cacheKey, dataUrl);
+                    
+                    resultBox.innerHTML = `<img src="${dataUrl}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
+                    
+                    document.getElementById('download-trigger').onclick = () => {
+                        const link = document.createElement('a');
+                        link.download = `Report_${state.filterYear}_${state.filterMonth}.png`;
+                        link.href = dataUrl;
+                        link.click();
+                    };
+                } catch (err) {
+                    showToast("生成失敗");
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+
+    </script>
 </body>
 </html>
