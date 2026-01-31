@@ -13,10 +13,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-        
+        *{
+            font-family: "Noto Sans TC", sans-serif;
+        }
         :root {
             --brand-color: #92A8D1; 
             --brand-gradient: linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%);
@@ -82,6 +85,7 @@
         .type-switcher button.active.income { color: var(--income-color); }
 
         .status-unArrived { background-color: #fee2e2; color: #ef4444; }
+        .status-freight { background-color: #bcd7fa; color: #3170fa; }
         .status-toShip { background-color: #fef3c7; color: #d97706; }
         .status-soldout { background-color: #ffffff; color: #10b981; }
         .status-received { background-color: #dcfce7; color: #16a34a; }
@@ -141,6 +145,11 @@
             top: 0;
             width: 800px;
         }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-card { animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
     </style>
 </head>
@@ -292,56 +301,76 @@
         </div>
     </div>
     <!-- 分享圖片預覽彈窗 -->
-    <div id="share-modal" class="fixed inset-0 bg-black/90 hidden z-[100] flex flex-col items-center justify-center p-6 overflow-y-scroll" onclick="this.classList.add('hidden')">
+    <div id="share-modal" class="fixed inset-0 bg-black/90 hidden z-[100] flex flex-col items-center p-6 overflow-y-scroll md:justify-start justify-center" onclick="this.classList.add('hidden')">
         <div class="w-full max-w-sm relative" onclick="event.stopPropagation()">
             
-            <button onclick="drawShareCard(true)" class="absolute -top-12 right-0 text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                <span>重新生成</span>
-            </button>
+            <div class="flex justify-end mb-4">
+                <button onclick="drawShareCard(true)" class="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>重新生成</span>
+                </button>
+            </div>
 
-            <div id="share-result-container" class="rounded-[2.5rem] overflow-hidden shadow-2xl bg-white min-h-[400px] flex items-center justify-center">
+            <div id="share-result-container" class="rounded-[2.5rem]  shadow-2xl bg-white min-h-[400px] flex justify-center">
                 <div class="p-10 text-center">
                     <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic leading-loose">Preparing 1080p Assets...</p>
+                    <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic leading-loose">正在生成圖片中...</p>
                 </div>
             </div>
             <div class="mt-8 flex gap-3 w-full">
-                <button onclick="document.getElementById('share-modal').classList.add('hidden')" class="flex-1 bg-white/10 text-white font-bold py-4 rounded-2xl">返回</button>
-                <button id="download-trigger" class="flex-[1.5] bg-brand text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest italic">Save to Album</button>
+                <button onclick="document.getElementById('share-modal').classList.add('hidden')" class="flex-1 bg-white/20 text-white font-bold py-4 rounded-2xl">返回</button>
+                <button id="download-trigger" class="flex-[1.5] bg-brand text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest">儲存</button>
             </div>
         </div>
     </div>
         <!-- 分享卡捕捉區域 (隱藏在視窗外) -->
     <div id="share-capture-zone">
-        <div id="share-card" class="relative w-[1080px] h-[1920px] rounded-[60px] overflow-hidden bg-gradient-to-br from-[#F7CAC9] to-[#92A8D1] text-white flex flex-col">
+        <div id="share-card" class="relative w-[1080px] h-[1920px] rounded-[60px] overflow-hidden bg-brand text-white flex flex-col">
             <!-- 裝飾元素 -->
             <div class="absolute -top-[300px] -right-[300px] w-[700px] h-[700px] rounded-full bg-white/10"></div>
             <div class="absolute -bottom-[200px] -left-[200px] w-[500px] h-[500px] rounded-full bg-white/10"></div>
 
             <div class="relative px-[100px] pt-[150px] flex-grow">
-                <!-- 標題區域 -->
-                <div id="share-title" class="text-[120px] font-black leading-none tracking-tighter italic">2026.01</div>
-                <div class="mt-4 text-[26px] tracking-[0.4em] opacity-60 font-black uppercase">MONTHLY ASSET ARCHIVE</div>
+                <!-- 標題區域 (英文月份) -->
+                <div class="flex items-end">
+                    <div id="share-title" class="text-[110px] font-black leading-none tracking-tighter italic uppercase">JANUARY</div>
+                    <div id="share-title-sub" class="text-[50px] font-black leading-none tracking-tighter italic uppercase">2026</div>
+                </div>
 
-                <!-- 總額區域 -->
+                <div class="mt-4 text-[26px] tracking-[0.2em] opacity-60 font-black uppercase">Bankruptcy Report of the Month</div>
+
+                <!-- 追星人格區 -->
                 <div class="mt-[80px]">
-                    <div class="text-[40px] font-bold opacity-70 tracking-widest uppercase mb-4">Total Expenditure</div>
-                    <div id="share-total" class="text-[40px] font-black leading-none tracking-tighter">$0</div>
+                    <div class="text-[36px] font-bold opacity-70 tracking-widest uppercase mb-4 italic">追星消費分析</div>
+                    <div id="share-personality" class="text-[50px] font-black leading-tight tracking-tighter drop-shadow-xl min-h-[120px]">追星玩家｜小粉絲</div>
                 </div>
 
                 <!-- 照片九宮格 (確保固定高度與格子間距) -->
-                <div id="share-photo-grid" class="mt-[120px] grid grid-cols-3 gap-[30px]">
+                <div id="share-photo-grid" class="mt-[60px] grid grid-cols-3 gap-[30px]">
                     <!-- JS 動態插入 9 個格子 -->
                 </div>
             </div>
 
             <!-- 底部浮水印 -->
-            <div class="relative pb-[120px] text-center px-[100px]">
-                <div class="w-full h-px bg-white/20 mb-12"></div>
-                <div class="text-[50px] font-black tracking-[0.1em] uppercase">FANDOM WALLET</div>
-                <div class="mt-3 text-[24px] opacity-50 tracking-[0.1em] font-medium italic">RECORD YOUR PASSION, ARCHIVE YOUR LOVE.</div>
+            <div class="relative pb-[120px] px-[100px]">
+            <div class="w-full h-px bg-white/20 mb-12"></div>
+
+            <div class="flex items-center justify-between">
+                <!-- 左側：Icon + 標題 -->
+                <div class="flex items-center gap-6">
+                    <div class="bg-white w-[132px] h-[132px] rounded-xl justify-items-center content-center"><img src="qrcode.png"class="w-[120px] h-[120px]" alt=""></div>
+                    <div class="flex-row">
+                        <div class="text-[46px] font-black leading-tight">
+                            追星錢包<span class="ml-2 text-[25px] opacity-70 uppercase">FANDOM WALLET</span>
+                        </div>
+                        <div class="mt-2 text-[28px] opacity-70">管理你的周邊，記錄你的追星歷程</div>
+                    </div>
+                </div>
             </div>
+            </div>
+
         </div>
     </div>
 
@@ -518,6 +547,7 @@
             enableExchange :false,
             defaultCurrency:'TWD'
         };
+
         function setTempType(type) { //切換消費/售出
             state.tempType = type;
             const isExp = type === 'expense';
@@ -584,20 +614,20 @@
         ];
 
         const categoriesACGN = [
-            { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        // 靛藍：閱讀感
-            { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          // 琥珀黃：展示物
-            { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          // 紫色：收藏感
-            { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       // 粉紅：平面視覺
-            { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        // 藍色：小物定位
-            { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          // 橘色：實體重量
-            { id: '一番賞', icon: '🎯', color: '#eab308' },               // 金黃：抽獎命運
-            { id: '聯名服飾', icon: '👕', color: '#22c55e' },             // 綠色：穿戴類
-            { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, // 紅色：體驗型
-            { id: '其他支出', icon: '📦', color: '#64748b' }              // 灰色：收納盒
+            { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        
+            { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          
+            { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          
+            { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       
+            { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        
+            { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          
+            { id: '一番賞', icon: '🎯', color: '#eab308' },              
+            { id: '聯名服飾', icon: '👕', color: '#22c55e' },             
+            { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, 
+            { id: '其他支出', icon: '📦', color: '#64748b' }             
         ];
         const wishCategories = ["專輯", "周邊商品", "娃娃", "小卡","演唱會 / 見面會門票"];
         const wishCategoriesACGN = ["漫畫 / 輕小說", "立牌 / 吊飾", "小卡 / 色紙","明信片 / 海報","徽章 / 壓克力","公仔 / 娃娃","其他周邊"];
-        const arrivalOptions = ['未到貨', '待出貨', '已取貨','已售出'];
+        const arrivalOptions = ['未到貨','待二補', '待出貨', '已取貨','已售出'];
         const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金'];
         let myChart = null;
         /**滑動關閉編輯邏輯 */
@@ -827,6 +857,7 @@
 
         function getStatusClass(s) {
             if (s === '未到貨') return 'status-unArrived';
+            if (s === '待二補') return 'status-freight';
             if (s === '待出貨') return 'status-toShip';
             if (s === '已售出') return 'status-soldout';
             return 'status-received';
@@ -1388,9 +1419,17 @@
 
             container.innerHTML = `
                 <div class="p-6">
-                    <div class="flex items-center gap-3 mb-6">
-                        <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
-                        <h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
+                    <div class="flex justify-between items-center gap-3 mb-6">
+                        <div class="flex items-center gap-3 mb-6>
+                            <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
+                            <h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
+                        </div>
+                            <button onclick="drawShareCard()" class="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#92A8D1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs font-bold text-gray-600">分享1月卡片</span>
+                        </button>
                     </div>
 
                     <div class="flex border-b border-gray-100 mb-6">
@@ -2572,7 +2611,7 @@
     <script>
         const base64Cache = new Map();
         const finalCardCache = new Map();
-
+        const ENGLISH_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         /** * 1. 圖片處理：縮圖快取 */
         async function getSafeBase64(url) {
             if (!url) return null;
@@ -2614,54 +2653,118 @@
          * 2. 生成分享卡 (智慧快取優化版)
          * @param {boolean} force - 是否強制清除快取並重新繪製
          */
-        async function drawShareCard(force = false) {
+        async function drawShareCard(forceRandom = false) {
             const modal = document.getElementById('share-modal');
             const resultBox = document.getElementById('share-result-container');
             const grid = document.getElementById('share-photo-grid');
             
             // A. 計算資料指紋 (Fingerprint)
             const currentMonthItems = state.expenses.filter(ex => ex.type !== 'income' && ex.year === state.filterYear && ex.month === state.filterMonth);
-            const total = currentMonthItems.reduce((s, i) => s + (Number(i.total || i.amount) || 0), 0);
+            //const total = currentMonthItems.reduce((s, i) => s + (Number(i.total || i.amount) || 0), 0);
+            const totalExp = currentMonthItems.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
+            const totalInc = currentMonthItems.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
+            const total = totalExp - totalInc;
             const photoItems = currentMonthItems.filter(i => i.image).slice(0, 9);
             
             // 關鍵優化：Cache Key 包含圖片 URL，網址一換快取就自動失效
             const imagesFingerprint = photoItems.map(i => i.image).join('|');
             const cacheKey = `${state.filterYear}-${state.filterMonth}-${currentMonthItems.length}-${total}-${imagesFingerprint}`;
 
-            // B. 處理強制重繪
-            if (force) finalCardCache.delete(cacheKey);
-
-            // C. 檢查快取
-            if (finalCardCache.has(cacheKey)) {
-                const cachedDataUrl = finalCardCache.get(cacheKey);
+           // C. 檢查快取
+            if (!forceRandom && finalCardCache.has(cacheKey)) {
                 modal.classList.remove('hidden');
-                resultBox.innerHTML = `<img src="${cachedDataUrl}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
-                
+                resultBox.innerHTML = `<img src="${finalCardCache.get(cacheKey)}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
                 document.getElementById('download-trigger').onclick = () => {
                     const link = document.createElement('a');
                     link.download = `Report_${state.filterYear}_${state.filterMonth}.png`;
                     link.href = cachedDataUrl;
                     link.click();
-                };
+                };               
                 return;
             }
 
             // D. 繪製流程
             modal.classList.remove('hidden');
             resultBox.innerHTML = `
-                <div class="p-10 text-center">
+                <div class=" h-[70vh] flex items-center justify-center p-10 text-center">
+                    <div>
                     <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic">生成圖片中...</p>
-                    <p class="text-slate-400 text-xs tracking-widest ">初次載入可能會花5~10秒</p>
+                    <p class="text-slate-400 text-xs tracking-widest ">預計會花5~10秒</p>
+                    </div>
                 </div>`;
 
             const base64Photos = await Promise.all(photoItems.map(async (item) => {
                 return await getSafeBase64(item.image);
             }));
             // 更新 DOM 內容
-            document.getElementById('share-title').textContent = `${state.filterYear}.${String(state.filterMonth).padStart(2, '0')}`;
-            document.getElementById('share-total').textContent = `$${total.toLocaleString()}`;
-            
+            //document.getElementById('share-title').textContent = `${state.filterYear}.${String(state.filterMonth).padStart(2, '0')}`;
+            //document.getElementById('share-total').textContent = `$${total.toLocaleString()}`;
+            // --- 更新標題：英文月份 ---
+            const monthName = ENGLISH_MONTHS[state.filterMonth - 1] || "MONTH";
+            document.getElementById('share-title').textContent = `${monthName}`;
+            document.getElementById('share-title-sub').textContent = `${state.filterYear}`;
+
+            // --- 隨機人格邏輯 ---
+            const categoryPrefixTemplates = {
+                '專輯': ['{tag}專輯控','音樂守護者','實體CD執念者','銷量貢獻大戶'],
+                '小卡': ['{tag}小卡狂熱者','小卡愛好者','卡片蒐集狂','迷你收藏家','卡冊建築大師'],
+                '演唱會 / 見面會門票': ['搶票戰神','門票富翁','舞台追尋者', '排隊專業戶'],
+                '周邊商品': ['{tag}周邊控','實體收藏達人'],
+                '娃娃': ['{tag}娃娃親媽','娃娃守護者','萌物收藏家'],
+
+                '漫畫 / 輕小說': ['{tag}書架破壞者', '精神糧食糧倉主', '二次元住民'],
+                '立牌 / 吊飾': ['{tag}神壇建築師', '壓克力守護靈', '桌面空間侵占者', '壓克力收藏家'],
+                '小卡 / 色紙': ['{tag}紙片人代購商', '卡冊建築大師','色紙展示狂'],
+                '明信片 / 海報': ['{tag}牆面粉刷匠', '平面美學監製', '視線捕捉者'],
+                '徽章 / 壓克力': ['{tag}痛包重量擔當', '金屬撞擊愛好者', '閃亮亮搜刮者','別針受難者'],
+                '公仔 / 娃娃': ['{tag}棉花娃親媽', '娃娃守護者', '萌物收藏家'],
+            };
+
+            const getSuffixByAmount = (amount) => {
+                if (amount === 0) return '純愛戰士(零成本版)';
+                if (amount < 1000) return '純愛戰士';
+                if (amount < 1500) return '理性小粉絲';
+                if (amount < 2000) return '快樂小粉絲';
+                if (amount < 3000) return '精神糧食愛好者';
+                if (amount < 4000) return '存摺縮水警告中';
+                if (amount < 4500) return '提款機精靈';
+                if (amount < 5000) return '專業周邊獵人';
+                if (amount < 5500) return '行走的周邊收割機';
+                if (amount < 6000) return '窮到吃土的快樂人🛖';
+                if (amount < 7000) return 'MBTI是ATM💸';
+                if (amount < 8000) return '為了歐爸呼吸的ATM';
+                if (amount < 8500) return '破產美學實踐者🏚️';
+                if (amount < 9000) return '偶像的神仙教母';
+                if (amount < 10000) return '粉絲銀行董事🏦';
+                if (amount < 20000) return '經紀公司再生父母💰';
+                if (amount < 30000) return '經紀公司榮譽董事';
+                return '偶像背後的隱形金主👑';
+            };
+
+            const getPrefixByExpenses = (expenses) => {
+                if (!expenses.length) return '快樂追星族';
+                const categorySum = {};
+                const categoryTagMap = {};
+                expenses.forEach(e => {
+                    categorySum[e.category] = (categorySum[e.category] || 0) + (Number(e.total) || 0);
+                    const tag = (Array.isArray(e.tags) && e.tags.length > 0) ? e.tags[0] : '';
+                    if (tag) {
+                        categoryTagMap[e.category] = categoryTagMap[e.category] || {};
+                        categoryTagMap[e.category][tag] = (categoryTagMap[e.category][tag] || 0) + 1;
+                    }
+                });
+                const topCategory = Object.entries(categorySum).sort((a,b)=>b[1]-a[1])[0][0];
+                const topTagObj = categoryTagMap[topCategory] || {};
+                const topTag = Object.entries(topTagObj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+                const templates = categoryPrefixTemplates[topCategory] || ['追星玩家'];
+                let chosen = templates[Math.floor(Math.random() * templates.length)];
+                return chosen.replace('{tag}', topTag);
+            };
+            const prefix = getPrefixByExpenses(currentMonthItems);
+            const suffix = getSuffixByAmount(total);
+            document.getElementById('share-personality').textContent = `${prefix}｜${suffix}`;
+
             // 強制填充至 9 個格子，不足的留白
             grid.innerHTML = '';
             for (let i = 0; i < 9; i++) {
@@ -2670,7 +2773,7 @@
                 // 格子間距與圓角放大以匹配 1080p
                 slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
                 if (b64) {
-                    slot.innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
+                    slot.innerHTML = `<img src="${b64}" crossorigin="anonymous" class="w-full h-full object-cover">`;
                 } else {
                     // 剩餘留白處理 (顯示透明背景 Slot)
                     slot.innerHTML = `<div class="w-full h-full"></div>`;
@@ -2681,18 +2784,19 @@
             requestAnimationFrame(async () => {
                 try {
                     const node = document.getElementById('share-card');
+                    await document.fonts.ready;
                     // 執行擷取，pixelRatio 設為 1 因為 DOM 已經是 1080px
                     const dataUrl = await htmlToImage.toPng(node, { 
                         width: 1080, 
                         height: 1920,
                         pixelRatio: 1, 
-                        cacheBust: false 
+                        cacheBust: true,
+                        skipFonts: false,
                     });
                     
                     finalCardCache.set(cacheKey, dataUrl);
                     
-                    resultBox.innerHTML = `<img src="${dataUrl}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
-                    
+                    resultBox.innerHTML = `<img src="${dataUrl}" class="w-full h-full shadow-2xl animate-card">`;
                     document.getElementById('download-trigger').onclick = () => {
                         const link = document.createElement('a');
                         link.download = `Report_${state.filterYear}_${state.filterMonth}.png`;
