@@ -6,6 +6,7 @@
       "https://fandom-expense.vercel.app"
     ],
     "method": ["GET"],
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin"],
     "maxAgeSeconds": 3600
   }
 ]
