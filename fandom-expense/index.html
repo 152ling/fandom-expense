@@ -2666,16 +2666,19 @@
                 img.crossOrigin = 'anonymous';
                 img.src = URL.createObjectURL(blob);
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const scale = targetSize / Math.max(img.width, img.height);
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const result = canvas.toDataURL('image/jpeg', 0.8);
-                    URL.revokeObjectURL(img.src);
-                    resolve(result);
+                   try {
+                        const canvas = document.createElement('canvas');
+                        const scale = targetSize / Math.max(img.width, img.height);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    } catch {
+                        resolve(null);
+                    }
                 };
+                img.onerror = () => resolve(null);
+                img.src = URL.createObjectURL(blob);
             });
         }
 
@@ -2709,6 +2712,7 @@
 
            // C. 檢查快取
             if (!forceRandom && finalCardCache.has(cacheKey)) {
+                const cachedDataUrl = finalCardCache.get(cacheKey);
                 modal.classList.remove('hidden');
                 resultBox.innerHTML = `<img src="${finalCardCache.get(cacheKey)}" class="w-full h-auto rounded-[2.5rem] shadow-2xl animate-card">`;
                 document.getElementById('download-trigger').onclick = () => {
@@ -2817,7 +2821,9 @@
                 slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
                 if (b64) {
                     slot.innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
-                } else {
+                } else if (photoItems[i]?.image) {
+                    slot.innerHTML = `<img src="${photoItems[i].image}" class="w-full h-full object-cover">`;
+                }else {
                     // 剩餘留白處理 (顯示透明背景 Slot)
                     slot.innerHTML = `<div class="w-full h-full"></div>`;
                 }
