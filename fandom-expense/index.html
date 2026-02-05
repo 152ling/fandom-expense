@@ -2814,28 +2814,39 @@
             const loadPromises = [];
 
             for (let i = 0; i < 9; i++) {
-                const b64 = base64Photos[i];
                 const slot = document.createElement('div');
-                // 格子間距與圓角放大以匹配 1080p
-                slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
-                if (b64) {
-                    //slot.innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
-                    const img = new Image();
-                    img.className = 'w-full h-full object-cover';
-                    // 建立一個 Promise 確保這張圖載入完成
-                    const p = new Promise((resolve) => {
-                        img.onload = resolve;
-                        img.onerror = resolve; // 失敗也要 resolve 以免卡死
-                    });
-                    loadPromises.push(p);
-                    img.src = b64;
-                    slot.appendChild(img);
-                } else if (photoItems[i]?.image) {
-                    slot.innerHTML = `<img src="${photoItems[i].image}" class="w-full h-full object-cover">`;
-                }else {
-                    // 剩餘留白處理 (顯示透明背景 Slot)
-                    slot.innerHTML = `<div class="w-full h-full"></div>`;
-                }
+                    slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
+                    
+                    // 取得圖片網址：優先使用處理過的 b64，其次是原始網址
+                    const imageUrl = base64Photos[i] || photoItems[i]?.image;
+
+                    if (imageUrl) {
+                        const img = new Image();
+                        img.className = 'w-full h-full object-cover';
+                        
+                        // 建立 Promise 確保這張圖「下載」且「解碼」完成
+                        const p = new Promise((resolve) => {
+                            img.onload = async () => {
+                                // 針對 iOS/Safari 的關鍵優化：確保圖片解碼完成
+                                if ('decode' in img) {
+                                    try {
+                                        await img.decode();
+                                    } catch (e) {
+                                        console.warn("Decode failed", e);
+                                    }
+                                }
+                                resolve();
+                            };
+                            img.onerror = resolve; // 失敗也要繼續
+                        });
+                        loadPromises.push(p);
+                        
+                        img.src = imageUrl;
+                        slot.appendChild(img);
+                    } else {
+                        // 剩餘留白處理
+                        slot.innerHTML = `<div class="w-full h-full"></div>`;
+                    }
                 grid.appendChild(slot);
             }
 
@@ -2843,16 +2854,17 @@
                 try {
                     const node = document.getElementById('share-card');
                     
-                    // 核心修正：等待圖片載入 + 字體就緒 + 給予瀏覽器額外 500ms 渲染圖層
+                    // 核心修正：等待圖片載入 + 字體就緒 + 給予瀏覽器額外 1000ms 渲染圖層
                     await Promise.all([...loadPromises, document.fonts.ready]);
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     const dataUrl = await htmlToImage.toPng(node, { 
                         width: 1080, 
                         height: 1920,
                         pixelRatio: 1, 
                         cacheBust: true,
                         includeGraphics: true,
-                        fontEmbedCSS: ""
+                        fontEmbedCSS: "",
+                        imagePlaceholder: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
                     });
                     
                     finalCardCache.set(cacheKey, dataUrl);
