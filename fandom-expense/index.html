@@ -1087,7 +1087,7 @@
                         </button>
                     </div>
                     <div class="flex gap-4" >
-                        ${item.image ? `<img src="${item.image}" crossorigin="anonymous"  loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
+                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
                         `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
@@ -2663,6 +2663,7 @@
         function shrinkImage(blob, targetSize) {
             return new Promise((resolve) => {
                 const img = new Image();
+                img.crossOrigin = 'anonymous';
                 img.src = URL.createObjectURL(blob);
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
@@ -2815,7 +2816,7 @@
                 // 格子間距與圓角放大以匹配 1080p
                 slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
                 if (b64) {
-                    slot.innerHTML = `<img src="${b64}" crossorigin="anonymous" class="w-full h-full object-cover">`;
+                    slot.innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
                 } else {
                     // 剩餘留白處理 (顯示透明背景 Slot)
                     slot.innerHTML = `<div class="w-full h-full"></div>`;
