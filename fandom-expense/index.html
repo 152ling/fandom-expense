@@ -318,7 +318,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20v-8m0 0l-4 4m4-4l4 4M4 12V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <h3 class="text-xl font-black text-slate-800 dark:text-white mb-3">生成分享圖？</h3>
-            <p class="text-sm text-slate-400 leading-relaxed mb-8"><b>(目前可能會失敗 測試中請稍後TT)</b> <br>系統將根據您目前篩選月份的消費數據生成圖片九宮格分享卡片。第一次載入需 2-3 秒處理圖片。</p>
+            <p class="text-sm text-slate-400 leading-relaxed mb-8">系統將根據您目前篩選月份的消費數據生成圖片九宮格分享卡片。第一次載入需 2-3 秒處理圖片。<br></p>
             <div class="flex flex-col gap-3">
                 <button onclick="startShareGeneration()" class="w-full bg-brand text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">開始生成</button>
                 <button onclick="document.getElementById('share-confirm-overlay').classList.add('hidden')" class="w-full text-slate-400 font-bold py-2 text-sm">取消</button>
@@ -384,7 +384,7 @@
                 <div class="flex items-center justify-between">
                     <!-- 左側：Icon + 標題 -->
                     <div class="flex items-center gap-6">
-                        <div class="flex bg-white w-[132px] h-[132px] rounded-xl justify-items-center content-center"><img src="qrcode.png"class="w-[120px] h-[120px] block mx-auto my-auto object-contain" alt=""></div>
+                        <div class="flex bg-[#ffffff] w-[132px] h-[132px] rounded-xl justify-items-center content-center"><img src="qrcode.png"class="w-[120px] h-[120px] block mx-auto my-auto object-contain" alt=""></div>
                         <div class="flex-row">
                             <div class="text-[46px] font-black leading-tight">
                                 追星錢包<span class="ml-2 text-[25px] opacity-70 uppercase">FANDOM WALLET</span>
@@ -1406,7 +1406,7 @@
                             <span>▶</span>
                         </div>
                     </div>              
-                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
                         <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v8.0</span><span>▶</span></div>
@@ -2670,7 +2670,7 @@
                         canvas.width = img.width * scale;
                         canvas.height = img.height * scale;
                         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
                     } catch {
                         resolve(null);
                     }
@@ -2729,6 +2729,7 @@
                     <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p class="text-slate-400 text-sm font-bold tracking-widest uppercase italic">生成圖片中...</p>
                     <p class="text-slate-400 text-xs tracking-widest ">預計會花5~10秒</p>
+                    <p class="text-slate-400 text-xs tracking-widest ">若圖片有缺漏請點擊重新生成</p>
                     </div>
                 </div>`;
 
@@ -2815,8 +2816,8 @@
 
             for (let i = 0; i < 9; i++) {
                 const slot = document.createElement('div');
-                    slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 shadow-xl';
-                    
+                    slot.className = 'aspect-square bg-white/10 rounded-[45px] overflow-hidden border-2 border-white/20 ';
+                    slot.style.filter = 'drop-shadow(0 15px 20px rgba(0, 0, 0, 0.15))';
                     // 取得圖片網址：優先使用處理過的 b64，其次是原始網址
                     const imageUrl = base64Photos[i] || photoItems[i]?.image;
 
