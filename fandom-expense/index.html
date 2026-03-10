@@ -569,7 +569,8 @@
             rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1  },
             rateStatusText: '匯率已就緒',
             enableExchange :false,
-            defaultCurrency:'TWD'
+            defaultCurrency:'TWD',
+            currentPage: 1, // 新增：分頁功能
         };
 
         function setTempType(type) { //切換消費/售出
@@ -891,7 +892,7 @@
          * 3. 導覽與渲染
          */
         function switchTab(tab) {
-            state.activeTab = tab; state.subPage = null; state.searchKeyword = ''; state.selectedCategory = '';
+            state.activeTab = tab; state.subPage = null; state.searchKeyword = ''; state.selectedCategory = '';state.currentPage = 1;
             ['expense', 'report', 'wish', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.className = `flex-1 flex flex-col items-center gap-1 transition-colors ${tab === t ? 'tab-active' : 'text-gray-400'}`;
@@ -941,7 +942,7 @@
                         </div>
                     </div>
                     <div class="relative mb-3">
-                        <input type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                        <input type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;state.currentPage=1;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                         <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
                     </div>
                     <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
@@ -962,7 +963,7 @@
                 state.searchKeyword = value;
                 if (input) input.value = value;
             }
-
+            state.currentPage = 1; // 重設分頁
             // 執行渲染：更新分類列與清單內容
             renderTagAndCatBar(); 
             renderExpenseListItems(document.getElementById('expense-list-items'));
@@ -976,6 +977,7 @@
                 const isActive = state.selectedCategory === cat.id;
                 return `
                     <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
+                                state.currentPage=1;            
                                 renderTagAndCatBar(); 
                                 renderExpenseListItems(document.getElementById('expense-list-items'))" 
                         class="chip ${isActive ? 'active-cat text-white' : ''}" 
@@ -1009,6 +1011,7 @@
                     const isActive = state.searchKeyword === tag;
                     return `
                         <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
+                                    state.currentPage=1;            
                                     renderTagAndCatBar(); 
                                     renderExpenseListItems(document.getElementById('expense-list-items'))" 
                             class="chip ${isActive ? 'active-tag' : ''}">
@@ -1038,6 +1041,18 @@
 
             return dateMatch && catMatch && keywordMatch;
             });
+            const sorted = filtered.sort((a, b) => 
+                Number(b.year) - Number(a.year) ||
+                Number(b.month) - Number(a.month) ||
+                Number(b.day  || 1) - Number(a.day  || 1) || 
+                Number(b.id) - Number(a.id)
+            );
+            // 分頁邏輯
+            const itemsPerPage = 10;
+            const totalItems = sorted.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+            if (state.currentPage > totalPages) state.currentPage = totalPages;
+            const paginatedItems = sorted.slice((state.currentPage - 1) * itemsPerPage, state.currentPage * itemsPerPage);
             //const total = filtered.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
             //const total = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
             const totalExp = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
@@ -1049,8 +1064,7 @@
 
 
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`; return; }
-            
-            container.innerHTML = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
+            let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
                 <div>
                     <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
                         <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
@@ -1066,13 +1080,8 @@
                         ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
                         <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
                     </div>
-                </div>` + 
-                filtered.sort((a, b) => 
-                    Number(b.year) - Number(a.year) ||
-                    Number(b.month) - Number(a.month) ||
-                    Number(b.day  || 1) - Number(a.day  || 1) || //沒有日期就預設1號
-                    Number(b.id) - Number(a.id) //先比年月日在比id順序
-                ).map(item => {
+                </div>` 
+            html += paginatedItems.map(item => {
                 const allCats = [...categories, ...categoriesACGN];
                 const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
                 const isIncome = item.type === 'income';
@@ -1114,9 +1123,35 @@
                     </div>` : ''}
                 </div>`;
             }).join('');
-        }
-        // 通用確認工具，會回傳 true 或 false
 
+            // 添加分頁按鈕 UI
+            if (totalPages > 1) {
+                html += `
+                <div class="flex justify-center items-center gap-6 mt-8 mb-4">
+                    <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+                        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        <span class="text-brand mx-1">${state.currentPage}</span> / ${totalPages}
+                    </div>
+                    <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+                        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+        // 換頁函式
+        function changePage(delta) {
+            state.currentPage += delta;
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+            // 捲動回最上方
+            const main = document.getElementById('main-content');
+            if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 通用確認工具，會回傳 true 或 false
         function askUser(title, desc, icon = '💸') {
             const overlay = document.getElementById('common-confirm-overlay');
             document.getElementById('confirm-title').textContent = title;
@@ -1441,8 +1476,8 @@
 
             container.innerHTML = `
                 <div class="p-6">
-                    <div class="flex justify-between items-center gap-3 mb-6">
-                        <div class="flex items-center gap-3 mb-6">
+                    <div class="flex justify-between items-center gap-3 mb-2">
+                        <div class="flex items-center gap-3 mb-2">
                             <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                             </button>
@@ -1450,11 +1485,11 @@
                         </div>
                     </div>
 
-                    <div class="flex border-b border-gray-100 mb-6">
+                    <div class="flex border-b border-gray-100 mb-2">
                         <button onclick="state.photoWallTab='purchased';state.photoFilterCat='';renderContent()" 
-                            class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button>
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button>
                         <button onclick="state.photoWallTab='wish';state.photoFilterCat='';renderContent()" 
-                            class="photo-tab flex-1 py-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button>
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button>
                     </div>
 
                     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
@@ -2851,7 +2886,6 @@
                             img.onerror = resolve; // 失敗也要繼續
                         });
                         loadPromises.push(p);
-                        
                         img.src = imageUrl;
                         slot.appendChild(img);
                     } else {
@@ -2867,7 +2901,9 @@
                     
                     // 核心修正：等待圖片載入 + 字體就緒 + 給予瀏覽器額外 1000ms 渲染圖層
                     await Promise.all([...loadPromises, document.fonts.ready]);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    // 強制瀏覽器 Reflow (重繪)
+                    node.getBoundingClientRect();
+                    await new Promise(resolve => setTimeout(resolve, 1200));
                     const dataUrl = await htmlToImage.toPng(node, { 
                         width: 1080, 
                         height: 1920,
