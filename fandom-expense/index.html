@@ -429,7 +429,7 @@
                 await signInWithPopup(auth, provider);
             } catch (err) {
                 console.error("Login Error:", err);
-                showToast("登入失敗，請檢查彈窗設定");
+                showToast("登入失敗，請檢查彈窗設定，請將網頁加入主畫面後重試。iOS建議使用safari開啟");
             }
         },
         logout: async () => { await signOut(auth); localStorage.clear(); location.reload(); },
@@ -566,7 +566,7 @@
             reportType: 'expense',
             categorySet: 'categories',//kpop/acgn
             WishcategorySet:'wishCategories',
-            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05 },
+            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1  },
             rateStatusText: '匯率已就緒',
             enableExchange :false,
             defaultCurrency:'TWD'
@@ -1632,6 +1632,8 @@
                                 <option value="JPY" ${state.defaultCurrency === 'JPY' ? 'selected' : ''}>JPY - 日圓</option>
                                 <option value="KRW" ${state.defaultCurrency === 'KRW' ? 'selected' : ''}>KRW - 韓幣</option>
                                 <option value="CNY" ${state.defaultCurrency === 'CNY' ? 'selected' : ''}>CNY - 人民幣</option>
+                                <option value="MYR" ${state.defaultCurrency === 'MYR' ? 'selected' : ''}>MYR - 令吉</option>
+                                <option value="SGD" ${state.defaultCurrency === 'SGD' ? 'selected' : ''}>SGD - 新加坡幣</option>
                             </select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
                         </div>
@@ -1691,7 +1693,9 @@
                         CNY: 1 / data.conversion_rates.CNY,
                         USD: 1 / data.conversion_rates.USD,
                         HKD: 1 / data.conversion_rates.HKD,
-                        TWD: 1 / data.conversion_rates.TWD
+                        MYR: 1 / data.conversion_rates.MYR, // 增加馬來西亞
+                        SGD: 1 / data.conversion_rates.SGD, // 增加新加坡
+                        TWD: 1 / data.conversion_rates.TWD,
                     };
                     // 更新狀態並存入本地儲存
                     state.rates = newRates;
@@ -1935,11 +1939,11 @@
                             <button type="button" onclick="setTempType('expense')" id="btn-type-exp" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all active shadow-sm">支出</button>
                             <button type="button" onclick="setTempType('income')" id="btn-type-inc" ${isConvertingWish ? 'disabled' : ''} class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-400">售出</button>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
                         <div class="flex gap-4">
                             <div class="flex-1 space-y-1">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
-                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                             <div class="flex-1 space-y-1 relative" id="qty-combobox">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
@@ -1969,6 +1973,9 @@
                                             <option value="CNY" ${itemData?.currency === 'CNY' ? 'selected' : ''}>CNY</option>
                                             <option value="USD" ${itemData?.currency === 'USD' ? 'selected' : ''}>USD</option>
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
+                                            <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
+                                            <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
                                         <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
                                         <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
@@ -2031,8 +2038,8 @@
                     }
                 }
                 form.innerHTML = `<div class="space-y-4">
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱</label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格></label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end ml-1">
@@ -2047,6 +2054,9 @@
                                             <option value="CNY" ${itemData?.currency === 'CNY' ? 'selected' : ''}>CNY</option>
                                             <option value="USD" ${itemData?.currency === 'USD' ? 'selected' : ''}>USD</option>
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
+                                            <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
+                                            <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
                                         <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
                                         <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
