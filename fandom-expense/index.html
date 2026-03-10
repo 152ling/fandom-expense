@@ -1505,7 +1505,7 @@
                         ${photos.length > 0 ? photos.map(item => `
                             <div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
                                 class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
-                                <img src="${item.image}" loading="lazy" class="w-full h-full object-cover">
+                                <img src="${item.image}" class="w-full h-full object-cover">
                             </div>
                         `).join('') : `
                             <div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
@@ -2901,8 +2901,7 @@
                     
                     // 核心修正：等待圖片載入 + 字體就緒 + 給予瀏覽器額外 1000ms 渲染圖層
                     await Promise.all([...loadPromises, document.fonts.ready]);
-                    // 強制瀏覽器 Reflow (重繪)
-                    node.getBoundingClientRect();
+                    
                     await new Promise(resolve => setTimeout(resolve, 1200));
                     const dataUrl = await htmlToImage.toPng(node, { 
                         width: 1080, 
