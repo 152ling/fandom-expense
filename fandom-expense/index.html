@@ -1094,7 +1094,7 @@
                         </button>
                     </div>
                     <div class="flex gap-4" >
-                        ${item.image ? `<img src="${item.image}" loading="lazy" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
+                        ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
                         `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
@@ -1210,7 +1210,7 @@
                                 </button>
                             </div>
                             <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
-                                ${item.image ? `<img src="${item.image}" loading="lazy" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                                ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                                 <div class="flex-grow pr-24">
                                     <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
                                     <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
