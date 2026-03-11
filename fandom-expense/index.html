@@ -46,7 +46,7 @@
         }
         /* 修正 iOS input 寬度與原生樣式 */
         input[type="month"], 
-        input[type="date"] {
+        input[type="date"],input[type="time"]{
             -webkit-appearance: none; /* 移除 iOS 預設外觀 */
             appearance: none;
             min-height: 44px;
@@ -150,12 +150,23 @@
             to { opacity: 1; transform: scale(1); }
         }
         .animate-card { animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
+        
+        .faq-item .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+        }
+        .faq-item.active svg {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-20 sm:pb-36"></main>
+    <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-36 sm:pb-40"></main>
     <div id="toast">提示訊息</div>
     <!-- 懸浮按鈕群組 -->
     <div class="fixed bottom-28 right-6 flex flex-col gap-4 z-40">
@@ -566,7 +577,7 @@
             reportType: 'expense',
             categorySet: 'categories',//kpop/acgn
             WishcategorySet:'wishCategories',
-            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1  },
+            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1,THB:1},
             rateStatusText: '匯率已就緒',
             enableExchange :false,
             defaultCurrency:'TWD',
@@ -921,6 +932,7 @@
                 else if (state.subPage === 'photowall') renderPhotoWall(container);
                 else if (state.subPage === 'version') renderVersionView(container);
                 else if (state.subPage === 'accountConfig') renderAccountConfig(container);
+                else if (state.subPage === 'faq') renderFAQView(container);
                 else renderSettings(container);
             }
         }
@@ -1209,13 +1221,13 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                                 </button>
                             </div>
-                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || '未定'}')` : ''}">
+                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.releaseDate || ''}')` : ''}">
                                 ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                                 <div class="flex-grow pr-24">
                                     <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
                                     <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
                                     <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
-                                    <p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate || '未定'} ${item.releaseTime || ''}</p>
+                                    ${item.releaseDate ? `<p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate} ${item.releaseTime || ''}</p>` : ''}
                                 </div>
                             </div>
                             ${item.remark ? `
@@ -1441,10 +1453,15 @@
                             <span>▶</span>
                         </div>
                     </div>              
-                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
+                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
                         <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v8.0</span><span>▶</span></div>
+                    </div>
+                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">常見問題與幫助</span></div>
+                        <div class="flex items-center gap-2"><span>▶</span></div>
                     </div>
 
                 </div>
@@ -1669,6 +1686,7 @@
                                 <option value="CNY" ${state.defaultCurrency === 'CNY' ? 'selected' : ''}>CNY - 人民幣</option>
                                 <option value="MYR" ${state.defaultCurrency === 'MYR' ? 'selected' : ''}>MYR - 令吉</option>
                                 <option value="SGD" ${state.defaultCurrency === 'SGD' ? 'selected' : ''}>SGD - 新加坡幣</option>
+                                <option value="THB" ${state.defaultCurrency === 'THB' ? 'selected' : ''}>THB - 泰銖</option>
                             </select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
                         </div>
@@ -1730,7 +1748,8 @@
                         HKD: 1 / data.conversion_rates.HKD,
                         MYR: 1 / data.conversion_rates.MYR, // 增加馬來西亞
                         SGD: 1 / data.conversion_rates.SGD, // 增加新加坡
-                        TWD: 1 / data.conversion_rates.TWD,
+                        THB: 1 / data.conversion_rates.THB, // 增加泰銖
+                        TWD: 1 / data.conversion_rates.TWD
                     };
                     // 更新狀態並存入本地儲存
                     state.rates = newRates;
@@ -1822,6 +1841,49 @@
                 </div>
             `;
         }
+        // 常見問題 FAQ 
+        function renderFAQView(container) { 
+            const faqs = [
+                { q: "追星錢包會上架到APP商店嗎？", a: "目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！" },
+                { q: "如何加入主畫面？", a: "使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。" },
+                { q: "一鍵匯入匯出功能如何使用？", a: "使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨" },
+                { q: "如何查詢未到貨商品？", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" }
+            ];
+
+            container.innerHTML = `
+                <div class="p-6 pb-32">
+                    <div class="flex items-center gap-3 mb-8">
+                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
+                    </div>
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
+                    <div class="space-y-3 mb-10">
+                        ${faqs.map((faq, i) => `
+                            <div class="faq-item bg-white rounded-2xl p-4 card-shadow" onclick="toggleFaq(${i})">
+                                <div class="flex justify-between items-center cursor-pointer">
+                                    <h4 class="text-xs font-bold text-slate-700 pr-4">${faq.q}</h4>
+                                    <svg class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
+                                </div>
+                                <div class="faq-answer mt-2"><p class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="space-y-4">
+                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-slate-500 font-bold py-4 rounded-2xl text-center text-sm shadow-sm active:scale-[0.98] transition-all">
+                            📝 問題回報與功能許願
+                        </a>
+                    </div>
+                </div>`;
+        }
+
+        window.toggleFaq = (index) => {
+            const items = document.querySelectorAll('.faq-item');
+            items.forEach((item, i) => {
+                if (i === index) item.classList.toggle('active'); else item.classList.remove('active');
+            });
+        };
+
 
         /**
          * 4. 付款方式動態監聽
@@ -2010,6 +2072,7 @@
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
                                             <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
                                             <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
                                         <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
@@ -2062,6 +2125,7 @@
                 const defaultTime = "12:00";
                 const currentCats = getCurrentWishCategories();
                 let dropdownOptions = [...currentCats];
+                const hasDate = itemData?.releaseDate ? true : false; //是否有存日期
                 if (itemData) {
                     const exists = currentCats.includes(itemData.category);//願望清單直接比對字串
                     if (!exists) {
@@ -2074,7 +2138,7 @@
                 }
                 form.innerHTML = `<div class="space-y-4">
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格></label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end ml-1">
@@ -2091,6 +2155,7 @@
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
                                             <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
                                             <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
                                         <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
@@ -2104,11 +2169,31 @@
                             </div>
                         ` : ''}
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">發售日期</label><input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
-                        <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
+                    
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">記錄發售日期與時間</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="m-wish-date-toggle" class="sr-only peer" onchange="toggleWishDateInput(this.checked)" ${hasDate ? 'checked' : ''}>
+                                <div class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer 
+                                            peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
+                                            after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
+                                            after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-700">
+                                </div>
+                            </label>
+                        </div>
+                        <div id="wish-date-container" class="${hasDate ? '' : 'hidden'} grid grid-cols-2 gap-4 animate-enter">
+                            <div class="space-y-1 flex flex-col">
+                                <label class="text-[10px] font-bold text-slate-400">日期</label>
+                                <input type="date" id="m-release-date" value="${itemData?.releaseDate || today}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold">
+                            </div>
+                            <div class="space-y-1 flex flex-col">
+                                <label class="text-[10px] font-bold text-slate-400">時間</label>
+                                <input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold">
+                            </div>
+                        </div>
                     </div>
-                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
                     <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
                     <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                 </div>`;
@@ -2118,6 +2203,18 @@
             document.getElementById('modal-overlay').classList.remove('hidden');
             setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
         }
+
+    function toggleWishDateInput(show) {
+        const container = document.getElementById('wish-date-container');
+        if (container) container.classList.toggle('hidden', !show);
+         // 如果取消勾選，主動清空欄位值，確保 UI 與邏輯一致
+        if (!show) {
+            const dateInput = document.getElementById('m-release-date');
+            const timeInput = document.getElementById('m-release-time');
+            if (dateInput) dateInput.value = '';
+            if (timeInput) timeInput.value = '';
+        }
+    }
     function initQtyPicker() { //數量選擇
         const input = document.getElementById('m-qty');
         const list = document.getElementById('qty-options');
@@ -2204,13 +2301,15 @@
                 };
                 item.total = (item.price * item.qty) + item.shipping;
             } else { //心願模式
+                const recordDate = document.getElementById('m-wish-date-toggle').checked; //是否有勾選紀錄日期
                 item = { 
                     id: state.editingId || String(Date.now()), name: n, 
                     price: p,
                     currency: c,foreign_amount: pf || '',
                     category: document.getElementById('m-wish-cat').value, 
-                    releaseDate: document.getElementById('m-release-date').value, 
-                    releaseTime: document.getElementById('m-release-time').value, 
+                    // 儲存邏輯：若勾選才存入值，否則存入空字串
+                    releaseDate: recordDate ? document.getElementById('m-release-date').value : '', 
+                    releaseTime: recordDate ? document.getElementById('m-release-time').value : '',
                     remark: document.getElementById('m-remark').value || '', 
                     image: finalImageUrl
                 };
