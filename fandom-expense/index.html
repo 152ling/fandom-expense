@@ -502,7 +502,7 @@
             try {
                 // 修正：路徑增加 'main' 使其變為偶數對 (6層)
                 const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
-                await setDoc(userDoc, { expenses, wishlist }, { merge: true });
+                await setDoc(userDoc, { expenses, wishlist, catOrder: state.catOrder }, { merge: true });
             } catch (e) { console.error("Sync failed:", e); }
         },
         pull: async () => {
@@ -523,8 +523,10 @@
             if (data) {
                 state.expenses = data.expenses || state.expenses;
                 state.wishlist = data.wishlist || state.wishlist;
+                state.catOrder = data.catOrder || state.catOrder;
                 localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
                 localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
+                localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
             }
         }
         renderContent();
@@ -576,6 +578,7 @@
             hideAmount: JSON.parse(localStorage.getItem('fe_v11_hideAmount')) || false, //總金額隱藏狀態
             reportType: 'expense',
             categorySet: 'categories',//kpop/acgn
+            catOrder: JSON.parse(localStorage.getItem('fe_v11_catOrder')) || {},
             WishcategorySet:'wishCategories',
             rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1,THB:1},
             rateStatusText: '匯率已就緒',
@@ -637,8 +640,8 @@
             year: "消費年份", month: "消費月份",day:"消費日期", platform: "收物平台",
             arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
         };
-
-        const categories = [
+        const baseCategories = {
+            categories : [
             { id: '專輯', icon: '🎵', color: '#6366f1' },            
             { id: '小卡', icon: '✨', color: '#eab308' },               
             { id: '演唱會 / 見面會門票', icon: '🎫', color: '#f43f5e' },  
@@ -647,20 +650,43 @@
             { id: '會員費', icon: '🫧', color: '#8b5cf6' },             
             { id: '交通 / 住宿', icon: '✈️', color: '#10b981' },          
             { id: '其他追星支出', icon: '🌈', color: '#64748b' }           
-        ];
+            ],
+            categoriesACGN : [
+                { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        
+                { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          
+                { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          
+                { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       
+                { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        
+                { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          
+                { id: '一番賞', icon: '🎯', color: '#eab308' },              
+                { id: '聯名服飾', icon: '👕', color: '#22c55e' },             
+                { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, 
+                { id: '其他支出', icon: '📦', color: '#64748b' }             
+            ]
+        };
+        // const categories = [
+        //     { id: '專輯', icon: '🎵', color: '#6366f1' },            
+        //     { id: '小卡', icon: '✨', color: '#eab308' },               
+        //     { id: '演唱會 / 見面會門票', icon: '🎫', color: '#f43f5e' },  
+        //     { id: '周邊商品', icon: '💍', color: '#0ea5e9' },     
+        //     { id: '娃娃', icon: '🧸', color: '#f97316' },               
+        //     { id: '會員費', icon: '🫧', color: '#8b5cf6' },             
+        //     { id: '交通 / 住宿', icon: '✈️', color: '#10b981' },          
+        //     { id: '其他追星支出', icon: '🌈', color: '#64748b' }           
+        // ];
 
-        const categoriesACGN = [
-            { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        
-            { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          
-            { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          
-            { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       
-            { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        
-            { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          
-            { id: '一番賞', icon: '🎯', color: '#eab308' },              
-            { id: '聯名服飾', icon: '👕', color: '#22c55e' },             
-            { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, 
-            { id: '其他支出', icon: '📦', color: '#64748b' }             
-        ];
+        // const categoriesACGN = [
+        //     { id: '漫畫 / 輕小說', icon: '📖', color: '#6366f1' },        
+        //     { id: '立牌 / 吊飾', icon: '🪧', color: '#f59e0b' },          
+        //     { id: '小卡 / 色紙', icon: '🃏', color: '#d946ef' },          
+        //     { id: '明信片 / 海報', icon: '🖼️', color: '#ec4899' },       
+        //     { id: '徽章 / 壓克力', icon: '📍', color: '#0ea5e9' },        
+        //     { id: '公仔 / 娃娃', icon: '🧸', color: '#f97316' },          
+        //     { id: '一番賞', icon: '🎯', color: '#eab308' },              
+        //     { id: '聯名服飾', icon: '👕', color: '#22c55e' },             
+        //     { id: '活動門票 / 展覽 / 電影票', icon: '🎟️', color: '#f43f5e' }, 
+        //     { id: '其他支出', icon: '📦', color: '#64748b' }             
+        // ];
         const wishCategories = ["專輯", "周邊商品", "娃娃", "小卡","演唱會 / 見面會門票"];
         const wishCategoriesACGN = ["漫畫 / 輕小說", "立牌 / 吊飾", "小卡 / 色紙","明信片 / 海報","徽章 / 壓克力","公仔 / 娃娃","其他周邊"];
         const arrivalOptions = ['未到貨','待二補', '待出貨', '已取貨','已售出'];
@@ -670,8 +696,16 @@
         let touchStartY = 0;
         let isDragging = false;
         // 取得當前組別的分類陣列
+        // function getCurrentCategories() {
+        //     return state.categorySet === 'categories' ? categories : categoriesACGN;
+        // }
+
         function getCurrentCategories() {
-            return state.categorySet === 'categories' ? categories : categoriesACGN;
+            const set = state.categorySet;
+            const items = [...baseCategories[set]];
+            const order = state.catOrder[set];
+            if (!order) return items;
+            return items.sort((a, b) => (order.indexOf(a.id) === -1 ? 99 : order.indexOf(a.id)) - (order.indexOf(b.id) === -1 ? 99 : order.indexOf(b.id)));
         }
         function getCurrentWishCategories() {
             return state.WishcategorySet === 'wishCategories' ? wishCategories : wishCategoriesACGN;
@@ -932,6 +966,7 @@
                 else if (state.subPage === 'photowall') renderPhotoWall(container);
                 else if (state.subPage === 'version') renderVersionView(container);
                 else if (state.subPage === 'accountConfig') renderAccountConfig(container);
+                else if (state.subPage === 'catOrder') renderCategoryOrderView(container);
                 else if (state.subPage === 'faq') renderFAQView(container);
                 else renderSettings(container);
             }
@@ -1094,8 +1129,9 @@
                     </div>
                 </div>` 
             html += paginatedItems.map(item => {
-                const allCats = [...categories, ...categoriesACGN];
-                const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
+                // const allCats = [...categories, ...categoriesACGN];
+                // const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
+                const cat = [...baseCategories.categories, ...baseCategories.categoriesACGN].find(c => c.id === item.category) || {icon: '🌈', color: '#92A8D1'};
                 const isIncome = item.type === 'income';
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
@@ -1107,10 +1143,10 @@
                     </div>
                     <div class="flex gap-4" >
                         ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
-                        `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${catInfo.icon}</div>`}
+                        `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`}
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
-                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${catInfo.color}1A; color: ${catInfo.color};">${catInfo.icon} ${item.category}</span>
+                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon} ${item.category}</span>
                                 <span onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
                                  ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400">${item.month}月</span>` : ''}
                             </div>
@@ -1694,7 +1730,17 @@
                     </div>
                     ` : ''}
                     </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-3xl card-shadow" onclick="state.subPage='catOrder'; renderContent();">
+                            <div class="flex justify-between items-center cursor-pointer">
+                                <div><h3 class="text-sm font-bold text-slate-500 tracking-widest">調整分類順序</h3><p class="text-[10px] text-slate-400">自訂最常用的分類顯示在最前面</p></div>
+                                <span class="text-slate-300">▶</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
             </div>`;
         }
         function updateDefaultCurrency(val) {
@@ -1789,6 +1835,38 @@
             rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} ${state.defaultCurrency}`;
             rateTag.classList.add('text-brand');
         }
+        // --- 分類排序頁 ---
+        function renderCategoryOrderView(container) {
+            const currentCats = [...baseCategories[state.categorySet]];
+            const order = state.catOrder[state.categorySet] || currentCats.map(c => c.id);
+            const sorted = [...currentCats].sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8"><button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold">◀</button><h2 class="text-2xl font-black">排序分類</h2></div>
+                    <div class="bg-white rounded-3xl p-2 card-shadow">
+                        ${sorted.map((c, i) => `
+                            <div class="flex items-center justify-between p-4 border-b last:border-0">
+                                <span class="font-bold text-slate-700">${c.icon} ${c.id}</span>
+                                <div class="flex gap-2">
+                                    <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded ${i===0?'opacity-20':''}">▲</button>
+                                    <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded ${i===sorted.length-1?'opacity-20':''}">▼</button>
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>`;
+        }
+
+        function moveCat(id, dir) {
+            const set = state.categorySet;
+            let order = state.catOrder[set] || baseCategories[set].map(c => c.id);
+            const idx = order.indexOf(id);
+            const newIdx = idx + dir;
+            if(newIdx < 0 || newIdx >= order.length) return;
+            [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
+            state.catOrder[set] = order;
+            localStorage.setItem('fe_v11_catOrder', JSON.stringify(state.catOrder));
+            renderCategoryOrderView(document.getElementById('main-content'));
+        }
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
@@ -1841,6 +1919,7 @@
                 </div>
             `;
         }
+
         // 常見問題 FAQ 
         function renderFAQView(container) { 
             const faqs = [
