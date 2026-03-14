@@ -7,6 +7,49 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         t.textContent = msg; t.classList.add("show");
         setTimeout(() => t.classList.remove("show"), 2000);
     }
+    /**滑動關閉編輯邏輯 */
+        let touchStartY = 0;
+        let isDragging = false;
+    export    function initSwipeToClose() {
+            const container = document.getElementById('action-modal-container');
+            const overlay = document.getElementById('action-modal-overlay');
+            
+            container.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                isDragging = true;
+                container.classList.add('dragging');
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - touchStartY;
+                
+                if (deltaY > 0) { // 只有向下劃時有反應
+                    container.style.transform = `translateY(${deltaY}px)`;
+                    // 背景透明度隨滑動距離變淡
+                    const opacity = Math.max(0, 0.6 - (deltaY / 500));
+                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`;
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                container.classList.remove('dragging');
+                
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - touchStartY;
+
+                if (deltaY > 120) { // 滑動門檻：120px
+                    closeActionModal();
+                } else {
+                    // 彈回原位
+                    container.style.transform = 'translateY(0)';
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                }
+            });
+        }
         /**
          * 3. 導覽與渲染
          */
@@ -201,6 +244,19 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
 
             container.innerHTML = html;
         }
+        function getStatusClass(s) {
+            if (s === '未到貨') return 'status-unArrived';
+            if (s === '待二補') return 'status-freight';
+            if (s === '待出貨') return 'status-toShip';
+            if (s === '已售出') return 'status-soldout';
+            return 'status-received';
+        }
+        export function handlePaymentChange(val) {
+            const amountContainer = document.getElementById('paid-amount-container');
+            if (amountContainer) {
+                amountContainer.classList.toggle('hidden', val !== '已付訂金');
+            }
+        }
         // 換頁函式
         export function changePage(delta) {
             state.currentPage += delta;
@@ -209,6 +265,37 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             const main = document.getElementById('main-content');
             if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        
+        export function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
+
+              
+        //燈箱與切換
+        export function openLightbox(imgs, name, sub) {
+            if (!imgs || imgs.length === 0) return;
+            state.lightbox = { images: imgs, index: 0 };
+            document.getElementById('lightbox-name').textContent = name;
+            document.getElementById('lightbox-sub').textContent = sub;
+            updateLightboxUI();
+            document.getElementById('lightbox-overlay').classList.remove('hidden');
+        }
+        function updateLightboxUI() {
+            const lb = state.lightbox;
+            document.getElementById('lightbox-img').src = lb.images[lb.index];
+            const isMulti = lb.images.length > 1;
+            document.getElementById('lightbox-dots').innerHTML = isMulti
+                ? lb.images.map((_, i) => `
+                    <div class="w-1.5 h-1.5 rounded-full ${i === lb.index ? 'bg-white' : 'bg-white/30'}"></div>
+                `).join('')
+                : '';
+            document.getElementById('lb-prev').classList.toggle('hidden', !isMulti);
+            document.getElementById('lb-next').classList.toggle('hidden', !isMulti);
+        }
+
+        export function changeLightboxImg(dir) {
+            state.lightbox.index = (state.lightbox.index + dir + state.lightbox.images.length) % state.lightbox.images.length;
+            updateLightboxUI();
+        }
+        export function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
 
         export function openAddModal(itemData = null) {
             state.editingId = (itemData?.id && !itemData?.isCopy) ? String(itemData.id) : null;
@@ -462,7 +549,76 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             document.getElementById('modal-overlay').classList.remove('hidden');
             setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
         }
+    export function initQtyPicker() { //數量選擇
+        const input = document.getElementById('m-qty');
+        const list = document.getElementById('qty-options');
+        const toggle = document.getElementById('qty-toggle');
+        const arrow = toggle.querySelector('svg');
+        list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-slate-50 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
+        const toggleShow = (show) => { list.classList.toggle('hidden', !show); arrow.style.transform = show ? 'rotate(180deg)' : 'rotate(0deg)'; };
+        input.addEventListener('focus', () => toggleShow(true));
+        toggle.onclick = (e) => { e.stopPropagation(); toggleShow(list.classList.contains('hidden')); };
+        list.querySelectorAll('li').forEach(li => { li.onclick = () => { input.value = li.dataset.val; toggleShow(false); }; });
+        document.addEventListener('click', (e) => { if (!document.getElementById('qty-combobox')?.contains(e.target)) toggleShow(false); }, { once: true });
+    }
 
+            //--- 圖片預覽3張與處理 ---
+    export function updateImagePreviewUI() {
+            const container = document.getElementById('img-preview-row');
+            if (!container) return;
+            // 核心防呆：確保變數一定是陣列，避免 forEach 讀取 undefined
+            const urls = state.tempImages || [];
+            const b64s = state.tempImageBase64 || [];
+            
+            let html = '';
+            // 渲染已儲存的 URL
+            urls.forEach((src, i) => {
+                html += `
+                    <div class="img-preview-chip">
+                        <img src="${src}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeImg(${i}, 'url')" class="img-delete-btn">✕</button>
+                    </div>`;
+            });
+            // 渲染新選取的 Base64
+            b64s.forEach((b64, i) => {
+                html += `
+                    <div class="img-preview-chip opacity-80">
+                        <img src="${b64}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeImg(${i}, 'b64')" class="img-delete-btn">✕</button>
+                    </div>`;
+            });
+
+            // 如果沒滿，顯示增加按鈕
+            if (urls.length + b64s.length < 3) {
+                html += `
+                    <div onclick="document.getElementById('m-img-input').click()" class="flex-shrink-0 w-20 h-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-300 text-2xl">＋</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        export function removeImg(idx, type) {
+            if (type === 'url') state.tempImages.splice(idx, 1);
+            else state.tempImageBase64.splice(idx, 1);
+            updateImagePreviewUI();
+        }
+
+    export function openActionModal(e, type, id) { //共用編輯彈窗
+            e.stopPropagation();
+            state.actionTarget = { type, id };
+            
+            const convertBtn = document.getElementById('action-convert-btn');
+            if (convertBtn) {
+                // 如果點擊的是「心願清單 (wish)」，才顯示轉換按鈕
+                if (type === 'wish') {
+                    convertBtn.classList.remove('hidden');
+                } else {
+                    convertBtn.classList.add('hidden');
+                }
+            }
+            
+            // 呼叫動畫開啟
+            openModalAnimation('action-modal-overlay', 'action-modal-container');
+        }
         export function openModalAnimation(overlayId, containerId) {
             const overlay = document.getElementById(overlayId);
             const container = document.getElementById(containerId);
@@ -582,6 +738,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             // 渲染完 HTML 後，填充分類列
             renderWishCatBar();
         }
+
         export function renderWishCatBar() { // 渲染分類按鈕
             const bar = document.getElementById('wish-cat-bar');
             const currentCats = getCurrentWishCategories();
@@ -607,6 +764,889 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         export function getCurrentWishCategories() {
             return state.WishcategorySet === 'wishCategories' ? wishCategories : wishCategoriesACGN;
         }
+        export function toggleWishDateInput(show) {
+            const container = document.getElementById('wish-date-container');
+            if (container) container.classList.toggle('hidden', !show);
+            // 如果取消勾選，主動清空欄位值，確保 UI 與邏輯一致
+            if (!show) {
+                const dateInput = document.getElementById('m-release-date');
+                const timeInput = document.getElementById('m-release-time');
+                if (dateInput) dateInput.value = '';
+                if (timeInput) timeInput.value = '';
+            }
+        }
+
+        function renderTagAndCatBar() {
+            const catBar = document.getElementById('cat-bar'); 
+            if (!catBar) return;
+            const currentCats = getCurrentCategories();
+            // --- 第一層：分類 (Categories) 渲染 ---
+            catBar.innerHTML = currentCats.map(cat => {
+                const isActive = state.selectedCategory === cat.id;
+                return `
+                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
+                                state.currentPage=1;            
+                                renderTagAndCatBar(); 
+                                renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                        class="chip ${isActive ? 'active-cat text-white' : ''}" 
+                        style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
+                        ${cat.icon} ${cat.id.split(' ')[0]}
+                    </div>`;
+            }).join('');
+
+            // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
+            const tagBar = document.getElementById('tag-bar');
+            if (!tagBar) return;
+
+            //同時過濾 年份、月份 以及 分類
+            const filteredExpensesForTags = state.expenses.filter(ex => {
+                // 1. 檢查年份與月份是否符合目前的選擇   
+                const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
+               // 2. 檢查分類是否符合目前的選擇
+                const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
+                
+                return dateMatch && catMatch;
+         });
+
+        // 2. 提取這些紀錄中不重複的標籤
+            const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
+
+            // 3. 渲染標籤列
+            if (relevantTags.length === 0) {
+                tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
+            } else {
+                tagBar.innerHTML = relevantTags.map(tag => {
+                    const isActive = state.searchKeyword === tag;
+                    return `
+                        <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
+                                    state.currentPage=1;            
+                                    renderTagAndCatBar(); 
+                                    renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                            class="chip ${isActive ? 'active-tag' : ''}">
+                            #${tag}
+                        </div>`;
+                }).join('');
+            }
+        }
+        function quickFilter(type, value) {
+            const input = document.querySelector('input[placeholder*="搜尋"]');
+            
+            if (type === 'category') {
+                state.selectedCategory = value;
+            } else {
+                state.searchKeyword = value;
+                if (input) input.value = value;
+            }
+            state.currentPage = 1; // 重設分頁
+            // 執行渲染：更新分類列與清單內容
+            renderTagAndCatBar(); 
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
+
+        // --- 財務報表 ---
+        function changeReportType(type) {
+            state.reportType = type;
+            renderContent(); // 重新渲染報表
+        }
+        function renderReport(container) {
+            const rangeData = calculateReportRange();
+            const currentCats = getCurrentCategories();
+            const currentCatIds = currentCats.map(c => c.id);
+            // 1. 過濾出該時段的所有紀錄
+            const periodRecords = state.expenses.filter(ex => {
+                const d = new Date(ex.year, ex.month - 1);
+                const dateMatch = d >= rangeData.start && d <= rangeData.end;
+                const categoryMatch = currentCatIds.includes(ex.category);
+                return dateMatch && categoryMatch;
+            });
+
+            // 2. 基本金額計算
+            const totalExp = periodRecords.filter(i => i.type !== 'income').reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+            const totalInc = periodRecords.filter(i => i.type === 'income').reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+            const netBalance = totalExp - totalInc;
+
+            // 3. 判斷目前的報表模式 (expense / income / net)
+            const reportMode = (totalInc > 0) ? (state.reportType || 'expense') : 'expense';
+            let stats = [];
+            let chartTitle = "";
+            let centerAmount = 0;
+
+            if (reportMode === 'net') {
+                // --- 淨支出模式：顯示 支出 vs 收入 的對比 ---
+                chartTitle = "淨支出";
+                centerAmount = netBalance;
+                stats = [
+                    { id: '總支出', amount: totalExp, color: '#92A8D1', icon: '💸' },
+                    { id: '總收入', amount: totalInc, color: '#10b981', icon: '💰' }
+                ].filter(s => s.amount > 0);
+            } else {
+                // --- 支出或收入模式：顯示詳細分類 ---
+                const isInc = reportMode === 'income';
+                const targetRecords = periodRecords.filter(i => (isInc ? i.type === 'income' : i.type !== 'income'));
+                chartTitle = isInc ? "總收入" : "總支出";
+                centerAmount = isInc ? totalInc : totalExp;
+                const currentCats = getCurrentCategories();
+                stats = currentCats.map(cat => ({
+                    ...cat,
+                    amount: targetRecords
+                        .filter(ex => ex.category === cat.id)
+                        .reduce((sum, item) => sum + (Number(item.total) || 0), 0)
+                })).filter(s => s.amount > 0).sort((a, b) => b.amount - a.amount);
+            }
+
+            const formatAmt = (num) => state.hideAmount ? '•••' : num.toLocaleString();
+            
+            container.innerHTML = `
+                <div class="p-6">
+                    <h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
+                    
+                    <div class="flex flex-col gap-4 mb-8">
+                        <div class="flex bg-slate-200/50 p-1 rounded-2xl">
+                            ${['month', '6months', 'year'].map(r => `
+                                <button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange === r ? 'active' : ''}">
+                                    ${r === 'month' ? '月' : r === 'year' ? '年' : '近 6 個月'}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl card-shadow">
+                            <button onclick="shiftRange(-1)" class="p-2 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
+                            <span class="text-sm font-black text-slate-700">${rangeData.label}</span>
+                            <button onclick="shiftRange(1)" class="p-2 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button>
+                        </div>
+                    </div>
+                    ${totalInc > 0 ? `
+                        <div class="grid grid-cols-3 gap-3 mb-8">
+                            <div onclick="changeReportType('expense')" 
+                                class="cursor-pointer transition-all ${reportMode === 'expense' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
+                                <p class="text-[9px] font-bold ${reportMode === 'expense' ? 'text-white' : 'text-slate-400'} uppercase mb-1">總支出</p>
+                                <p class="text-sm font-black ${reportMode === 'expense' ? 'text-white' : 'text-slate-700'}">$${formatAmt(totalExp)}</p>
+                            </div>
+                            <div onclick="changeReportType('income')" 
+                                class="cursor-pointer transition-all ${reportMode === 'income' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
+                                <p class="text-[9px] font-bold ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'} uppercase mb-1">總收入</p>
+                                <p class="text-sm font-black ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'}">+$${formatAmt(totalInc)}</p>
+                            </div>
+                            <div onclick="changeReportType('net')" 
+                                class="cursor-pointer transition-all ${reportMode === 'net' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
+                                <p class="text-[9px] font-bold ${reportMode === 'net' ? 'text-white' : 'text-slate-400'} uppercase mb-1">淨支出</p>
+                                <p class="text-sm font-black ${reportMode === 'net' ? 'text-white' : 'text-slate-700'}">$${formatAmt(netBalance)}</p>
+                            </div>
+                        </div>
+                    ` : ``
+                    }
+
+                    ${stats.length > 0 ? `
+                        <div class="bg-white rounded-3xl p-6 card-shadow mb-8 relative">
+                            <div class="w-full max-w-[240px] mx-auto relative">
+                                <canvas id="donutChart"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${chartTitle}</span>
+                                    <span class="text-xl font-black text-slate-800">$${formatAmt(centerAmount)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">
+                                ${reportMode === 'net' ? '收支平衡分析' : (reportMode === 'income' ? '收入來源排名' : '支出佔比排名')}
+                            </h3>
+                            ${stats.map(s => { 
+                                const p = ((s.amount / (reportMode === 'net' ? (totalExp + totalInc) : centerAmount)) * 100).toFixed(1); 
+                                return `
+                                    <div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}">
+                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-sm font-bold text-slate-700">${s.id}</span>
+                                                <span class="text-xs font-black text-slate-400">${p} %</span>
+                                            </div>
+                                            <div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden">
+                                                <div class="h-full rounded-full transition-all duration-1000" style="width:${p}%; background-color:${s.color}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right flex-shrink-0 font-black text-slate-800">$${formatAmt(s.amount)}</div>
+                                    </div>`; 
+                            }).join('')}
+                        </div>
+                    ` : `
+                        <div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">
+                            目前時段尚無數據可分析
+                        </div>
+                    `}
+                </div>`;
+
+            if (stats.length > 0) initChart(stats);
+        }
+        /*** 報表範圍切換 (月/半年/年)*/
+        function changeReportRange(range) {
+            state.reportRange = range;
+            state.reportOffset = 0; // 切換時重設偏移量
+            renderContent();
+        }
+
+        //報表時間軸前後移動
+        function shiftRange(delta) {
+            state.reportOffset += delta;
+            renderContent();
+        }
+        
+        function calculateReportRange() {
+            let start, end, label; const now = new Date();
+            if (state.reportRange === 'month') { start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1); end = new Date(start.getFullYear(), start.getMonth() + 1, 0); label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; }
+            else if (state.reportRange === '6months') { end = new Date(now.getFullYear(), now.getMonth() + state.reportOffset + 1, 0); start = new Date(end.getFullYear(), end.getMonth() - 5, 1); label = `${start.getFullYear()}.${start.getMonth()+1} ～ ${end.getFullYear()}.${end.getMonth()+1}`; }
+            else { start = new Date(now.getFullYear() + state.reportOffset, 0, 1); end = new Date(start.getFullYear(), 11, 31); label = `${start.getFullYear()} 年度報告`; }
+            return { start, end, label };
+        }
+        let myChart = null;
+        function initChart(stats) {
+            const ctx = document.getElementById('donutChart'); if (!ctx) return;
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, { type: 'doughnut', data: { labels: stats.map(s => s.id), datasets: [{ data: stats.map(s => s.amount), backgroundColor: stats.map(s => s.color), borderWidth: 0 }] }, options: { cutout: '75%', plugins: { legend: { display: false } } } });
+        }
+
+        //設定
+        function renderSettings(container) {
+            const user = state.user;
+            container.innerHTML = `
+            <div class="p-6 h-screen"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
+                <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4 ">
+                    <div class="w-12 h-12 rounded-full overflow-hidden bg-slate-50 border-2 border-brand/20 flex items-center justify-center">
+                        ${state.user 
+                        ? `<img src="${state.user.photoURL}" class="w-full h-full object-cover" alt="使用者頭像">` 
+                        : `<span class="text-xl">👤</span>`}
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-slate-800 text-sm">
+                        ${state.user ? (state.user.displayName || 'Google 用戶') : '訪客模式'}
+                        </h4>
+                        <p class="text-[10px] text-slate-400">
+                        ${state.user ? '雲端資料已同步 ☁️' : '登入後開啟雲端備份'}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        ${state.user 
+                        ? `<button onclick="window.cloud.logout()" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-2 rounded-xl active:scale-95 transition-all">登出</button>` 
+                        : `<button onclick="window.cloud.login()" class="text-xs bg-brand text-white font-bold px-4 py-2 rounded-xl shadow-md active:scale-95 transition-transform">登入</button>`}
+                    </div>
+                    </div>
+                <div class="bg-white rounded-3xl overflow-hidden card-shadow">
+                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+                    <div onclick="runStorageCleanup()" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/>
+                            </svg>
+                            <span class="font-bold text-slate-700">清理冗餘圖檔</span>
+                        </div><span>▶</span>
+                    </div>  
+                    <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="font-bold text-slate-700">帳本與功能設定</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-300 font-bold">${state.categorySet === 'categories' ? 'KPOP' : 'ACGN'}${state.enableExchange ? ' / 匯率開' : ''}</span>
+                            <span>▶</span>
+                        </div>
+                    </div>              
+                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v8.0</span><span>▶</span></div>
+                    </div>
+                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">常見問題與幫助</span></div>
+                        <div class="flex items-center gap-2"><span>▶</span></div>
+                    </div>
+
+                </div>
+                        
+
+            </div>
+                `;
+        }
+
+        //我的照片牆
+        function renderPhotoWall(container) {
+            const isWishWall = state.photoWallTab === 'wish';
+            // 根據標籤決定資料來源與分類清單
+            const dataSource = isWishWall ? state.wishlist : state.expenses;
+            const BuyCats = getCurrentCategories();
+            const WishCats = getCurrentWishCategories();
+            const currentCats = isWishWall ? WishCats : BuyCats.map(c => c.id);
+
+            // 取得有照片的資料並過濾分類
+            let photos = dataSource.filter(i => i.image && i.type !== 'income');
+            if (state.photoFilterCat && state.photoFilterCat !== '') {
+                photos = photos.filter(p => p.category === state.photoFilterCat);
+            }
+            photos.sort((a, b) => 
+                Number(b.year) - Number(a.year) ||
+                Number(b.month) - Number(a.month) ||
+                Number(b.day || 1) - Number(a.day || 1) ||
+                Number(b.id) - Number(a.id)
+            );
+
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center gap-3 mb-2">
+                        <div class="flex items-center gap-3 mb-2">
+                            <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                            </button>
+                            <h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
+                        </div>
+                    </div>
+
+                    <div class="flex border-b border-gray-100 mb-2">
+                        <button onclick="state.photoWallTab='purchased';state.photoFilterCat='';renderContent()" 
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button>
+                        <button onclick="state.photoWallTab='wish';state.photoFilterCat='';renderContent()" 
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button>
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
+                        <div onclick="state.photoFilterCat='';renderContent()" 
+                            class="chip ${state.photoFilterCat === '' ? 'active-tag' : ''}">全部</div>
+                        ${currentCats.map(c => `
+                            <div onclick="state.photoFilterCat='${c}';renderContent()" 
+                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}">${c.split(' ')[0]}</div>
+                        `).join('')}
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">
+                        ${photos.length > 0 ? photos.map(item => `
+                            <div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
+                                class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
+                                <img src="${item.image}" class="w-full h-full object-cover">
+                            </div>
+                        `).join('') : `
+                            <div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
+                        `}
+                    </div>
+                </div>`;
+             // 修正：渲染完後，自動將啟動中的 Chip 捲動到可視範圍
+            requestAnimationFrame(() => {
+                const activeChip = container.querySelector('.active-tag');
+                if (activeChip) {
+                    activeChip.scrollIntoView({
+                        behavior: 'auto', // 直接切換
+                        inline: 'center',   // 將該元素置中顯示
+                        block: 'nearest'    // 垂直方向不變
+                    });
+                }
+            });
+        }
+
+        // --- 外觀設定 ---
+        function renderAppearanceView(container) {
+            const presets = [
+                {name:'粉藍', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
+                {name:'幻紫', c:'#BB96FF'},
+                {name:'沁藍', c:'#69C4E0'},
+                {name:'螢綠', c:'#B6ED00'},
+                {name:'極光', c:'#6C3591'},
+                {name:'熠金', c:'#E2B216'}
+            ];
+            const currentHex = (state.themeColor && state.themeColor.startsWith('#')) ? state.themeColor : '';
+            const isCustomGrad = state.themeColor.includes('gradient') && state.themeColor !== 'svt';
+            const btnGrad = isCustomGrad ? state.themeColor : 'linear-gradient(135deg, #FEBEBE 0%,#85D0FF 100%)';
+            container.innerHTML = `
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-8">
+                            <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                            </button>
+                            <h2 class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2>
+                        </div>
+                        
+                        <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800">
+                            <div class="flex mb-6 justify-between">
+                                <h3 class="text-sm font-bold text-slate-500 tracking-wide">選擇預設主題</h3>
+                                <div class="flex justify-center border-slate-50">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="grad-dark-toggle" class="sr-only peer" onchange="toggleDarkMode(this.checked)" ${document.body.classList.contains('dark-mode') ? 'checked' : ''}>
+                                        <div class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer 
+                                                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
+                                                    after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
+                                                    after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all 
+                                                    peer-checked:bg-slate-700"></div>
+                                        
+                                        <span class="select-none text-sm font-bold text-slate-500">深色模式</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 gap-y-8 gap-x-4 place-items-center mb-10">
+                                ${presets.map(p => `
+                                    <div class="flex flex-col items-center gap-2">
+                                        <div onclick="applyTheme('${p.c}');renderContent()" 
+                                            class="color-preset ${state.themeColor===p.c?'active':''}" 
+                                            style="background:${p.g || p.c}"></div>
+                                        <span class="text-[10px] font-bold text-slate-400">${p.name}</span>
+                                    </div>
+                                `).join('')}
+                                <div class="flex flex-col items-center gap-2">
+                                    <input type="color" onchange="applyTheme(this.value);renderContent()" 
+                                        value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" 
+                                        class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm">
+                                    <span class="text-[10px] font-bold text-slate-400">滴管選色</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-2">
+                                    <div onclick="openGradModal()" 
+                                        class="color-preset flex items-center justify-center text-white text-[10px] font-bold ${state.themeColor.includes('gradient') && state.themeColor!=='svt'?'active':''}" 
+                                        style="background:white">🎨</div>
+                                    <span class="text-[10px] font-bold text-slate-400">自訂漸層</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 pt-6 border-t border-slate-50">
+                                <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">輸入自訂色碼</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" id="custom-hex-input" placeholder="#RRGGBB" 
+                                        value="${currentHex}"
+                                        class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-2xl px-4 py-3 text-sm outline-none font-mono text-slate-700">
+                                    <button onclick="applyHexColor()" 
+                                            class="bg-brand text-white font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">
+                                        套用
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-slate-300 mt-2 ml-1">請輸入包含 # 的六位數色碼，例如 #92A8D1</p>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+        export function toggleDarkMode(isDark) {
+            // 套用目前的顏色，但傳入新的深淺設定
+            applyTheme(state.themeColor, isDark);
+            showToast(isDark ? "深色模式已開啟" : "深色模式已關閉");
+        }
+        export function applyHexColor() {
+            const hexInput = document.getElementById('custom-hex-input');
+            const color = hexInput.value.trim();
+            
+            // 驗證格式是否為有效的 Hex 色碼 (例如 #FFFFFF 或 #FFF)
+            const isHex = /^#([A-Fa-f0-9]{3}){1,2}$/.test(color);
+            
+            if (isHex) {
+                applyTheme(color);
+                renderContent();
+                showToast("已更換自訂主題色！");
+            } else {
+                showToast("格式錯誤！請輸入如 #92A8D1 的色碼");
+            }
+        }
+                //漸層工具
+        // 同步：輸入文字框 -> 色盤
+        export function syncGradInput(id) {
+            const inputEl = document.getElementById(`${id}-hex`);
+            let hex = inputEl.value.trim();
+            // 1. 自動補井字號
+            if (hex.length > 0 && !hex.startsWith('#')) {
+                hex = '#' + hex;
+                inputEl.value = hex;
+            }
+            const isValid = /^#[0-9A-F]{6}$/i.test(hex);
+
+            if (isValid) {
+                document.getElementById(`${id}-picker`).value = hex;
+                inputEl.style.borderColor = 'transparent'; // 移除紅框
+                updateGradPreview();
+            } else {// 如果長度已經夠了(7碼)但格式不對，或是輸入中
+                if (hex.length >= 7) {
+                    inputEl.style.borderColor = '#ef4444'; 
+                } else {
+                    inputEl.style.borderColor = 'transparent';
+                }
+            }
+        }
+
+        // 同步：色盤 -> 輸入文字框
+        export function syncGradPicker(id) {
+            const val = document.getElementById(`${id}-picker`).value;
+            document.getElementById(`${id}-hex`).value = val.toUpperCase();
+            updateGradPreview();
+        }
+
+        // 更新預覽區
+        function updateGradPreview() {
+            const c1 = document.getElementById('g1-picker').value;
+            const c2 = document.getElementById('g2-picker').value;
+            document.getElementById('grad-preview-box').style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+        }
+
+        // 開啟並初始化彈窗
+        export function openGradModal() {
+            // 1. 顯示彈窗
+            document.getElementById('grad-modal').classList.remove('hidden');
+            
+            // 2. 設定預設值 (避免沒抓到顏色時報錯)
+            let color1 = "#F7CAC9"; 
+            let color2 = "#92A8D1"; 
+
+            // 3. 根據目前的狀態 state.themeColor 解析顏色
+            if (state.themeColor.includes('gradient') && state.themeColor !== 'svt') {
+                // 如果是自訂漸層，用正則表達式抓取色碼
+                const matchedColors = state.themeColor.match(/#[A-Fa-f0-9]{3,6}/g);
+                if (matchedColors && matchedColors.length >= 2) {
+                    color1 = matchedColors[0];
+                    color2 = matchedColors[1];
+                }
+            } else if (state.themeColor === 'svt') {
+                color1 = "#F7CAC9";
+                color2 = "#92A8D1";
+            } else if (state.themeColor.startsWith('#')) {
+                // 如果是純色，起始設為該色，結束設為白色
+                color1 = state.themeColor;
+                color2 = "#FFFFFF";
+            }
+            document.getElementById('g1-hex').value = color1.toUpperCase();
+            document.getElementById('g1-picker').value = color1;
+            document.getElementById('g2-hex').value = color2.toUpperCase();
+            document.getElementById('g2-picker').value = color2;
+            // 新增：偵測 body 是否有 dark-mode class，有的話就把開關打勾
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('grad-dark-toggle').checked = isDark;
+            updateGradPreview();
+        }
+
+    export function saveGrad() {
+            const c1 = document.getElementById('g1-picker').value;
+            const c2 = document.getElementById('g2-picker').value;
+            const grad = `linear-gradient(135deg, ${c1}, ${c2})`;
+            const isDark = document.getElementById('grad-dark-toggle').checked;
+            // 套用主題，多傳一個 isDark 參數
+            applyTheme(grad, isDark);
+            document.getElementById('grad-modal').classList.add('hidden');
+            renderContent();
+            showToast("漸層已更新！");
+        }
+
+        //應用主題顏色
+    export function applyTheme(color, isDarkMode = null) {
+            state.themeColor = color;
+            const root = document.documentElement;
+            const body = document.body;
+
+            // --- 深色模式判斷邏輯 ---
+            let targetDark;
+            
+            if (isDarkMode !== null) {
+                // 如果有從 saveGrad 傳進來 (true 或 false)，就用傳進來的
+                targetDark = isDarkMode;
+            } else {
+                // 如果是點擊「粉藍」或其他預設顏色（只傳一個參數時），就讀取原本存的狀態
+                targetDark = localStorage.getItem('fe_v11_darkMode') === 'true';
+            }
+
+            localStorage.setItem('fe_v11_darkMode', targetDark);
+            if (targetDark) {
+                body.classList.add('dark-mode');
+            } else {
+                body.classList.remove('dark-mode');
+            }
+
+            if (color === 'svt') {
+                root.style.setProperty('--brand-color', '#92A8D1');
+                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)');
+            } else if (color.includes('gradient')) {
+                root.style.setProperty('--brand-gradient', color);
+                const match = color.match(/#[A-Fa-f0-9]{6}/);
+                root.style.setProperty('--brand-color', match ? match[0] : '#92A8D1');
+            } else {
+                root.style.setProperty('--brand-color', color);
+                root.style.setProperty('--brand-gradient', color);
+            }
+            localStorage.setItem('fe_v11_theme', color);
+        }
+
+
+        // 通用確認工具，會回傳 true 或 false
+        function askUser(title, desc, icon = '💸') {
+            const overlay = document.getElementById('common-confirm-overlay');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-desc').textContent = desc;
+            document.getElementById('confirm-icon').textContent = icon;
+            
+            // 根據圖示自動調整背景色（如果是垃圾桶就變紅色系，否則用品牌色）
+            const iconBg = document.getElementById('confirm-icon');
+            if (icon === '🗑️') {
+                iconBg.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            } else {
+                iconBg.className = "w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            }
+
+            overlay.classList.remove('hidden');
+
+            return new Promise((resolve) => {
+                document.getElementById('confirm-btn-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
+                document.getElementById('confirm-btn-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
+            });
+        }
+
+        // 顯示/隱藏金額函數
+        async function toggleAmountVisibility() {
+            // 關鍵邏輯：如果是 true (要顯示)，就等待彈窗回傳。如果使用者按取消 (!true)，就中斷
+            if (state.hideAmount && !(await askUser("確定要顯示金額嗎？", "顯示後將可查看完整的消費明細與總計。"))) {
+                return;
+            }
+            state.hideAmount = !state.hideAmount;
+            localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount));
+            renderContent();
+        }
+
+        // --- 數據匯入與匯出 ---
+        function renderBackupView(container) {
+            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
+                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料<br>⚠️匯入後會覆蓋現有資料並清除圖片</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
+        }
+        export function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const headers = Object.values(excelHeaderMap);
+            //const rows = state.expenses.map(i => { return Object.keys(excelHeaderMap).map(engKey => { let val = i[engKey]; if (engKey === 'tags' && Array.isArray(val)) return val.join(','); return (val !== undefined && val !== null) ? val : ""; }); });
+            const sortedExpenses = [...state.expenses].sort((a, b) =>
+                Number(a.year) - Number(b.year) ||
+                Number(a.month) - Number(b.month) ||
+                Number((a.day ?? 1)) - Number((b.day ?? 1)) ||
+                Number(a.id) - Number(b.id)
+            );
+            const rows = sortedExpenses.map(i => { 
+                return Object.keys(excelHeaderMap).map(engKey => { 
+                    let val = i[engKey]; 
+                    if (engKey === 'type') {
+                        return (val === 'income') ? '售出' : '支出';
+                    }
+                    if (engKey === 'day' && val == null) {
+                        val=1;
+                    }
+                    // 如果欄位是標籤且為陣列，則用逗號合併為字串
+                    if (engKey === 'tags' && Array.isArray(val)) return val.join(', '); 
+                    if (engKey === 'paidAmount') {
+                        if (i.paymentMethod !== '已付訂金') {
+                            return i.total;
+                        }
+                    };
+                    return (val !== undefined && val !== null) ? val : ""; 
+                }); 
+            });
+            const wsExp = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            XLSX.utils.book_append_sheet(wb, wsExp, "消費清單");
+            XLSX.writeFile(wb, `追星記帳_備份_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+    export async function importFromExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const confirmed = await askUser(
+            "確定要匯入資料嗎？", 
+            "注意：匯入 Excel 會「完全覆蓋」目前的消費清單，原本的舊資料將會消失。建議匯入前先執行一次匯出備份。", 
+            "⚠️"
+        );
+
+        // 2. 如果使用者點擊取消，則清空輸入框並中斷執行
+        if (!confirmed) {
+            input.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                if (!workbook.SheetNames.includes("消費清單")) {
+                    showToast("找不到「消費清單」工作表");
+                    return;
+                }
+
+                const worksheet = workbook.Sheets["消費清單"];
+                const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                if (aoa.length < 1) {
+                    showToast("檔案為空");
+                    return;
+                }
+
+                const fileHeaders = aoa[0].map(h => String(h || "").trim());
+                const nameIdx = fileHeaders.indexOf("項目名稱");
+                if (nameIdx === -1) {
+                    showToast("找不到「項目名稱」欄位");
+                    return;
+                }
+
+                // 準備預設值
+                const now = new Date();
+                const defaultYear = now.getFullYear();
+                const defaultMonth = now.getMonth();//前一個月
+                const defaultDay = 1;
+
+                const importedData = [];
+
+                for (let r = 1; r < aoa.length; r++) {
+                    const row = aoa[r];
+                    if (!row[nameIdx]) continue; // 如果沒有項目名稱則跳過
+
+                    let item = { id: String(Date.now() + r), image: null };
+
+                    Object.keys(excelHeaderMap).forEach(engKey => {
+                        const chiKey = excelHeaderMap[engKey];
+                        const colIdx = fileHeaders.indexOf(chiKey);
+                        let val = colIdx > -1 ? row[colIdx] : undefined;
+
+                        // 檢查值是否有效（非空且非 undefined）
+                        const isEmpty = (val === undefined || val === null || String(val).trim() === "");
+                        if (engKey === 'type') {
+                            const typeStr = String(val || "").trim();
+                            if (typeStr === '售出' || typeStr === 'income') {
+                                item[engKey] = 'income';
+                            } else {
+                                item[engKey] = 'expense';
+                            }
+                        }
+                        else if (engKey === 'tags') {
+                            item[engKey] = isEmpty ? [] : String(val).split(',').map(t => t.trim());
+                        } 
+                        else if (engKey === 'qty') {// 數量預設為 1
+                            item[engKey] = isEmpty ? 1 : (Number(val) || 1);
+                        } 
+                        else if (engKey === 'year') {// 年份預設為當前年份
+                            item[engKey] = isEmpty ? defaultYear : Number(val);
+                        } 
+                        else if (engKey === 'month') { // 無月份則預設為前一個月
+                            item[engKey] = isEmpty ? defaultMonth : Number(val);
+                        } 
+                        else if (engKey === 'day') {
+                            item[engKey] = isEmpty ? defaultDay : Number(val);
+                        } 
+                        else if (engKey === 'category') { // 分類預設
+                            item[engKey] = isEmpty ? "專輯" : String(val).trim();
+                        } 
+                        else if (engKey === 'arrivalStatus') {// 到貨狀態預設
+                            item[engKey] = isEmpty ? "已到貨" : String(val).trim();
+                        } 
+                        else if (engKey === 'paymentMethod') { // 付款方式預設
+                            item[engKey] = isEmpty ? "匯款全額" : String(val).trim();
+                        } 
+                        else if (['price', 'paidAmount','shipping'].includes(engKey)) {// 金額類預設為 0
+                            item[engKey] = Number(val) || 0;
+                        } 
+                        else {// 其他字串欄位
+                            item[engKey] = isEmpty ? "" : String(val).trim();
+                        }
+                    });
+                    item.total =(Number(item.price) * Number(item.qty)) + Number(item.shipping);
+                    if (item.paymentMethod !== '已付訂金') {
+                        item.paidAmount = item.total; // 非訂金制則視為全額付清
+                    }
+                    importedData.push(item);
+                }
+
+                if (importedData.length > 0) {
+                    state.expenses = importedData;
+                    localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+                    if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                    renderContent();
+                    showToast(`匯入成功：共 ${importedData.length} 筆，若無填寫日期請查看上個月的消費清單`);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("檔案格式錯誤");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        input.value = "";
+    }
+    //數據匯入與匯出end
+    
+    export async function runStorageCleanup() {
+        // 1. 詢問使用者
+        const confirmed = await askUser("啟動深層清理？", "正在優化雲端空間，安全移除重複或失效的圖檔。這需要一點時間，請放心，您的所有紀錄與相片都會妥善保留。", "🧹");
+        if (!confirmed) return;
+
+        showToast("正在掃描雲端檔案...");
+
+        // 2. 收集目前所有紀錄中正在使用的圖片網址：同時收集新版 (images) 與舊版 (image) 欄位中的所有有效網址
+        const activeUrls = [
+            ...state.expenses.flatMap(ex => Array.isArray(ex.images) ? ex.images : (ex.image ? [ex.image] : [])),
+            ...state.wishlist.flatMap(w => Array.isArray(w.images) ? w.images : (w.image ? [w.image] : []))
+        ].filter(url => url); 
+
+        // 3. 執行清理
+        const count = await window.cloud.cleanupOrphanedFiles(activeUrls);
+
+        if (count > 0) {
+            showToast(`清理完成！共刪除了 ${count} 個冗餘圖檔`);
+        } else if (count === 0) {
+            showToast("雲端非常整潔，沒有需要清理的檔案");
+        } else {
+            showToast("清理過程發生錯誤");
+        }
+    }
+
+        // --- 帳本與功能設定 ---
+        function renderAccountConfig(container) {
+        container.innerHTML = `
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold text-xl">◀</button>
+                    <h2 class="text-2xl font-black tracking-tight text-slate-800">帳本與功能</h2>
+                </div>
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl p-6 card-shadow">
+                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 tracking-widest">帳本分類模式</h3>
+                        <div class="flex bg-slate-100 p-1 rounded-2xl">
+                            <button onclick="switchCatSet('categories')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categories' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">KPOP 模式</button>
+                            <button onclick="switchCatSet('categoriesACGN')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categoriesACGN' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">ACGN 模式</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-6 card-shadow">
+                        <div class="flex items-center justify-between ${state.enableExchange ? 'mb-6 border-b border-slate-50' : ''}">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-500 tracking-widest">開啟匯率換算工具</h3>
+                                <p class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
+                                <p class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" onchange="toggleExchange(this.checked)" ${state.enableExchange ? 'checked' : ''}>
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-slate-700 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                            </label>
+                        </div>
+                     ${state.enableExchange ? `
+                    <div class="animate-enter">
+                        <h3 class="text-xs  text-slate-400 mb-4 tracking-widest uppercase">預設記帳幣別</h3>
+                        <div class="relative">
+                            <select onchange="updateDefaultCurrency(this.value)" class="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none border-2 border-transparent focus:border-brand appearance-none">
+                                <option value="TWD" ${state.defaultCurrency === 'TWD' ? 'selected' : ''}>TWD - 新台幣</option>
+                                <option value="HKD" ${state.defaultCurrency === 'HKD' ? 'selected' : ''}>HKD - 港幣</option>
+                                <option value="USD" ${state.defaultCurrency === 'USD' ? 'selected' : ''}>USD - 美金</option>
+                                <option value="JPY" ${state.defaultCurrency === 'JPY' ? 'selected' : ''}>JPY - 日圓</option>
+                                <option value="KRW" ${state.defaultCurrency === 'KRW' ? 'selected' : ''}>KRW - 韓幣</option>
+                                <option value="CNY" ${state.defaultCurrency === 'CNY' ? 'selected' : ''}>CNY - 人民幣</option>
+                                <option value="MYR" ${state.defaultCurrency === 'MYR' ? 'selected' : ''}>MYR - 令吉</option>
+                                <option value="SGD" ${state.defaultCurrency === 'SGD' ? 'selected' : ''}>SGD - 新加坡幣</option>
+                                <option value="THB" ${state.defaultCurrency === 'THB' ? 'selected' : ''}>THB - 泰銖</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 px-1">更改此處將會影響匯率換算的基準幣別。</p>
+                    </div>
+                    ` : ''}
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-3xl card-shadow" onclick="state.subPage='catOrder'; renderContent();">
+                            <div class="flex justify-between items-center cursor-pointer">
+                                <div><h3 class="text-sm font-bold text-slate-500 tracking-widest">調整分類順序</h3><p class="text-[10px] text-slate-400">自訂最常用的分類顯示在最前面</p></div>
+                                <span class="text-slate-300">▶</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>`;
+        }
         export function switchCatSet(setName) {
             state.categorySet = setName;
             if(setName =='categories'){state.WishcategorySet = wishCategories;}else{state.WishcategorySet = wishCategoriesACGN;}
@@ -615,19 +1655,249 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             renderContent();
             showToast(`已切換至 ${setName === 'categories' ? 'KPOP分類' : 'ACGN分類'}`);
         }
+        export function updateDefaultCurrency(val) {
+            state.defaultCurrency = val;
+            localStorage.setItem('fe_v11_defaultCurrency', val);
+            localStorage.removeItem('fandom_rates_timestamp'); //清除原本快取
+            fetchRates(); 
+            showToast(`預設幣別已更改為 ${val}`);
+            renderContent();
+        }
 
-// 5. 掛載到全域 (為了相容 HTML 裡的 onclick)
+        export function toggleExchange(val) {
+            state.enableExchange = val;
+            localStorage.setItem('fe_v11_enableExchange', val);
+            if (val) fetchRates();
+            renderContent(); // 重新渲染以實現 toggle 效果
+            showToast(val ? "已開啟換算工具" : "已關閉換算工具");
+        }
+     // 快取獲取匯率
+        async function fetchRates() {
+            if (!state.enableExchange) return;
+            const CACHE_KEY = 'fandom_rates_data';
+            const CACHE_TIME_KEY = 'fandom_rates_timestamp';
+            const FIVE_DAY = 5 * 24 * 60 * 60 * 1000; // 5天的毫秒數
+
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+            const now = Date.now();
+
+            // 如果有快取且未過期，直接使用
+            if (cachedData && cachedTime && (now - cachedTime < FIVE_DAY)) {
+                state.rates = JSON.parse(cachedData);
+                state.rateStatusText = "匯率已就緒 (快取)";
+                console.log("Using cached rates from:", new Date(parseInt(cachedTime)).toLocaleString());
+                return;
+            }
+
+            // 否則，向網路請求新的匯率
+            state.rateStatusText = "正在更新最新匯率...";
+            updateRateUI();
+            try {
+                const base = state.defaultCurrency || 'TWD';
+                const res = await fetch(`https://v6.exchangerate-api.com/v6/50ae63bdd687e4ec0781ce85/latest/${base}`);
+                const data = await res.json();
+                if (data?.conversion_rates) {
+                    const newRates = {
+                        KRW: 1 / data.conversion_rates.KRW,
+                        JPY: 1 / data.conversion_rates.JPY,
+                        CNY: 1 / data.conversion_rates.CNY,
+                        USD: 1 / data.conversion_rates.USD,
+                        HKD: 1 / data.conversion_rates.HKD,
+                        MYR: 1 / data.conversion_rates.MYR, // 增加馬來西亞
+                        SGD: 1 / data.conversion_rates.SGD, // 增加新加坡
+                        THB: 1 / data.conversion_rates.THB, // 增加泰銖
+                        TWD: 1 / data.conversion_rates.TWD
+                    };
+                    // 更新狀態並存入本地儲存
+                    state.rates = newRates;
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(newRates));
+                    localStorage.setItem(CACHE_TIME_KEY, now.toString());
+                    state.rateStatusText = "匯率已更新(網路)";
+                    console.log("Rates updated from API");
+                }
+                else {
+                    if (cachedData) state.rates = JSON.parse(cachedData);
+                    state.rateStatusText = "匯率連線失敗，使用離線數據";
+                }
+            } catch (e) {
+                console.warn("API 抓取失敗，使用預設值或舊快取",e);
+                if (cachedData) state.rates = JSON.parse(cachedData);
+                state.rateStatusText = "匯率連線失敗，使用離線數據";
+            }
+            updateRateUI();
+        }
+        // 更新介面上的文字 (若元素存在)
+        function updateRateUI() {
+            const tag = document.getElementById('rate-tag');
+            if (tag) tag.innerText = state.rateStatusText;
+        }
+        export function convertCurrency() { //匯率換算
+            const currency = document.getElementById('currency-select').value;
+            const amount = parseFloat(document.getElementById('foreign-amount').value);
+            const priceInput = document.getElementById('m-u-p');
+            const rateTag = document.getElementById('rate-tag');
+
+            if (!amount) return;
+
+            const rate = state.rates[currency];
+            const result = Math.round(amount * rate);
+            
+            priceInput.value = result;
+            rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} ${state.defaultCurrency}`;
+            rateTag.classList.add('text-brand');
+        }
+        // --- 分類排序頁 ---
+        function renderCategoryOrderView(container) {
+            const currentCats = [...baseCategories[state.categorySet]];
+            const order = state.catOrder[state.categorySet] || currentCats.map(c => c.id);
+            const sorted = [...currentCats].sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8"><button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold">◀</button><h2 class="text-2xl font-black">排序分類</h2></div>
+                    <div class="bg-white rounded-3xl p-2 card-shadow">
+                        ${sorted.map((c, i) => `
+                            <div class="flex items-center justify-between p-4 border-b last:border-0">
+                                <span class="font-bold text-slate-700">${c.icon} ${c.id}</span>
+                                <div class="flex gap-2">
+                                    <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded ${i===0?'opacity-20':''}">▲</button>
+                                    <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded ${i===sorted.length-1?'opacity-20':''}">▼</button>
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>`;
+        }
+
+        export function moveCat(id, dir) {
+            const set = state.categorySet;
+            let order = state.catOrder[set] || baseCategories[set].map(c => c.id);
+            const idx = order.indexOf(id);
+            const newIdx = idx + dir;
+            if(newIdx < 0 || newIdx >= order.length) return;
+            [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
+            state.catOrder[set] = order;
+            localStorage.setItem('fe_v11_catOrder', JSON.stringify(state.catOrder));
+            renderCategoryOrderView(document.getElementById('main-content'));
+        }
+        // --- 版本說明 ---
+        function renderVersionView(container) { 
+            const logs = [
+                { version: 'v8.0', date: '2026.02.05', updates: ['生成分享圖功能：將當月消費與收藏照片整理成一張長圖 <br> 輕鬆分享你的追星 Photo Dump' ]},
+                { version: 'v7.0', date: '2026.01.24', updates: ['匯率換算工具，啟用後支援外幣金額與原幣別紀錄','新增日期功能，保持記帳順序不被打亂']},
+                { version: 'v6.0', date: '2026.01.11', updates: ['全面升級「帳本分類模式」，專為 KPOP 與 ACGN 消費情境設計','目前財務報表僅支援查看各帳本金額無法合併查看']},
+                { version: 'v5.0', date: '2026.01.04', updates: ['「售出」功能，完整紀錄追星資產流向', '優化財務報表：支援支出、收入、淨支出分析', '修正 Excel 匯入/匯出之數據準確性','「複製並新增」功能，快速記錄相似支出'] },
+                { version: 'v4.0', date: '2025.12.29', updates: ['智慧標籤建議，快速完成分類', '自訂主題漸層與深色模式', '清除冗餘圖檔，提升整體效能'] },
+                { version: 'v3.0', date: '2025.12.27', updates: ['金額隱藏功能，看不見代表沒有花', '新增運費欄位，消費紀錄更完整', '外觀設定支援自行輸入色碼'] },
+                { version: 'v2.0', date: '2025.12.25', updates: ['支援同時過濾年份、月份與分類', '優化圖片壓縮算法', '優化 Excel 匯入流程，支援預設值'] },
+                { version: 'v1.0', date: '2025.12.25', updates: ['追星錢包正式上線', '消費紀錄、財務報表、願望清單', '照片牆、外觀設定'] }
+            ];
+
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8">
+                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                        </button>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800">版本說明</h2>
+                    </div>
+                    
+                    <div class="flex flex-col items-center mb-10">
+                        <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
+                        <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 8.0</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        ${logs.map(log => `
+                            <div class="relative pl-6 border-l-2 border-slate-100">
+                                <div class="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-brand rounded-full"></div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <h4 class="font-black text-brand">${log.version}</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 font-mono">${log.date}</span>
+                                </div>
+                                <ul class="space-y-1">
+                                    ${log.updates.map(u => `<li class="text-xs text-slate-500 font-medium leading-relaxed flex gap-2">
+                                        <span class="text-brand/40">•</span>${u}
+                                    </li>`).join('')}
+                                </ul>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="mt-8 border-t border-slate-50 text-center">
+                        <p class="text-[9px] text-slate-300 font-medium">Made for Fans , by fan. </p>
+                        <p class="text-[8px] text-slate-300 mt-1 uppercase tracking-widest">©2026 bobi_9yu </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 常見問題 FAQ 
+        function renderFAQView(container) { 
+            const faqs = [
+                { q: "追星錢包會上架到APP商店嗎？", a: "目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！" },
+                { q: "如何加入主畫面？", a: "使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。" },
+                { q: "一鍵匯入匯出功能如何使用？", a: "使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨" },
+                { q: "如何查詢未到貨商品？", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" }
+            ];
+
+            container.innerHTML = `
+                <div class="p-6 pb-32">
+                    <div class="flex items-center gap-3 mb-8">
+                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
+                    </div>
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
+                    <div class="space-y-3 mb-10">
+                        ${faqs.map((faq, i) => `
+                            <div class="faq-item bg-white rounded-2xl p-4 card-shadow" onclick="toggleFaq(${i})">
+                                <div class="flex justify-between items-center cursor-pointer">
+                                    <h4 class="text-xs font-bold text-slate-700 pr-4">${faq.q}</h4>
+                                    <svg class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
+                                </div>
+                                <div class="faq-answer mt-2"><p class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="space-y-4">
+                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-slate-500 font-bold py-4 rounded-2xl text-center text-sm shadow-sm active:scale-[0.98] transition-all">
+                            📝 問題回報與功能許願
+                        </a>
+                    </div>
+                </div>`;
+        }
+
+        window.toggleFaq = (index) => {
+            const items = document.querySelectorAll('.faq-item');
+            items.forEach((item, i) => {
+                if (i === index) item.classList.toggle('active'); else item.classList.remove('active');
+            });
+        };
+
+
+// 掛載到全域 (為了相容 HTML 裡的 onclick)
 // ---------------------------------------------------------
 
 window.showToast = showToast;
+window.initSwipeToClose = initSwipeToClose;
 window.switchTab = switchTab;
 window.renderContent = renderContent;
 
 window.renderExpenseListItems = renderExpenseListItems;
+window.openLightbox=openLightbox;
+window.changeLightboxImg=changeLightboxImg;
+window.closeLightbox=closeLightbox;
+
+window.updateFilter=updateFilter;
 window.openAddModal = openAddModal;
 window.openModalAnimation = openModalAnimation;
 window.openAddModal = openAddModal;
 window.openAddModal = openAddModal;
+window.openActionModal = openActionModal;
+window.openAddModal = openAddModal;
+window.initQtyPicker = initQtyPicker;
+window.removeImg=removeImg;
 
 window.closeActionModal = closeActionModal;
 window.closeModal = closeModal;
@@ -638,10 +1908,43 @@ window.closeModal = () => {
 };
 window.renderWishList = renderWishList;
 window.renderWishCatBar = renderWishCatBar;
+window.toggleWishDateInput = toggleWishDateInput;
+
 
 window.getCurrentCategories = getCurrentCategories;
 window.getCurrentWishCategories = getCurrentWishCategories;
+
+
+window.renderTagAndCatBar = renderTagAndCatBar;
+//財務報表
+window.changeReportType = changeReportType;
+window.changeReportRange = changeReportRange;
+window.shiftRange = shiftRange;
+
+//外觀設定
+window.toggleDarkMode = toggleDarkMode;
+window.saveGrad=saveGrad;
+window.applyHexColor = applyHexColor;
+window.openGradModal=openGradModal
+window.syncGradPicker=syncGradPicker;
+window.syncGradInput=syncGradInput;
+
+//數據備份匯入匯出
+window.importFromExcel = importFromExcel;
+window.exportToExcel = exportToExcel;
+
+//清理圖檔
+window.runStorageCleanup = runStorageCleanup;
+
+//帳本功能與設定
+//帳本分類模式
 window.switchCatSet = switchCatSet;
+//匯率
+window.updateDefaultCurrency = updateDefaultCurrency;
+window.toggleExchange = toggleExchange;
+window.convertCurrency= convertCurrency;
+//分類排序
+window.moveCat = moveCat;
 
 window.changePage = (delta) => {
     window.state.currentPage += delta;

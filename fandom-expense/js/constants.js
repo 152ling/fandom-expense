@@ -29,8 +29,15 @@
     export const wishCategoriesACGN = ["漫畫 / 輕小說", "立牌 / 吊飾", "小卡 / 色紙","明信片 / 海報","徽章 / 壓克力","公仔 / 娃娃","其他周邊"];
     export const arrivalOptions = ['未到貨','待二補', '待出貨', '已取貨','已售出'];
     export const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金'];
+    export const excelHeaderMap = {
+            type: "收支類型",name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
+            year: "消費年份", month: "消費月份",day:"消費日期", platform: "收物平台",
+            arrivalStatus: "到貨狀態", paymentMethod: "付款方式", paidAmount: "已付金額", tags: "標籤", remark: "備註"
+        };
+
     window.baseCategories = baseCategories;
     window.wishCategories = wishCategories;
     window.wishCategoriesACGN = wishCategoriesACGN;
     window.arrivalOptions = arrivalOptions;
     window.paymentOptions = paymentOptions;
+    window.excelHeaderMap = excelHeaderMap;

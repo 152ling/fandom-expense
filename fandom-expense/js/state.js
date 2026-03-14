@@ -1,7 +1,7 @@
 /**
  * state.js - 負責狀態管理與資料持久化
  */
-    export let state = {
+    export const state = {
             activeTab: 'expense',
             subPage: null,
             photoWallTab: 'purchased',
