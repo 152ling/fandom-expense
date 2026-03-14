@@ -162,6 +162,14 @@
         .faq-item.active svg {
             transform: rotate(180deg);
         }
+
+        /* 圖片滾動區與預覽 */
+        .img-scroll-container::-webkit-scrollbar { display: none; }
+        .img-preview-chip { position: relative; flex-shrink: 0; width: 80px; height: 80px; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
+        .img-delete-btn { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 10; }
+
+
+
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -312,13 +320,26 @@
         </div>
     </div>
     <!-- 燈箱 -->
-    <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
+    <!-- <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
         <div class="relative w-full max-w-md">
             <img id="lightbox-img" src="" class="w-full h-auto rounded-3xl shadow-2xl">
             <div id="lightbox-info" class="absolute bottom-5 left-0 right-0 text-white text-center">
                 <p id="lightbox-name" class="font-black text-lg"></p>
                 <p id="lightbox-sub" class="text-white/60 text-xs"></p>
             </div>
+        </div>
+    </div> -->
+    <!-- 燈箱 -->
+    <div id="lightbox-overlay" onclick="closeLightbox()" class="fixed inset-0 bg-black/95 hidden z-[200] flex flex-col items-center justify-center p-4">
+        <div class="relative w-full max-w-md" onclick="event.stopPropagation()">
+            <img id="lightbox-img" src="" class="w-full h-full max-h-[60vh] object-cover rounded-3xl shadow-2xl">
+            <div id="lightbox-info" class="absolute bottom-5 left-0 right-0 text-white text-center">
+                <p id="lightbox-name" class="font-black text-lg"></p>
+                <p id="lightbox-sub" class="text-white/60 text-xs"></p>
+                <div id="lightbox-dots" class="flex justify-center gap-2 mt-2"></div>
+            </div>
+            <button id="lb-prev" onclick="changeLightboxImg(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-500/50 rounded-full text-white text-xl hidden">◀</button>
+            <button id="lb-next" onclick="changeLightboxImg(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-500/50 rounded-full text-white text-xl hidden">▶</button>
         </div>
     </div>
 
@@ -561,8 +582,9 @@
             themeColor: localStorage.getItem('fe_v11_theme') || 'svt', 
             tempType: 'expense',
             expenses: JSON.parse(localStorage.getItem('fe_v11_expenses')) || [],
-            tempImage: null,     // 用來存既有的圖片網址 (URL)
-            tempImageBlob: null, // 用來存新選取的圖片檔案 (Blob)
+            tempImage: [],     // 用來存既有的圖片網址 (URL)
+            // tempImageBlob: null, // 用來存新選取的圖片檔案 (Blob)
+            tempImageBase64: [], // 即將上傳的圖片 Base64
             wishlist: JSON.parse(localStorage.getItem('fe_v11_wishlist')) || [],
             wishSourceId: null, // 用來暫存轉換中的願望 ID
             filterYear: Number(new Date().getFullYear()),
@@ -586,6 +608,7 @@
             defaultCurrency:'TWD',
             currentPage: 1, // 新增：分頁功能
         };
+        let isSaving = false; // 全域鎖定，避免重複觸發儲存流程
 
         function setTempType(type) { //切換消費/售出
             state.tempType = type;
@@ -1132,6 +1155,7 @@
                 // const allCats = [...categories, ...categoriesACGN];
                 // const catInfo = allCats.find(c => c.id === item.category) || { icon: '🌈' };
                 const cat = [...baseCategories.categories, ...baseCategories.categoriesACGN].find(c => c.id === item.category) || {icon: '🌈', color: '#92A8D1'};
+                const imgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
                 const isIncome = item.type === 'income';
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
@@ -1142,8 +1166,18 @@
                         </button>
                     </div>
                     <div class="flex gap-4" >
-                        ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl" onclick="${item.image ? `openLightbox('${item.image}', '${item.name}', '${item.year}/${item.month}')` : ''}">` : 
-                        `<div class="w-20 h-20  ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`}
+                    <div class="relative w-20 h-20 flex-shrink-0"
+                        onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g, '&quot;')}, '${item.name}', '${item.year}/${item.month}')">
+                            ${imgs.length > 0 
+                            ? `<img src="${imgs[0]}" class="w-full h-full object-cover rounded-2xl">`
+                            : `<div class="w-full h-full ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`
+                            }
+
+                            ${imgs.length > 1 
+                            ? `<div class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">＋${imgs.length-1}</div>` 
+                            : ''
+                            }
+                        </div>
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
                                 <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon} ${item.category}</span>
@@ -2011,8 +2045,7 @@
                 const copiedData = { 
                     ...originalItem, 
                     id: null,
-                    //year: now.getFullYear(),   // 自動設為今年 在看使用上需不需要
-                    //month: now.getMonth() + 1  // 自動設為今月
+                    isCopy: true // 標記這是一筆複製件
                 };
                 openAddModal(copiedData);
                 showToast("已載入複製資料，修改後請儲存");
@@ -2064,8 +2097,21 @@
          */
         function openAddModal(itemData = null) {
             state.editingId = itemData?.id ? String(itemData.id) : null;
-            state.tempImage = itemData?.image || null; // 既有網址存在這裡
-            state.tempImageBlob = null;               // 開啟時清空新選取的檔案
+            // 初始化清空
+            state.tempImages = [];
+            state.tempImageBase64 = [];
+            if (itemData) {
+                // 兼容舊版單圖 (image) 與新版多圖 (images)
+                const itemImgs = Array.isArray(itemData.images) ? [...itemData.images] : (itemData.image ? [itemData.image] : []);
+                
+                if (itemData.isCopy) {
+                    // 【複製模式】：強迫進入待處理籃子，儲存時會觸發 uploadFile 產生新網址
+                    state.tempImageBase64 = itemImgs;
+                } else {
+                    // 【一般編輯】：進入已存在籃子，儲存時不重複上傳
+                    state.tempImages = itemImgs;
+                }
+            }
             const form = document.getElementById('data-form');
             const modalTitle = document.getElementById('modal-title');
             // 修改判斷邏輯：如果資料裡有 qty，或者目前確實在 expense 分頁，才顯示消費模式
@@ -2188,13 +2234,21 @@
                             </div>
                         </div>
                         <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
-                        <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
-                        <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
+                       
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">圖片紀錄 (上限 3 張)</label>
+                            <div id="img-preview-row" class="flex gap-2 overflow-x-auto no-scrollbar img-scroll-container">
+                                
+                            </div>
+                            <input type="file" id="m-img-input" accept="image/*" class="hidden" multiple onchange="handleMultiImage(this)">
+                        </div>
+                    
                     </div>`;
                     if(state.enableExchange) {updateRateUI();}
                     initQtyPicker();
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
                     setTempType(currentType);
+                    updateImagePreviewUI();
                     window.getSmartTags = initSmartTags(itemData?.tags || []);
                         
             } else {
@@ -2205,6 +2259,7 @@
                 const currentCats = getCurrentWishCategories();
                 let dropdownOptions = [...currentCats];
                 const hasDate = itemData?.releaseDate ? true : false; //是否有存日期
+                const previewImg = state.tempImages.length > 0 ? state.tempImages[0] : (itemData?.image || null);
                 if (itemData) {
                     const exists = currentCats.includes(itemData.category);//願望清單直接比對字串
                     if (!exists) {
@@ -2273,7 +2328,9 @@
                             </div>
                         </div>
                     </div>
-                    <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">${state.tempImage ? `<img src="${state.tempImage}" class="w-full h-full object-cover">` : `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}</div>
+                    <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" ...>
+                        ${previewImg ? `<img src="${previewImg}" class="w-full h-full object-cover">` : `<span class="...">上傳相片</span>`}
+                    </div>
                     <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                 </div>`;
                 if(state.enableExchange) {updateRateUI();}
@@ -2306,7 +2363,125 @@
         list.querySelectorAll('li').forEach(li => { li.onclick = () => { input.value = li.dataset.val; toggleShow(false); }; });
         document.addEventListener('click', (e) => { if (!document.getElementById('qty-combobox')?.contains(e.target)) toggleShow(false); }, { once: true });
     }
+        //--- 圖片預覽3張與處理 ---
+        function updateImagePreviewUI() {
+            const container = document.getElementById('img-preview-row');
+            if (!container) return;
+            // 核心防呆：確保變數一定是陣列，避免 forEach 讀取 undefined
+            const urls = state.tempImages || [];
+            const b64s = state.tempImageBase64 || [];
+            
+            let html = '';
+            // 渲染已儲存的 URL
+            urls.forEach((src, i) => {
+                html += `
+                    <div class="img-preview-chip">
+                        <img src="${src}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeImg(${i}, 'url')" class="img-delete-btn">✕</button>
+                    </div>`;
+            });
+            // 渲染新選取的 Base64
+            b64s.forEach((b64, i) => {
+                html += `
+                    <div class="img-preview-chip opacity-80">
+                        <img src="${b64}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeImg(${i}, 'b64')" class="img-delete-btn">✕</button>
+                    </div>`;
+            });
+
+            // 如果沒滿，顯示增加按鈕
+            if (urls.length + b64s.length < 3) {
+                html += `
+                    <div onclick="document.getElementById('m-img-input').click()" class="flex-shrink-0 w-20 h-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-300 text-2xl">＋</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        async function handleMultiImage(input) {
+            if (!state.user) {
+                showToast("請先登入以開啟圖片上傳功能☁️");
+                input.value = "";
+                return;
+            }
+
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+
+            const currentCount = state.tempImages.length + state.tempImageBase64.length;
+            const remain = 3 - currentCount;
+            if (remain <= 0) {
+                showToast("已達上傳上限 (最多 3 張)");
+                input.value = "";
+                return;
+            }
+
+            const toProcess = files.slice(0, remain);
+            showToast("正在讀取圖片...");
+
+            for (const file of toProcess) {
+                // 1. 類型檢查 (每一張圖片都會個別執行此檢查)
+                let isImage = false;
+                if (file.type) {
+                    isImage = file.type.startsWith('image/');
+                } else {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    isImage = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext);
+                }
+
+                if (!isImage) {
+                    showToast(`不支援的檔案格式，請選擇圖片檔: ${file.name}`);
+                    continue;
+                }
+
+                // 2. 大小檢查 (上限 15MB)
+                if (file.size > 15 * 1024 * 1024) {
+                    showToast(`圖片太大囉: ${file.name}`);
+                    continue;
+                }
+
+                try {
+                    const b64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onerror = () => {
+                            showToast("讀取失敗");
+                            reject(new Error("Read failed"));
+                        };
+                        reader.onload = async (e) => {
+                            try {
+                                // 3. 壓縮邏輯 (與單圖上傳一致)
+                                const compressionWidth = file.size > 2 * 1024 * 1024 ? 500 : 800;
+                                const compressedBase64 = await compressImage(e.target.result, compressionWidth);
+                                resolve(compressedBase64);
+                            } catch (err) {
+                                reject(err);
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    });
+
+                    if (b64) {
+                        state.tempImageBase64.push(b64);
+                        // 每處理完一張就更新一次預覽，增加反應速度
+                        updateImagePreviewUI();
+                    }
+                } catch (error) {
+                    console.error("Image processing error:", error);
+                    showToast(`處理失敗: ${file.name}`);
+                }
+            }
+            
+            showToast("圖片處理完成");
+            input.value = ""; // 清空 input 以便下次選擇
+        }
+
+        function removeImg(idx, type) {
+            if (type === 'url') state.tempImages.splice(idx, 1);
+            else state.tempImageBase64.splice(idx, 1);
+            updateImagePreviewUI();
+        }
     async function saveData() {
+        if (isSaving) return; // 防止重複點擊
         try {
             const n = document.getElementById('m-t-l')?.value; 
             const pVal = document.getElementById('m-u-p')?.value; 
@@ -2319,26 +2494,35 @@
 
             const isExp = (state.activeTab === 'expense' || document.getElementById('m-qty'));
             const key = isExp ? 'expenses' : 'wishlist';
-            
-            // --- 關鍵修正：處理圖片上傳 ---
-            let finalImageUrl = state.tempImage; // 如果是編輯模式且沒換圖，保留原網址
-            if (state.tempImageBlob) {
-                showToast("正在上傳圖片...");
-                if (state.editingId) { // 檢查：如果是「編輯模式」，且原本就有圖片網址，則先刪除舊圖
-                    const oldItem = state[key].find(i => String(i.id) === state.editingId);
-                    if (oldItem && oldItem.image) {
-                        // 異步刪除舊圖，不卡住上傳流程
-                        window.cloud.deleteFile(oldItem.image).then(res => {
-                            console.log("舊圖片已清理:", oldItem.image);
-                        });
-                    }
-                }
-                const fileName = `${Date.now()}.jpg`;
-                const uploadedUrl = await window.cloud.uploadFile(state.tempImageBlob, fileName);
-                if (uploadedUrl) {
-                    finalImageUrl = uploadedUrl;
-                }
+            isSaving = true; // 開鎖
+            showToast("正在上傳並同步...");
+
+             // --- 核心轉移邏輯：清理孤兒圖片與舊格式 ---
+            if (state.editingId) {
+                const oldItem = state[key].find(i => String(i.id) === state.editingId);
+                // 同時檢查舊版的 .image 跟新版的 .images
+                const oldImgs = Array.isArray(oldItem?.images) ? oldItem.images : (oldItem?.image ? [oldItem.image] : []);
+                
+                // 找出編輯後不再被需要的 URL
+                const removedUrls = oldImgs.filter(url => !state.tempImages.includes(url));
+                removedUrls.forEach(url => {
+                    window.cloud.deleteFile(url).then(() => console.log("已從雲端清理被移除的舊圖:", url));
+                });
             }
+
+            // 上傳新選取的圖片 (Base64 -> Blob -> URL)
+            const uploadedUrls = await Promise.all(state.tempImageBase64.map(async b64 => {
+                const blob = await fetch(b64).then(r => r.blob());
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                return await window.cloud.uploadFile(blob, fileName);
+            }));
+            // 2. 合併：tempImages(原本就在的) + uploadedUrls(剛剛上傳產生的新檔)
+            const rawImages = [...state.tempImages, ...uploadedUrls.filter(u => u)];
+            
+            // 3. 關鍵：去重。確保同一個網址不會在陣列裡出現兩次
+            // 確保不管 UI 發生什麼事，存入資料庫的永遠只有前 3 張
+            const finalImages = [...new Set(rawImages)].slice(0, 3);
+            const finalImageUrl = finalImages.length > 0 ? finalImages[0] : null; // 取得第一張作為單圖兼容
             let item;
             const tags = window.getSmartTags ? window.getSmartTags() : [];
             let c, pf;
@@ -2370,7 +2554,8 @@
                     total: state.tempType === 'income' ? (p * q) : (p * q + s), 
                     category: document.getElementById('m-cat').value, 
                     year: y, month: m,day:d || 1,
-                    image: finalImageUrl, 
+                    images: finalImages,
+                    image: finalImageUrl, // 單圖兼容
                     platform: document.getElementById('m-platform').value || '', 
                     arrivalStatus: document.getElementById('m-status').value, 
                     paymentMethod: payM,
@@ -2436,6 +2621,8 @@
         } catch (error) {
             console.error("儲存失敗：", error);
             showToast("儲存發生錯誤，請檢查輸入內容");
+        } finally {
+            isSaving = false; // 關鎖
         }
     }
 
@@ -2450,23 +2637,39 @@
             const confirmed = await askUser("確定要刪除嗎？", "紀錄刪除後將無法恢復。", "🗑️");
 
             if (confirmed) {
-                const key = type === 'expense' ? 'expenses' : 'wishlist';
-                // 2. 找到要刪除的那筆資料，檢查是否有圖片
-                const itemToDelete = state[key].find(i => String(i.id) === String(id));
-        
-                // 用window.cloud.deleteFile刪除storage資料
-                if (itemToDelete && itemToDelete.image) {
-                    await window.cloud.deleteFile(itemToDelete.image);
-                }
+                try{
+                    const key = type === 'expense' ? 'expenses' : 'wishlist';
+                    // 2. 找到要刪除的那筆資料，檢查是否有圖片
+                    const itemToDelete = state[key].find(i => String(i.id) === String(id));
+            
+                    // 用window.cloud.deleteFile刪除storage資料
+                    if (itemToDelete) {
+                        // 同時抓取兩種欄位，過濾出不重複的有效網址
+                        const imagesToDelete = [
+                            ...(Array.isArray(itemToDelete.images) ? itemToDelete.images : []),
+                            ...(itemToDelete.image ? [itemToDelete.image] : [])
+                        ];
+                        
+                        const uniqueUrls = [...new Set(imagesToDelete)];
 
-                // 4. 刪除本地與雲端的文字紀錄
-                state[key] = state[key].filter(i => String(i.id) !== String(id));
-                localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
-                
-                if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
-                
-                renderContent();
-                showToast("已成功刪除紀錄");
+                        if (uniqueUrls.length > 0) {
+                            await Promise.all(uniqueUrls.map(url => window.cloud.deleteFile(url)));
+                            console.log(`已清理該紀錄相關的 ${uniqueUrls.length} 張圖片`);
+                        }
+                    }
+
+                    // 4. 刪除本地與雲端的文字紀錄
+                    state[key] = state[key].filter(i => String(i.id) !== String(id));
+                    localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
+                    
+                    if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
+                    
+                    renderContent();
+                    showToast("已成功刪除紀錄");
+                } catch (error) {
+                    console.error("刪除失敗：", error);
+                    showToast("刪除過程發生錯誤，請稍後再試");
+                }
             }
         }
 
@@ -2478,7 +2681,7 @@
         }
       
         function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
-        async function handleImage(input) {
+        async function handleImage(input) { //願望清單用的上傳
             if (!state.user) {
                 showToast("請先登入以開啟圖片上傳功能☁️");
                 input.value = "";
@@ -2552,7 +2755,33 @@
                 reader.readAsDataURL(file);
             }
         }
-        function openLightbox(url, name, sub) { const overlay = document.getElementById('lightbox-overlay'); const img = document.getElementById('lightbox-img'); document.getElementById('lightbox-name').textContent = name; document.getElementById('lightbox-sub').textContent = sub; img.src = url; overlay.classList.remove('hidden'); }
+        //燈箱與切換
+        function openLightbox(imgs, name, sub) {
+            if (!imgs || imgs.length === 0) return;
+            state.lightbox = { images: imgs, index: 0 };
+            document.getElementById('lightbox-name').textContent = name;
+            document.getElementById('lightbox-sub').textContent = sub;
+            updateLightboxUI();
+            document.getElementById('lightbox-overlay').classList.remove('hidden');
+        }
+        function updateLightboxUI() {
+            const lb = state.lightbox;
+            document.getElementById('lightbox-img').src = lb.images[lb.index];
+            const isMulti = lb.images.length > 1;
+            document.getElementById('lightbox-dots').innerHTML = isMulti
+                ? lb.images.map((_, i) => `
+                    <div class="w-1.5 h-1.5 rounded-full ${i === lb.index ? 'bg-white' : 'bg-white/30'}"></div>
+                `).join('')
+                : '';
+            document.getElementById('lb-prev').classList.toggle('hidden', !isMulti);
+            document.getElementById('lb-next').classList.toggle('hidden', !isMulti);
+        }
+
+        function changeLightboxImg(dir) {
+            state.lightbox.index = (state.lightbox.index + dir + state.lightbox.images.length) % state.lightbox.images.length;
+            updateLightboxUI();
+        }
+        // function openLightbox(url, name, sub) { const overlay = document.getElementById('lightbox-overlay'); const img = document.getElementById('lightbox-img'); document.getElementById('lightbox-name').textContent = name; document.getElementById('lightbox-sub').textContent = sub; img.src = url; overlay.classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
 
         function calculateReportRange() {
@@ -2730,11 +2959,17 @@
 
         showToast("正在掃描雲端檔案...");
 
-        // 2. 收集目前所有紀錄中正在使用的圖片網址
+        // // 2. 收集目前所有紀錄中正在使用的圖片網址
+        // const activeUrls = [
+        //     ...state.expenses.map(ex => ex.image),
+        //     ...state.wishlist.map(w => w.image)
+        // ].filter(url => url); // 移除空值
+
+        // 2. 收集目前所有紀錄中正在使用的圖片網址：同時收集新版 (images) 與舊版 (image) 欄位中的所有有效網址
         const activeUrls = [
-            ...state.expenses.map(ex => ex.image),
-            ...state.wishlist.map(w => w.image)
-        ].filter(url => url); // 移除空值
+            ...state.expenses.flatMap(ex => Array.isArray(ex.images) ? ex.images : (ex.image ? [ex.image] : [])),
+            ...state.wishlist.flatMap(w => Array.isArray(w.images) ? w.images : (w.image ? [w.image] : []))
+        ].filter(url => url); 
 
         // 3. 執行清理
         const count = await window.cloud.cleanupOrphanedFiles(activeUrls);
