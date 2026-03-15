@@ -58,42 +58,42 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
                 Number(b.id) - Number(a.id)
             );
             // 分頁邏輯
-            const itemsPerPage = 3;
+            const itemsPerPage = 20; // 每頁顯示 20 項
             const totalItems = sorted.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
             if (state.currentPage > totalPages) state.currentPage = totalPages;
             const paginatedItems = sorted.slice((state.currentPage - 1) * itemsPerPage, state.currentPage * itemsPerPage);
-// 計算要顯示的頁碼陣列 (最多顯示 3 個實體數字區塊)
-const getPageNumbers = (current, total) => {
-    // 1. 如果總頁數小於等於 3，直接全顯示
-    if (total <= 3) {
-        return Array.from({ length: total }, (_, i) => i + 1);
-    }
+            // 計算要顯示的頁碼陣列 (最多顯示 3 個實體數字區塊)
+            const getPageNumbers = (current, total) => {
+                // 1. 如果總頁數小於等於 3，直接全顯示
+                if (total <= 3) {
+                    return Array.from({ length: total }, (_, i) => i + 1);
+                }
 
-    // 2. 如果在第一頁：顯示 1, 2, ..., 最後一頁
-    if (current === 1) {
-        return [1, 2, '...', total];
-    }
+                // 2. 如果在第一頁：顯示 1, 2, ..., 最後一頁
+                if (current === 1) {
+                    return [1, 2, '...', total];
+                }
 
-    // 3. 如果在最後一頁：顯示 1, ..., 倒數第一頁, 最後一頁
-    if (current === total) {
-        return [1, '...', total - 1, total];
-    }
+                // 3. 如果在最後一頁：顯示 1, ..., 倒數第一頁, 最後一頁
+                if (current === total) {
+                    return [1, '...', total - 1, total];
+                }
 
-    // 4. 如果在中間頁面：
-    // 如果目前是第 2 頁，且總頁數 > 3，顯示 1, 2, ..., 最後一頁 (避免出現 1, ..., 2, ..., 最後一頁)
-    if (current === 2) {
-        return [1, 2, '...', total];
-    }
-    
-    // 如果目前是倒數第 2 頁，顯示 1, ..., 倒數第 2, 最後一頁
-    if (current === total - 1) {
-        return [1, '...', total - 1, total];
-    }
+                // 4. 如果在中間頁面：
+                // 如果目前是第 2 頁，且總頁數 > 3，顯示 1, 2, ..., 最後一頁 (避免出現 1, ..., 2, ..., 最後一頁)
+                if (current === 2) {
+                    return [1, 2, '...', total];
+                }
+                
+                // 如果目前是倒數第 2 頁
+                if (current === total - 1) {
+                    return [1, '...', total - 1, total];
+                }
 
-    // 5. 其餘中間情況：1, ..., 目前頁, ..., 最後一頁
-    return [1, '...', current, '...', total];
-};
+                // 5. 其餘中間情況
+                return [1, '...', current, '...', total];
+            };
 
             const pages = getPageNumbers(state.currentPage, totalPages);
             

@@ -1798,6 +1798,7 @@ window.openAddModal = openAddModal; // 這個在 index.html 裡有直接呼叫�
 window.closeActionModal =closeActionModal;
 window.handlePaymentChange = handlePaymentChange;
 window.removeImg=removeImg;
+window.fetchRates = fetchRates;
 
 window.setTempType = setTempType;
 window.closeModal = () => {
