@@ -1506,76 +1506,55 @@ import { renderExpenseList } from './expenseList.js';
             rateTag.innerText = `1 ${currency} ≈ ${rate.toFixed(4)} ${state.defaultCurrency}`;
             rateTag.classList.add('text-brand');
         }
-        // --- 分類排序頁 ---
-        // function renderCategoryOrderView(container) {
-        //     const currentCats = [...baseCategories[state.categorySet]];
-        //     const order = state.catOrder[state.categorySet] || currentCats.map(c => c.id);
-        //     const sorted = [...currentCats].sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
-        //     container.innerHTML = `
-        //         <div class="p-6">
-        //             <div class="flex items-center gap-3 mb-8"><button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold">◀</button><h2 class="text-2xl font-black">排序分類</h2></div>
-        //             <div class="bg-white rounded-3xl p-2 card-shadow">
-        //                 ${sorted.map((c, i) => `
-        //                     <div class="flex items-center justify-between p-4 border-b last:border-0">
-        //                         <span class="font-bold text-slate-700">${c.icon} ${c.id}</span>
-        //                         <div class="flex gap-2">
-        //                             <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded ${i===0?'opacity-20':''}">▲</button>
-        //                             <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded ${i===sorted.length-1?'opacity-20':''}">▼</button>
-        //                         </div>
-        //                     </div>`).join('')}
-        //             </div>
-        //         </div>`;
-        // }
+        /**
+         * --- 分類排序頁面渲染 ---
+         */
+        export function renderCategoryOrderView(container) {
+            const set = state.categorySet;
+            const currentCats = [...baseCategories[set]];
+            // 取得當前排序，若無則按預設 id 順序
+            const order = state.catOrder[set] || currentCats.map(c => c.id);
+            const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
-/**
- * --- 分類排序頁面渲染 ---
- */
-export function renderCategoryOrderView(container) {
-    const set = state.categorySet;
-    const currentCats = [...baseCategories[set]];
-    // 取得當前排序，若無則按預設 id 順序
-    const order = state.catOrder[set] || currentCats.map(c => c.id);
-    const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+            container.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8">
+                        <button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold active:scale-90 transition-all">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                        </button>
+                        <h2 class="text-2xl font-black text-slate-800">排序分類</h2>
+                    </div>
 
-    container.innerHTML = `
-        <div class="p-6">
-            <div class="flex items-center gap-3 mb-8">
-                <button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold active:scale-90 transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
-                </button>
-                <h2 class="text-2xl font-black text-slate-800">排序分類</h2>
-            </div>
+                    <div class="bg-white rounded-3xl p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
+                        ${sorted.map((c, i) => `
+                            <div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
+                                data-id="${c.id}">
+                                
+                                <div class="flex items-center gap-3 flex-grow cursor-move handle">
+                                    <span class="text-slate-300 group-active:text-brand transition-colors">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <path d="M7 10h10M7 14h10" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="font-bold text-slate-700 select-none">${c.icon} ${c.id}</span>
+                                </div>
 
-            <div class="bg-white rounded-3xl p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
-                ${sorted.map((c, i) => `
-                    <div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
-                         data-id="${c.id}">
-                        
-                        <div class="flex items-center gap-3 flex-grow cursor-move handle">
-                            <span class="text-slate-300 group-active:text-brand transition-colors">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                    <path d="M7 10h10M7 14h10" stroke-linecap="round"/>
-                                </svg>
-                            </span>
-                            <span class="font-bold text-slate-700 select-none">${c.icon} ${c.id}</span>
-                        </div>
+                                <div class="flex gap-1">
+                                    <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === 0 ? 'disabled' : ''}>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                    <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === sorted.length - 1 ? 'disabled' : ''}>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-6 text-center font-bold uppercase tracking-widest">可拖曳左側手柄或使用箭頭調整順序</p>
+                </div>`;
 
-                        <div class="flex gap-1">
-                            <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === 0 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                            <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === sorted.length - 1 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                        </div>
-                    </div>`).join('')}
-            </div>
-            <p class="text-[10px] text-slate-400 mt-6 text-center font-bold uppercase tracking-widest">可拖曳左側手柄或使用箭頭調整順序</p>
-        </div>`;
-
-    // 啟動拖曳監聽
-    initUniversalSort();
-}
+            // 啟動拖曳監聽
+            initUniversalSort();
+        }
 
 /**
  * --- 全域排序邏輯 (支援 Mouse & Touch) ---
@@ -1665,18 +1644,19 @@ export function renderCategoryOrderView(container) {
             // 2. 清除之前的計時器，重新開始計時
             clearTimeout(debounceTimer);
 
-            // 3. 設定延遲執行耗時動作 (0.8秒後沒動作才執行)
+            // 3. 設定延遲執行耗時動作 (2秒後沒動作才執行)
             debounceTimer = setTimeout(() => {
+                showToast("分類排序已更新 ✨")
                 // 執行雲端同步
                 if (window.cloud?.sync) {
                     window.cloud.sync(state.expenses, state.wishlist)
-                        .then(() => showToast("排序已更新 ✨"))
+                        .then(() => console.log("分類排序雲端同步成功"))
                         .catch(err => console.error("雲端同步失敗", err));
                 } else {
                     // 如果沒登入雲端，至少給個本地存檔完成的提示
                     showToast("本地排序已更新 ✨");
                 }
-            }, 800); 
+            }, 2000); 
         }
         export function saveNewOrder() {
             const list = document.getElementById('drag-list');
