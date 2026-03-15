@@ -58,18 +58,52 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
                 Number(b.id) - Number(a.id)
             );
             // 分頁邏輯
-            const itemsPerPage = 20;
+            const itemsPerPage = 3;
             const totalItems = sorted.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
             if (state.currentPage > totalPages) state.currentPage = totalPages;
             const paginatedItems = sorted.slice((state.currentPage - 1) * itemsPerPage, state.currentPage * itemsPerPage);
+// 計算要顯示的頁碼陣列 (最多顯示 3 個實體數字區塊)
+const getPageNumbers = (current, total) => {
+    // 1. 如果總頁數小於等於 3，直接全顯示
+    if (total <= 3) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    // 2. 如果在第一頁：顯示 1, 2, ..., 最後一頁
+    if (current === 1) {
+        return [1, 2, '...', total];
+    }
+
+    // 3. 如果在最後一頁：顯示 1, ..., 倒數第一頁, 最後一頁
+    if (current === total) {
+        return [1, '...', total - 1, total];
+    }
+
+    // 4. 如果在中間頁面：
+    // 如果目前是第 2 頁，且總頁數 > 3，顯示 1, 2, ..., 最後一頁 (避免出現 1, ..., 2, ..., 最後一頁)
+    if (current === 2) {
+        return [1, 2, '...', total];
+    }
+    
+    // 如果目前是倒數第 2 頁，顯示 1, ..., 倒數第 2, 最後一頁
+    if (current === total - 1) {
+        return [1, '...', total - 1, total];
+    }
+
+    // 5. 其餘中間情況：1, ..., 目前頁, ..., 最後一頁
+    return [1, '...', current, '...', total];
+};
+
+            const pages = getPageNumbers(state.currentPage, totalPages);
+            
             const totalExp = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
             const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const netTotal = totalExp - totalInc;
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
             const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
-
+            
 
             if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`; return; }
             let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
@@ -143,15 +177,42 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
             }).join('');
 
             // 添加分頁按鈕 UI
+            // if (totalPages > 1) {
+            //     html += `
+            //     <div class="flex justify-center items-center gap-6 mt-8 mb-4">
+            //         <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+            //             <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            //         </button>
+            //         <div class="text-xs font-black text-slate-400 uppercase tracking-widest">
+            //             <span class="text-brand mx-1">${state.currentPage}</span> / ${totalPages}
+            //         </div>
+            //         <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+            //             <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            //         </button>
+            //     </div>`;
+            // }
             if (totalPages > 1) {
                 html += `
-                <div class="flex justify-center items-center gap-6 mt-8 mb-4">
+                <div class="flex justify-center items-center gap-2 mt-8 mb-4">
                     <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
                         <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
-                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        <span class="text-brand mx-1">${state.currentPage}</span> / ${totalPages}
+
+                    <div class="flex gap-1">
+                        ${pages.map(p => {
+                            if (p === '...') {
+                                return `<span class="text-slate-300">...</span>`;
+                            }
+                            const isActive = state.currentPage === p;
+                            return `
+                                <button onclick="jumpToPage(${p})" 
+                                    class="w-8 h-8 text-xs font-black transition-all ${isActive ? 'text-brand ' : 'text-slate-400'}">
+                                    ${p}
+                                </button>
+                            `;
+                        }).join('')}
                     </div>
+
                     <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
                         <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
@@ -176,6 +237,12 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
             const main = document.getElementById('main-content');
             if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        export function jumpToPage(page) {
+            if (page === state.currentPage) return;
+            state.currentPage = page;
+            renderContent(); // 重新渲染頁面
+        }
+        window.jumpToPage = jumpToPage;
         
         export function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
 

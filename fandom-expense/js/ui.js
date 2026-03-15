@@ -805,7 +805,7 @@ import { renderExpenseList } from './expenseList.js';
                     <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span class="font-bold text-slate-700">帳本與功能設定</span>
+                            <span class="font-bold text-slate-700">帳本與功能</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] text-slate-300 font-bold">${state.categorySet === 'categories' ? 'KPOP' : 'ACGN'}${state.enableExchange ? ' / 匯率開' : ''}</span>
@@ -1507,37 +1507,205 @@ import { renderExpenseList } from './expenseList.js';
             rateTag.classList.add('text-brand');
         }
         // --- 分類排序頁 ---
-        function renderCategoryOrderView(container) {
-            const currentCats = [...baseCategories[state.categorySet]];
-            const order = state.catOrder[state.categorySet] || currentCats.map(c => c.id);
-            const sorted = [...currentCats].sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
-            container.innerHTML = `
-                <div class="p-6">
-                    <div class="flex items-center gap-3 mb-8"><button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold">◀</button><h2 class="text-2xl font-black">排序分類</h2></div>
-                    <div class="bg-white rounded-3xl p-2 card-shadow">
-                        ${sorted.map((c, i) => `
-                            <div class="flex items-center justify-between p-4 border-b last:border-0">
-                                <span class="font-bold text-slate-700">${c.icon} ${c.id}</span>
-                                <div class="flex gap-2">
-                                    <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded ${i===0?'opacity-20':''}">▲</button>
-                                    <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded ${i===sorted.length-1?'opacity-20':''}">▼</button>
-                                </div>
-                            </div>`).join('')}
-                    </div>
-                </div>`;
+        // function renderCategoryOrderView(container) {
+        //     const currentCats = [...baseCategories[state.categorySet]];
+        //     const order = state.catOrder[state.categorySet] || currentCats.map(c => c.id);
+        //     const sorted = [...currentCats].sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
+        //     container.innerHTML = `
+        //         <div class="p-6">
+        //             <div class="flex items-center gap-3 mb-8"><button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold">◀</button><h2 class="text-2xl font-black">排序分類</h2></div>
+        //             <div class="bg-white rounded-3xl p-2 card-shadow">
+        //                 ${sorted.map((c, i) => `
+        //                     <div class="flex items-center justify-between p-4 border-b last:border-0">
+        //                         <span class="font-bold text-slate-700">${c.icon} ${c.id}</span>
+        //                         <div class="flex gap-2">
+        //                             <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded ${i===0?'opacity-20':''}">▲</button>
+        //                             <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded ${i===sorted.length-1?'opacity-20':''}">▼</button>
+        //                         </div>
+        //                     </div>`).join('')}
+        //             </div>
+        //         </div>`;
+        // }
+
+/**
+ * --- 分類排序頁面渲染 ---
+ */
+export function renderCategoryOrderView(container) {
+    const set = state.categorySet;
+    const currentCats = [...baseCategories[set]];
+    // 取得當前排序，若無則按預設 id 順序
+    const order = state.catOrder[set] || currentCats.map(c => c.id);
+    const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
+    container.innerHTML = `
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-8">
+                <button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold active:scale-90 transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                </button>
+                <h2 class="text-2xl font-black text-slate-800">排序分類</h2>
+            </div>
+
+            <div class="bg-white rounded-3xl p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
+                ${sorted.map((c, i) => `
+                    <div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
+                         data-id="${c.id}">
+                        
+                        <div class="flex items-center gap-3 flex-grow cursor-move handle">
+                            <span class="text-slate-300 group-active:text-brand transition-colors">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M7 10h10M7 14h10" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="font-bold text-slate-700 select-none">${c.icon} ${c.id}</span>
+                        </div>
+
+                        <div class="flex gap-1">
+                            <button onclick="moveCat('${c.id}', -1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === 0 ? 'disabled' : ''}>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                            <button onclick="moveCat('${c.id}', 1)" class="p-2 bg-slate-50 rounded-xl text-slate-400 active:bg-brand/10 active:text-brand disabled:opacity-10 transition-all" ${i === sorted.length - 1 ? 'disabled' : ''}>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                    </div>`).join('')}
+            </div>
+            <p class="text-[10px] text-slate-400 mt-6 text-center font-bold uppercase tracking-widest">可拖曳左側手柄或使用箭頭調整順序</p>
+        </div>`;
+
+    // 啟動拖曳監聽
+    initUniversalSort();
+}
+
+/**
+ * --- 全域排序邏輯 (支援 Mouse & Touch) ---
+ */
+        function initUniversalSort() {
+            const list = document.getElementById('drag-list');
+            let dragEl = null;
+
+            // 1. 指針按下：鎖定目標
+            list.addEventListener('pointerdown', (e) => {
+                const handle = e.target.closest('.handle');
+                if (!handle) return;
+
+                dragEl = handle.closest('.drag-item');
+                dragEl.classList.add('bg-slate-50', 'z-50', 'ring-2', 'ring-brand/10');
+                list.setPointerCapture(e.pointerId);
+            });
+
+            // 2. 指針移動：動態插入
+            list.addEventListener('pointermove', (e) => {
+                if (!dragEl) return;
+                e.preventDefault();
+
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                const hoverEl = target?.closest('.drag-item');
+
+                if (hoverEl && hoverEl !== dragEl) {
+                    const rect = hoverEl.getBoundingClientRect();
+                    // 判斷指針在目標的上半部還是下半部，決定插入位置
+                    const isAfter = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    list.insertBefore(dragEl, isAfter ? hoverEl.nextSibling : hoverEl);
+                }
+            });
+
+            // 3. 指針放開：清理與儲存
+            const endHandler = (e) => {
+                if (!dragEl) return;
+                dragEl.classList.remove('bg-slate-50', 'z-50', 'ring-2', 'ring-brand/10');
+                list.releasePointerCapture(e.pointerId);
+                dragEl = null;
+                debouncedSaveOrder();
+                renderCategoryOrderView(document.getElementById('main-content')); // 重新渲染更新按鈕狀態
+            };
+
+            list.addEventListener('pointerup', endHandler);
+            list.addEventListener('pointercancel', endHandler);
         }
 
+        /**
+         * --- 箭頭點擊移動邏輯 ---
+         */
         export function moveCat(id, dir) {
-            const set = state.categorySet;
-            let order = state.catOrder[set] || baseCategories[set].map(c => c.id);
-            const idx = order.indexOf(id);
-            const newIdx = idx + dir;
-            if(newIdx < 0 || newIdx >= order.length) return;
-            [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
-            state.catOrder[set] = order;
-            localStorage.setItem('fe_v11_catOrder', JSON.stringify(state.catOrder));
+            const list = document.getElementById('drag-list');
+            const item = list.querySelector(`[data-id="${id}"]`);
+            if (!item) return;
+
+            if (dir === -1) {
+                // 向上移：插入到前一個元素之前
+                const prev = item.previousElementSibling;
+                if (prev) list.insertBefore(item, prev);
+            } else {
+                // 向下移：插入到下一個元素之後 (即下下個元素之前)
+                const next = item.nextElementSibling;
+                if (next) list.insertBefore(item, next.nextElementSibling);
+            }
+
+            debouncedSaveOrder();
             renderCategoryOrderView(document.getElementById('main-content'));
         }
+
+        /**
+         * --- 儲存最新的分類排序至 Local & Cloud ---
+         */
+        let debounceTimer = null;
+
+        /**
+         * 靜默儲存順序，並延遲執行雲端同步與提示
+         */
+        export function debouncedSaveOrder() {
+            // 1. 立即更新 State 並存入 LocalStorage (確保重新整理網頁時順序是對的)
+            const list = document.getElementById('drag-list');
+            if (!list) return;
+            const newOrder = [...list.querySelectorAll('.drag-item')].map(el => el.dataset.id);
+            state.catOrder[state.categorySet] = newOrder;
+            localStorage.setItem('fe_v11_catOrder', JSON.stringify(state.catOrder));
+
+            // 2. 清除之前的計時器，重新開始計時
+            clearTimeout(debounceTimer);
+
+            // 3. 設定延遲執行耗時動作 (0.8秒後沒動作才執行)
+            debounceTimer = setTimeout(() => {
+                // 執行雲端同步
+                if (window.cloud?.sync) {
+                    window.cloud.sync(state.expenses, state.wishlist)
+                        .then(() => showToast("排序已更新 ✨"))
+                        .catch(err => console.error("雲端同步失敗", err));
+                } else {
+                    // 如果沒登入雲端，至少給個本地存檔完成的提示
+                    showToast("本地排序已更新 ✨");
+                }
+            }, 800); 
+        }
+        export function saveNewOrder() {
+            const list = document.getElementById('drag-list');
+            if (!list) return;
+
+            const items = [...list.querySelectorAll('.drag-item')];
+            const newOrder = items.map(el => el.dataset.id);
+            const set = state.categorySet;
+
+            // 更新 State
+            state.catOrder[set] = newOrder;
+
+            // 儲存至本地
+            localStorage.setItem('fe_v11_catOrder', JSON.stringify(state.catOrder));
+            showToast("排序已儲存✨");
+
+            // 同步至雲端
+            if (window.cloud && typeof window.cloud.sync === 'function') {
+                window.cloud.sync(state.expenses, state.wishlist)
+                    .catch(err => showToast("排序同步失敗，請檢查網路或登入狀態", err));
+            }
+        }
+
+        /**
+         * --- 全域掛載 ---
+         */
+        window.moveCat = moveCat;
+        window.saveNewOrder = saveNewOrder;
+
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
@@ -1687,5 +1855,4 @@ window.updateDefaultCurrency = updateDefaultCurrency;
 window.toggleExchange = toggleExchange;
 window.convertCurrency= convertCurrency;
 //分類排序
-window.moveCat = moveCat;
 
