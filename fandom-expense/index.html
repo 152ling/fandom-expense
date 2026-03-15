@@ -167,7 +167,23 @@
         .img-scroll-container::-webkit-scrollbar { display: none; }
         .img-preview-chip { position: relative; flex-shrink: 0; width: 80px; height: 80px; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
         .img-delete-btn { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 10; }
+        
+        /* 正在被拖曳的項目樣式 */
+        .drag-active {
+            z-index: 100 !important;
+            background-color: var(--brand-color) !important; /* 變更為品牌色 */
+            color: white !important; /* 字體變白 */
+            transform: scale(1.02) translateY(-5px); /* 放大並微微往上「浮起」 */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 
+                        0 8px 10px -6px rgba(0, 0, 0, 0.1); /* 增加陰影營造漂浮感 */
+            border-radius: 1.5rem !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* 讓放大效果有過場動畫 */
+        }
 
+        /* 讓列表內其他項目在移動時也有平滑位移感 */
+        .drag-item {
+            transition: transform 0.1s ease-out; /* 這是讓旁邊分類「飄開」讓位的關鍵 */
+        }
 
 
     </style>

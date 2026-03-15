@@ -1525,7 +1525,7 @@ import { renderExpenseList } from './expenseList.js';
                         <h2 class="text-2xl font-black text-slate-800">排序分類</h2>
                     </div>
 
-                    <div class="bg-white rounded-3xl p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
+                    <div class="bg-white rounded-3xl m-4 p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
                         ${sorted.map((c, i) => `
                             <div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
                                 data-id="${c.id}">
@@ -1569,7 +1569,7 @@ import { renderExpenseList } from './expenseList.js';
                 if (!handle) return;
 
                 dragEl = handle.closest('.drag-item');
-                dragEl.classList.add('bg-slate-50', 'z-50', 'ring-2', 'ring-brand/10');
+                dragEl.classList.add('drag-active');
                 list.setPointerCapture(e.pointerId);
             });
 
@@ -1592,7 +1592,7 @@ import { renderExpenseList } from './expenseList.js';
             // 3. 指針放開：清理與儲存
             const endHandler = (e) => {
                 if (!dragEl) return;
-                dragEl.classList.remove('bg-slate-50', 'z-50', 'ring-2', 'ring-brand/10');
+                dragEl.classList.remove('drag-active');
                 list.releasePointerCapture(e.pointerId);
                 dragEl = null;
                 debouncedSaveOrder();
@@ -1689,7 +1689,7 @@ import { renderExpenseList } from './expenseList.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
-                { version: 'v9.0', date: '2026.03.16', updates: ['帳本與功能>分類順序支援自行調整，打造更順手的記帳流程','新增消費紀錄可上傳最多 3 張照片，完整保存每次追星瞬間','新增 FAQ 頁面，可直接回報問題或回饋建議']},
+                { version: 'v9.0', date: '2026.03.15', updates: ['帳本與功能新增:調整分類順序','新增消費紀錄可上傳最多 3 張照片','新增 FAQ 頁面，可直接回報問題或回饋建議']},
                 { version: 'v8.0', date: '2026.02.05', updates: ['生成分享圖功能：將當月消費與收藏照片整理成一張長圖 <br> 輕鬆分享你的追星 Photo Dump' ]},
                 { version: 'v7.0', date: '2026.01.24', updates: ['匯率換算工具，啟用後支援外幣金額與原幣別紀錄','新增日期功能，保持記帳順序不被打亂']},
                 { version: 'v6.0', date: '2026.01.11', updates: ['全面升級「帳本分類模式」，專為 KPOP 與 ACGN 消費情境設計','目前財務報表僅支援查看各帳本金額無法合併查看']},
