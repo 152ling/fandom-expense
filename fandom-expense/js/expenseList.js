@@ -21,7 +21,7 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
                                     <div class="absolute right-1 cursor-pointer"><svg class="w-4 h-4 transition-transform" fill="none" stroke="black" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
                                 </button>
                                 <ul id="year-options" 
-                                    class="absolute hidden z-50 mt-1 w-full bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar">
+                                    class="absolute hidden z-50 mt-1 w-[100px] bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar">
                                     ${yearList.map(y => `
                                         <li onclick="updateFilter('year', ${y});" 
                                             class="px-3 py-2 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-none">
