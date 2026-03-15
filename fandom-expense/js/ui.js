@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymentOptions } from './constants.js';
+import { renderExpenseList } from './expenseList.js';
 
     export function showToast(msg) {
         const t = document.getElementById("toast");
@@ -7,6 +8,28 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         t.textContent = msg; t.classList.add("show");
         setTimeout(() => t.classList.remove("show"), 2000);
     }
+        // 通用確認工具，會回傳 true 或 false
+    export function askUser(title, desc, icon = '💸') {
+            const overlay = document.getElementById('common-confirm-overlay');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-desc').textContent = desc;
+            document.getElementById('confirm-icon').textContent = icon;
+            
+            // 根據圖示自動調整背景色（如果是垃圾桶就變紅色系，否則用品牌色）
+            const iconBg = document.getElementById('confirm-icon');
+            if (icon === '🗑️') {
+                iconBg.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            } else {
+                iconBg.className = "w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
+            }
+
+            overlay.classList.remove('hidden');
+
+            return new Promise((resolve) => {
+                document.getElementById('confirm-btn-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
+                document.getElementById('confirm-btn-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
+            });
+        }
     /**滑動關閉編輯邏輯 */
         let touchStartY = 0;
         let isDragging = false;
@@ -88,214 +111,6 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             }
     }
 
-        export function renderExpenseList(container) {
-            container.innerHTML = `
-                <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
-                        <div class="flex gap-2 text-gray-800">
-                            <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
-                                <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
-                               ${[2020,2021,2022,2023,2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
-                            </select>
-                            <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
-                                <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
-                                ${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="relative mb-3">
-                        <input type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;state.currentPage=1;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
-                        <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
-                    </div>
-                    <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
-                    <div id="tag-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
-                </div>
-                <div id="expense-list-items" class="px-6 space-y-4 pb-12 pt-4"></div>
-            `;
-            renderTagAndCatBar();
-            renderExpenseListItems(document.getElementById('expense-list-items'));
-        }        function renderExpenseListItems(container) { //消費清單渲染
-            if(!container) return;
-            const kw = state.searchKeyword.toLowerCase();
-            const filtered = state.expenses.filter(ex => {
-            // 1. 基本時間過濾
-            const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
-            // 2. 分類過濾
-            const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
-            
-            // 3. 進階關鍵字過濾 (包含：名稱、標籤、備註、到貨狀態、收物平台)
-            const keywordMatch = (
-                ex.name.toLowerCase().includes(kw) || 
-                (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || 
-                (ex.remark && ex.remark.toLowerCase().includes(kw)) ||
-                (ex.arrivalStatus && ex.arrivalStatus.toLowerCase().includes(kw)) || // 新增：搜尋到貨狀態
-                (ex.platform && ex.platform.toLowerCase().includes(kw))             // 新增：搜尋收物平台
-            );
-
-            return dateMatch && catMatch && keywordMatch;
-            });
-            const sorted = filtered.sort((a, b) => 
-                Number(b.year) - Number(a.year) ||
-                Number(b.month) - Number(a.month) ||
-                Number(b.day  || 1) - Number(a.day  || 1) || 
-                Number(b.id) - Number(a.id)
-            );
-            // 分頁邏輯
-            const itemsPerPage = 20;
-            const totalItems = sorted.length;
-            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-            if (state.currentPage > totalPages) state.currentPage = totalPages;
-            const paginatedItems = sorted.slice((state.currentPage - 1) * itemsPerPage, state.currentPage * itemsPerPage);
-            const totalExp = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
-            const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
-            const netTotal = totalExp - totalInc;
-            const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
-            const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
-            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
-
-
-            if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`; return; }
-            let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
-                <div>
-                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
-                        <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
-                                ${state.hideAmount ? 
-                                    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>` : 
-                                    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5 " stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`
-                                }
-                        </button></div>
-                    <h3 class="text-3xl font-black">${totalDisplay}</h3>
-                    </div>
-                    <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: ${totalExpDisplay}</p>` : ''}
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
-                        <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
-                    </div>
-                </div>` 
-            html += paginatedItems.map(item => {
-                const cat = [...baseCategories.categories, ...baseCategories.categoriesACGN].find(c => c.id === item.category) || {icon: '🌈', color: '#92A8D1'};
-                const imgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
-                const isIncome = item.type === 'income';
-                const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
-                const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
-                return `<div class="${cardBg} rounded-3xl p-4 card-shadow relative overflow-hidden group">
-                    <div class="absolute top-4 right-4 z-10">
-                        <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                        </button>
-                    </div>
-                    <div class="flex gap-4" >
-                    <div class="relative w-20 h-20 flex-shrink-0"
-                        onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g, '&quot;')}, '${item.name}', '${item.year}/${item.month}')">
-                            ${imgs.length > 0 
-                            ? `<img src="${imgs[0]}" class="w-full h-full object-cover rounded-2xl">`
-                            : `<div class="w-full h-full ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`
-                            }
-
-                            ${imgs.length > 1 
-                            ? `<div class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">＋${imgs.length-1}</div>` 
-                            : ''
-                            }
-                        </div>
-                        <div class="flex-grow">
-                            <div class="flex gap-2 mb-1">
-                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon} ${item.category}</span>
-                                <span onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
-                                 ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400">${item.month}月</span>` : ''}
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
-                            ${item.remark ? `<div class="text-[10px] text-slate-400 mt-1"><span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
-
-                            <div class="flex justify-between items-end mt-2">
-                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="bg-slate-50 text-slate-400 text-[9px] px-2 py-0.5 rounded-md">#${t}</span>`).join('')}</div>
-                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p><p class="font-black text-lg leading-none">${state.hideAmount ? '•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
-                            </div>
-                        </div>
-                    </div>
-                    ${!isIncome ? ` 
-                    <div class="mt-4 pt-3 border-t border-slate-100">
-                            <div class="flex justify-between items-center">
-                                <div class="text-[10px] text-slate-400">
-                                    <span class="font-bold text-brand">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '已付訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
-                                    ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span class="opacity-70">運費:</span> $${item.shipping}</div>
-                                ` : ''}
-                                </div>
-                            ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>` : ''}
-                    </div>` : ''}
-                </div>`;
-            }).join('');
-
-            // 添加分頁按鈕 UI
-            if (totalPages > 1) {
-                html += `
-                <div class="flex justify-center items-center gap-6 mt-8 mb-4">
-                    <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
-                        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        <span class="text-brand mx-1">${state.currentPage}</span> / ${totalPages}
-                    </div>
-                    <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
-                        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                </div>`;
-            }
-
-            container.innerHTML = html;
-        }
-        function getStatusClass(s) {
-            if (s === '未到貨') return 'status-unArrived';
-            if (s === '待二補') return 'status-freight';
-            if (s === '待出貨') return 'status-toShip';
-            if (s === '已售出') return 'status-soldout';
-            return 'status-received';
-        }
-        export function handlePaymentChange(val) {
-            const amountContainer = document.getElementById('paid-amount-container');
-            if (amountContainer) {
-                amountContainer.classList.toggle('hidden', val !== '已付訂金');
-            }
-        }
-        // 換頁函式
-        export function changePage(delta) {
-            state.currentPage += delta;
-            renderExpenseListItems(document.getElementById('expense-list-items'));
-            // 捲動回最上方
-            const main = document.getElementById('main-content');
-            if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        export function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
-
-              
-        //燈箱與切換
-        export function openLightbox(imgs, name, sub) {
-            if (!imgs || imgs.length === 0) return;
-            state.lightbox = { images: imgs, index: 0 };
-            document.getElementById('lightbox-name').textContent = name;
-            document.getElementById('lightbox-sub').textContent = sub;
-            updateLightboxUI();
-            document.getElementById('lightbox-overlay').classList.remove('hidden');
-        }
-        function updateLightboxUI() {
-            const lb = state.lightbox;
-            document.getElementById('lightbox-img').src = lb.images[lb.index];
-            const isMulti = lb.images.length > 1;
-            document.getElementById('lightbox-dots').innerHTML = isMulti
-                ? lb.images.map((_, i) => `
-                    <div class="w-1.5 h-1.5 rounded-full ${i === lb.index ? 'bg-white' : 'bg-white/30'}"></div>
-                `).join('')
-                : '';
-            document.getElementById('lb-prev').classList.toggle('hidden', !isMulti);
-            document.getElementById('lb-next').classList.toggle('hidden', !isMulti);
-        }
-
-        export function changeLightboxImg(dir) {
-            state.lightbox.index = (state.lightbox.index + dir + state.lightbox.images.length) % state.lightbox.images.length;
-            updateLightboxUI();
-        }
-        export function closeLightbox() { document.getElementById('lightbox-overlay').classList.add('hidden'); }
 
         export function openAddModal(itemData = null) {
             state.editingId = (itemData?.id && !itemData?.isCopy) ? String(itemData.id) : null;
@@ -303,26 +118,38 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             state.tempImages = [];
             state.tempImageBase64 = [];
             state.tempImageBlob = null; // 新增：清空 Blob
+            // 修改判斷邏輯：如果資料裡有 qty，或者目前確實在 expense 分頁，才顯示消費模式
+            const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
+            const form = document.getElementById('data-form');
+            const modalTitle = document.getElementById('modal-title');
             if (itemData) {
                 // 抓取圖片網址（兼容單圖與多圖）
                 const itemImgs = Array.isArray(itemData.images) ? [...itemData.images] : (itemData.image ? [itemData.image] : []);
-                
-                if (state.editingId) {
-                    state.tempImages = itemImgs; // 編輯模式：放進「已存在」
+                // 無論是編輯、複製還是轉換，只要圖片網址是 http 開頭，就代表已經在雲端了
+                const cloudImages = itemImgs.filter(url => url.startsWith('http'));
+                const localImages = itemImgs.filter(url => url.startsWith('data:'));
+                // if (state.editingId) {
+                //     state.tempImages = itemImgs; // 編輯模式：放進「已存在」
+                // } else {
+                //     if (isWishMode) {
+                //         // 願望模式複製：把網址暫存，待會 saveData 會處理
+                //         // 這裡我們直接把網址塞進 tempImageBase64 偷懶讓 saveData 去跑 fetch
+                //         state.tempImageBase64 = itemImgs;
+                //     } else {
+                //         state.tempImageBase64 = itemImgs; // 消費模式複製
+                //     }
+                // }
+                if (state.editingId || state.wishSourceId) {
+                    // 如果是編輯、從願望轉換，現有的雲端圖片應該放進 tempImages
+                    // 這樣 saveData 就不會重新上傳它們
+                    state.tempImages = cloudImages;
+                    state.tempImageBase64 = localImages; 
                 } else {
-                    if (isWishMode) {
-                        // 願望模式複製：把網址暫存，待會 saveData 會處理
-                        // 這裡我們直接把網址塞進 tempImageBase64 偷懶讓 saveData 去跑 fetch
-                        state.tempImageBase64 = itemImgs;
-                    } else {
-                        state.tempImageBase64 = itemImgs; // 消費模式複製
-                    }
+                    // 全新新增的情況（理論上不會有 http 網址）
+                    state.tempImageBase64 = itemImgs;
                 }
             }
-            const form = document.getElementById('data-form');
-            const modalTitle = document.getElementById('modal-title');
-            // 修改判斷邏輯：如果資料裡有 qty，或者目前確實在 expense 分頁，才顯示消費模式
-            const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
+
          // --- 標題判斷邏輯優化 ---
             if (isWishMode) {
                 modalTitle.textContent = state.editingId ? "編輯心願" : "新增心願";
@@ -548,6 +375,12 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                         
             document.getElementById('modal-overlay').classList.remove('hidden');
             setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
+        }
+        export function handlePaymentChange(val) {
+            const amountContainer = document.getElementById('paid-amount-container');
+            if (amountContainer) {
+                amountContainer.classList.toggle('hidden', val !== '已付訂金');
+            }
         }
     export function initQtyPicker() { //數量選擇
         const input = document.getElementById('m-qty');
@@ -776,72 +609,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             }
         }
 
-        function renderTagAndCatBar() {
-            const catBar = document.getElementById('cat-bar'); 
-            if (!catBar) return;
-            const currentCats = getCurrentCategories();
-            // --- 第一層：分類 (Categories) 渲染 ---
-            catBar.innerHTML = currentCats.map(cat => {
-                const isActive = state.selectedCategory === cat.id;
-                return `
-                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
-                                state.currentPage=1;            
-                                renderTagAndCatBar(); 
-                                renderExpenseListItems(document.getElementById('expense-list-items'))" 
-                        class="chip ${isActive ? 'active-cat text-white' : ''}" 
-                        style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
-                        ${cat.icon} ${cat.id.split(' ')[0]}
-                    </div>`;
-            }).join('');
 
-            // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
-            const tagBar = document.getElementById('tag-bar');
-            if (!tagBar) return;
-
-            //同時過濾 年份、月份 以及 分類
-            const filteredExpensesForTags = state.expenses.filter(ex => {
-                // 1. 檢查年份與月份是否符合目前的選擇   
-                const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
-               // 2. 檢查分類是否符合目前的選擇
-                const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
-                
-                return dateMatch && catMatch;
-         });
-
-        // 2. 提取這些紀錄中不重複的標籤
-            const relevantTags = [...new Set(filteredExpensesForTags.flatMap(ex => ex.tags || []))].filter(t => t);
-
-            // 3. 渲染標籤列
-            if (relevantTags.length === 0) {
-                tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
-            } else {
-                tagBar.innerHTML = relevantTags.map(tag => {
-                    const isActive = state.searchKeyword === tag;
-                    return `
-                        <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
-                                    state.currentPage=1;            
-                                    renderTagAndCatBar(); 
-                                    renderExpenseListItems(document.getElementById('expense-list-items'))" 
-                            class="chip ${isActive ? 'active-tag' : ''}">
-                            #${tag}
-                        </div>`;
-                }).join('');
-            }
-        }
-        function quickFilter(type, value) {
-            const input = document.querySelector('input[placeholder*="搜尋"]');
-            
-            if (type === 'category') {
-                state.selectedCategory = value;
-            } else {
-                state.searchKeyword = value;
-                if (input) input.value = value;
-            }
-            state.currentPage = 1; // 重設分頁
-            // 執行渲染：更新分類列與清單內容
-            renderTagAndCatBar(); 
-            renderExpenseListItems(document.getElementById('expense-list-items'));
-        }
 
         // --- 財務報表 ---
         function changeReportType(type) {
@@ -1006,9 +774,8 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
 
         //設定
         function renderSettings(container) {
-            const user = state.user;
             container.innerHTML = `
-            <div class="p-6 h-screen"><h2 class="text-2xl font-black mb-8 tracking-tight">設定</h2>
+            <div class="p-6 h-screen"><h2 class="text-2xl font-black mb-8 tracking-tight" onclick="handleSecretClick()">設定</h2>
                 <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4 ">
                     <div class="w-12 h-12 rounded-full overflow-hidden bg-slate-50 border-2 border-brand/20 flex items-center justify-center">
                         ${state.user 
@@ -1035,14 +802,6 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                     <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
                     <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
-                    <div onclick="runStorageCleanup()" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
-                        <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/>
-                            </svg>
-                            <span class="font-bold text-slate-700">清理冗餘圖檔</span>
-                        </div><span>▶</span>
-                    </div>  
                     <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1056,11 +815,13 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v8.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v9.0</span><span>▶</span></div>
                     </div>
                     <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                         <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">常見問題與幫助</span></div>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                            </svg><span class="font-bold text-slate-700">常見問題與幫助</span></div>
                         <div class="flex items-center gap-2"><span>▶</span></div>
                     </div>
 
@@ -1070,7 +831,34 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             </div>
                 `;
         }
+        let secretClickCount = 0;
+        let secretClickTimer = null;
 
+        export function handleSecretClick() { // 在設定頁面標題被點擊時呼叫清除多餘圖檔
+            secretClickCount++;
+
+            // 如果 3 秒內沒有再次點擊，就重置計數
+            clearTimeout(secretClickTimer);
+            secretClickTimer = setTimeout(() => {
+                // 如果只點了 1 或 2 次，就當作正常的頁面切換
+                if (secretClickCount < 3) {
+                    state.subPage = 'accountConfig';
+                    renderContent();
+                }
+                secretClickCount = 0;
+            }, 500); // 500 毫秒內的連點才算數
+
+            // 當連點滿 3 次時
+            if (secretClickCount === 3) {
+                clearTimeout(secretClickTimer);
+                secretClickCount = 0;
+                // 執行你的隱藏功能
+                if (window.runStorageCleanup) {
+                    window.runStorageCleanup();
+                }
+            }
+        }
+        window.handleSecretClick = handleSecretClick;
         //我的照片牆
         function renderPhotoWall(container) {
             const isWishWall = state.photoWallTab === 'wish';
@@ -1240,7 +1028,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                 showToast("格式錯誤！請輸入如 #92A8D1 的色碼");
             }
         }
-                //漸層工具
+        //漸層工具
         // 同步：輸入文字框 -> 色盤
         export function syncGradInput(id) {
             const inputEl = document.getElementById(`${id}-hex`);
@@ -1365,39 +1153,6 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         }
 
 
-        // 通用確認工具，會回傳 true 或 false
-        function askUser(title, desc, icon = '💸') {
-            const overlay = document.getElementById('common-confirm-overlay');
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-desc').textContent = desc;
-            document.getElementById('confirm-icon').textContent = icon;
-            
-            // 根據圖示自動調整背景色（如果是垃圾桶就變紅色系，否則用品牌色）
-            const iconBg = document.getElementById('confirm-icon');
-            if (icon === '🗑️') {
-                iconBg.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
-            } else {
-                iconBg.className = "w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl";
-            }
-
-            overlay.classList.remove('hidden');
-
-            return new Promise((resolve) => {
-                document.getElementById('confirm-btn-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
-                document.getElementById('confirm-btn-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
-            });
-        }
-
-        // 顯示/隱藏金額函數
-        async function toggleAmountVisibility() {
-            // 關鍵邏輯：如果是 true (要顯示)，就等待彈窗回傳。如果使用者按取消 (!true)，就中斷
-            if (state.hideAmount && !(await askUser("確定要顯示金額嗎？", "顯示後將可查看完整的消費明細與總計。"))) {
-                return;
-            }
-            state.hideAmount = !state.hideAmount;
-            localStorage.setItem('fe_v11_hideAmount', JSON.stringify(state.hideAmount));
-            renderContent();
-        }
 
         // --- 數據匯入與匯出 ---
         function renderBackupView(container) {
@@ -1560,6 +1315,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
     }
     //數據匯入與匯出end
     
+    //清理雲端冗餘圖檔
     export async function runStorageCleanup() {
         // 1. 詢問使用者
         const confirmed = await askUser("啟動深層清理？", "正在優化雲端空間，安全移除重複或失效的圖檔。這需要一點時間，請放心，您的所有紀錄與相片都會妥善保留。", "🧹");
@@ -1590,7 +1346,10 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         container.innerHTML = `
             <div class="p-6">
                 <div class="flex items-center gap-3 mb-8">
-                    <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold text-xl">◀</button>
+                    <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold text-xl">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                    </button>
+                    
                     <h2 class="text-2xl font-black tracking-tight text-slate-800">帳本與功能</h2>
                 </div>
                 <div class="space-y-6">
@@ -1782,6 +1541,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                { version: 'v9.0', date: '2026.03.16', updates: ['帳本與功能>分類順序支援自行調整，打造更順手的記帳流程','新增消費紀錄可上傳最多 3 張照片，完整保存每次追星瞬間','新增 FAQ 頁面，可直接回報問題或回饋建議']},
                 { version: 'v8.0', date: '2026.02.05', updates: ['生成分享圖功能：將當月消費與收藏照片整理成一張長圖 <br> 輕鬆分享你的追星 Photo Dump' ]},
                 { version: 'v7.0', date: '2026.01.24', updates: ['匯率換算工具，啟用後支援外幣金額與原幣別紀錄','新增日期功能，保持記帳順序不被打亂']},
                 { version: 'v6.0', date: '2026.01.11', updates: ['全面升級「帳本分類模式」，專為 KPOP 與 ACGN 消費情境設計','目前財務報表僅支援查看各帳本金額無法合併查看']},
@@ -1804,7 +1564,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 8.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 9.0</p>
                     </div>
 
                     <div class="space-y-6">
@@ -1844,7 +1604,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
             container.innerHTML = `
                 <div class="p-6 pb-32">
                     <div class="flex items-center gap-3 mb-8">
-                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">◀</button>
+                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
                         <h2 class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
                     </div>
                     <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
@@ -1861,7 +1621,7 @@ import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymen
                     </div>
 
                     <div class="space-y-4">
-                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-slate-500 font-bold py-4 rounded-2xl text-center text-sm shadow-sm active:scale-[0.98] transition-all">
+                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-slate-500 font-bold py-4 rounded-2xl text-center text-sm card-shadow active:scale-[0.98] transition-all">
                             📝 問題回報與功能許願
                         </a>
                     </div>
@@ -1884,38 +1644,20 @@ window.initSwipeToClose = initSwipeToClose;
 window.switchTab = switchTab;
 window.renderContent = renderContent;
 
-window.renderExpenseListItems = renderExpenseListItems;
-window.openLightbox=openLightbox;
-window.changeLightboxImg=changeLightboxImg;
-window.closeLightbox=closeLightbox;
-
-window.updateFilter=updateFilter;
-window.openAddModal = openAddModal;
-window.openModalAnimation = openModalAnimation;
-window.openAddModal = openAddModal;
-window.openAddModal = openAddModal;
 window.openActionModal = openActionModal;
-window.openAddModal = openAddModal;
-window.initQtyPicker = initQtyPicker;
+window.closeActionModal= closeActionModal;//操作選單共用彈窗index有呼叫
+window.openAddModal = openAddModal; // 這個在 index.html 裡有直接呼叫，所以需要掛載到全域
+window.closeActionModal =closeActionModal;
+window.handlePaymentChange = handlePaymentChange;
 window.removeImg=removeImg;
 
-window.closeActionModal = closeActionModal;
-window.closeModal = closeModal;
-window.closeModalAnimation = closeModalAnimation;
 window.setTempType = setTempType;
 window.closeModal = () => {
     document.getElementById('modal-overlay').classList.add('hidden');
 };
-window.renderWishList = renderWishList;
-window.renderWishCatBar = renderWishCatBar;
 window.toggleWishDateInput = toggleWishDateInput;
 
 
-window.getCurrentCategories = getCurrentCategories;
-window.getCurrentWishCategories = getCurrentWishCategories;
-
-
-window.renderTagAndCatBar = renderTagAndCatBar;
 //財務報表
 window.changeReportType = changeReportType;
 window.changeReportRange = changeReportRange;
@@ -1925,6 +1667,7 @@ window.shiftRange = shiftRange;
 window.toggleDarkMode = toggleDarkMode;
 window.saveGrad=saveGrad;
 window.applyHexColor = applyHexColor;
+window.applyTheme=applyTheme;
 window.openGradModal=openGradModal
 window.syncGradPicker=syncGradPicker;
 window.syncGradInput=syncGradInput;
@@ -1946,7 +1689,3 @@ window.convertCurrency= convertCurrency;
 //分類排序
 window.moveCat = moveCat;
 
-window.changePage = (delta) => {
-    window.state.currentPage += delta;
-    renderExpenseListItems(document.getElementById('expense-list-items'));
-};

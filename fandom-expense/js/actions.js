@@ -2,7 +2,7 @@
  * actions.js - 處理所有按鈕觸發的動作（儲存、刪除、複製、轉換）
  */
 import { state } from './state.js';
-import { showToast, renderContent, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
+import { showToast,askUser, renderContent, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
 import { compressImage } from './utils.js';
 
 // 全域鎖定變數，防止連點導致重複存檔或刪除

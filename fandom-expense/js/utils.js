@@ -103,7 +103,7 @@ export    function shrinkImage(blob, targetSize) {
          * 2. 生成分享卡 (智慧快取優化版)
          * @param {boolean} force - 是否強制清除快取並重新繪製
          */
-        async function drawShareCard(forceRandom = false) {
+        export async function drawShareCard(forceRandom = false) {
             const modal = document.getElementById('share-modal');
             const resultBox = document.getElementById('share-result-container');
             const grid = document.getElementById('share-photo-grid');
@@ -304,3 +304,6 @@ export    function shrinkImage(blob, targetSize) {
 
 // 掛載到全域（若 HTML 仍有 onclick 呼叫）
 window.compressImage = compressImage;
+window.showShareConfirm = showShareConfirm;
+window.startShareGeneration = startShareGeneration;
+window.drawShareCard = drawShareCard;//重新生成onclick有呼叫
