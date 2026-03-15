@@ -4,15 +4,32 @@ import { baseCategories } from './constants.js';
 import { renderContent ,getCurrentCategories,askUser} from './ui.js';
 
         export function renderExpenseList(container) {
+            // 自動生成從 2010 到 明年 的年份陣列
+            const currentYear = new Date().getFullYear();
+            const years = [];
+            for (let y = 2010; y <= currentYear + 1; y++) { years.push(y); }
+            const yearList = [0, ...years.reverse()];
             container.innerHTML = `
                 <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
-                            <select onchange="updateFilter('year', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
-                                <option value="0" ${state.filterYear === 0 ? 'selected' : ''}>不限</option>
-                               ${[2020,2021,2022,2023,2024, 2025, 2026].map(y => `<option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>${y}年</option>`).join('')}
-                            </select>
+                            <div class="relative inline-block text-left" id="year-filter-box">
+                                <button onclick="toggleSelect('year-options')" 
+                                        class="flex items-center justify-between gap-2 bg-white border rounded-lg h-[28px] px-2 py-1 text-xs outline-none min-w-[80px] shadow-sm">
+                                    <span class="text-slate-700">${state.filterYear === 0 ? '不限' : state.filterYear + '年'}</span>
+                                    <div class="absolute right-1 cursor-pointer"><svg class="w-4 h-4 transition-transform" fill="none" stroke="black" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
+                                </button>
+                                <ul id="year-options" 
+                                    class="absolute hidden z-50 mt-1 w-full bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar">
+                                    ${yearList.map(y => `
+                                        <li onclick="updateFilter('year', ${y});" 
+                                            class="px-3 py-2 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-none">
+                                            ${y === 0 ? '不限' : y + '年'}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
                             <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
                                 <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
                                 ${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}
@@ -30,6 +47,19 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
             `;
             renderTagAndCatBar();
             renderExpenseListItems(document.getElementById('expense-list-items'));
+            /*** 簡單切換選單開關*/
+            window.toggleSelect = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.toggle('hidden');
+            };
+
+            // 點擊外面時自動關閉
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#year-filter-box')) {
+                    document.getElementById('year-options')?.classList.add('hidden');
+                }
+            });
         }
         function renderExpenseListItems(container) { //消費清單渲染
             if(!container) return;
