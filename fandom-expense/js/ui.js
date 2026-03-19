@@ -1408,7 +1408,7 @@ import { renderExpenseList } from './expenseList.js';
         }
         export function switchCatSet(setName) {
             state.categorySet = setName;
-            if(setName =='categories'){state.WishcategorySet = wishCategories;}else{state.WishcategorySet = wishCategoriesACGN;}
+            if(setName =='categories'){state.WishcategorySet = 'wishCategories';}else{state.WishcategorySet = 'wishCategoriesACGN';}
             state.selectedCategory = ''; // 切換組別時重設選擇
             localStorage.setItem('fe_cat_set', setName);
             renderContent();
