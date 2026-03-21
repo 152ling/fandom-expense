@@ -180,15 +180,24 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease; /* 讓放大效果有過場動畫 */
         }
 
-        /* 讓列表內其他項目在移動時也有平滑位移感 */
         .drag-item {
-            transition: transform 0.1s ease-out; /* 這是讓旁邊分類「飄開」讓位的關鍵 */
+            transition: transform 0.1s ease-out;
         }
-
+        .splash-fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        #app-splash {
+            background-color: #ffffff;
+        }
 
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
+    <div id="app-splash" class="fixed inset-0 z-[9999] bg-white flex items-center justify-center transition-all duration-1000 ease-in-out">
+        <img src="startimage.svg" alt="Splash" class="absolute inset-0 w-full h-full object-cover">
+        <div class="relative z-10 flex flex-col items-center"></div>
+    </div>
 
     <main id="main-content" class="flex-grow overflow-y-auto no-scrollbar pb-36 sm:pb-40"></main>
     <div id="toast">提示訊息</div>
@@ -591,6 +600,13 @@
             }
         }
         renderContent();
+        const splash = document.getElementById('app-splash');
+        if (splash) {
+            setTimeout(() => {
+                splash.classList.add('splash-fade-out');
+                setTimeout(() => splash.remove(), 500);
+            }, 800);
+        }
     });
     window.onerror = function (message, source, lineno, colno, error) {
         reportEvent('js_error', {

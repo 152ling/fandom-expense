@@ -212,7 +212,7 @@ import { renderExpenseList } from './expenseList.js';
                                 <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1" id="shipping-fee">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">運費</label>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
                                 <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                         </div>
@@ -1746,7 +1746,9 @@ import { renderExpenseList } from './expenseList.js';
                 { q: "追星錢包會上架到APP商店嗎？", a: "目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！" },
                 { q: "如何加入主畫面？", a: "使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。" },
                 { q: "一鍵匯入匯出功能如何使用？", a: "使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨" },
-                { q: "如何查詢未到貨商品？", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" }
+                { q: "如何查詢未到貨商品？", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" },
+                { q: "可以自行新增分類嗎？", a: "目前不支援。<br/>為了維持報表統計的一致性，採用固定分類。<br/>💡記帳小貼士：<br/>1. 標籤功能：細節（如：成員）請用 #標籤，能更靈活地記錄細節並支援搜尋篩選。<br/>2. 切換模式：在「設定 > 帳本與功能」可依照喜好切換預設分類。<br/>3. 許願功能：歡迎點擊下方前往許願，會評估後新增！" },
+                { q: "為什麼在網頁版新增了資料，打開 App (加入主畫面) 卻沒看到？", a: "這通常是因為 App 端的登入狀態尚未同步更新。<br/><b>檢查登入</b>：進入「設定」，確認目前是否為登入狀態。若顯示未登入，請重新登入即可抓回雲端資料。<br/><br/>追星錢包採用即時雲端儲存，只要是登入狀態新增的資料都會安全存在雲端囉！" }
             ];
 
             container.innerHTML = `

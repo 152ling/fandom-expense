@@ -133,9 +133,23 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
             const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
-            
-
-            if (filtered.length === 0) { container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`; return; }
+            if (filtered.length === 0) {
+                if (!state.user) { // 檢查是否未登入
+                    container.innerHTML = `
+                        <div class="text-center py-20 px-6">
+                            <div class="text-slate-300 font-bold text-lg mb-2">目前處於訪客模式</div>
+                            <p class="text-slate-300 text-sm font-bold mb-6">點擊登入以同步雲端備份<br/>隨時隨地查看你的紀錄</p>
+                            <button onclick="switchTab('settings')" 
+                                    class="bg-brand text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-lg active:scale-95 transition-transform">
+                                前往登入
+                            </button>
+                        </div>
+                    `;
+                } else {// 已登入但真的沒資料
+                    container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`;
+                }
+                return;
+            }
             let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
                 <div>
                     <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
