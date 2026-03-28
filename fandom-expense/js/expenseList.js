@@ -69,17 +69,17 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
             const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
             // 2. 分類過濾
             const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
-            
-            // 3. 進階關鍵字過濾 (包含：名稱、標籤、備註、到貨狀態、收物平台)
+            // 3. 標籤複選過濾 (必須包含「所有」選中的標籤)
+            const tagMatch = state.selectedTags.length === 0 || state.selectedTags.every(t => ex.tags && ex.tags.includes(t));
+            // 4. 進階關鍵字過濾 (包含：名稱、備註、到貨狀態、收物平台)
             const keywordMatch = (
                 ex.name.toLowerCase().includes(kw) || 
-                (ex.tags && ex.tags.some(t => t.toLowerCase().includes(kw))) || 
                 (ex.remark && ex.remark.toLowerCase().includes(kw)) ||
                 (ex.arrivalStatus && ex.arrivalStatus.toLowerCase().includes(kw)) || // 新增：搜尋到貨狀態
                 (ex.platform && ex.platform.toLowerCase().includes(kw))             // 新增：搜尋收物平台
             );
 
-            return dateMatch && catMatch && keywordMatch;
+            return dateMatch && catMatch && keywordMatch && tagMatch;
             });
             const sorted = filtered.sort((a, b) => 
                 Number(b.year) - Number(a.year) ||
@@ -356,8 +356,9 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
                 const dateMatch = (state.filterYear === 0 || Number(ex.year) === Number(state.filterYear)) && (state.filterMonth === 0 || Number(ex.month) === Number(state.filterMonth));
                // 2. 檢查分類是否符合目前的選擇
                 const catMatch = (state.selectedCategory === '' || ex.category === state.selectedCategory);
-                
-                return dateMatch && catMatch;
+                // 3. 檢查標籤是否符合目前的選擇 (必須包含「所有」選中的標籤)
+                const tagMatch = state.selectedTags.length === 0 || state.selectedTags.every(t => ex.tags && ex.tags.includes(t));
+                return dateMatch && catMatch && tagMatch;
          });
 
         // 2. 提取這些紀錄中不重複的標籤
@@ -368,17 +369,25 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
                 tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
             } else {
                 tagBar.innerHTML = relevantTags.map(tag => {
-                    const isActive = state.searchKeyword === tag;
+                    const isActive = state.selectedTags.includes(tag);
                     return `
-                        <div onclick="state.searchKeyword=(state.searchKeyword==='${tag}'?'':'${tag}'); 
-                                    state.currentPage=1;            
-                                    renderTagAndCatBar(); 
-                                    renderExpenseListItems(document.getElementById('expense-list-items'))" 
+                        <div onclick="toggleTagFilter('${tag}')" 
                             class="chip ${isActive ? 'active-tag' : ''}">
                             #${tag}
                         </div>`;
                 }).join('');
             }
+                window.toggleTagFilter = (tag) => {
+                    const index = state.selectedTags.indexOf(tag);
+                    if (index > -1) {
+                        state.selectedTags.splice(index, 1); // 已選中則移除
+                    } else {
+                        state.selectedTags.push(tag); // 未選中則加入
+                    }
+                    state.currentPage = 1;
+                    renderTagAndCatBar(); 
+                    renderExpenseListItems(document.getElementById('expense-list-items'));
+                };
         }
         export function quickFilter(type, value) {
             const input = document.querySelector('input[placeholder*="搜尋"]');

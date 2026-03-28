@@ -19,6 +19,7 @@
             reportOffset: 0,
             searchKeyword: '',
             selectedCategory: '',
+            selectedTags: [],
             photoFilterCat: '',
             editingId: null,
             actionTarget: { type: null, id: null },
