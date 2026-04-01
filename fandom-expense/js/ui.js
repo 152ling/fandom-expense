@@ -1514,7 +1514,15 @@ import { renderExpenseList } from './expenseList.js';
             const currentCats = [...baseCategories[set]];
             // 取得當前排序，若無則按預設 id 順序
             const order = state.catOrder[set] || currentCats.map(c => c.id);
-            const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+            // 如果 order.indexOf(id) 找不到 (-1)，則給予 99 讓它排在最後
+            const sorted = [...currentCats].sort((a, b) => {
+                const indexA = order.indexOf(a.id);
+                const indexB = order.indexOf(b.id);
+                const finalA = indexA === -1 ? 99 : indexA;
+                const finalB = indexB === -1 ? 99 : indexB;
+                return finalA - finalB;
+            });
+            // const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
             container.innerHTML = `
                 <div class="p-6">
