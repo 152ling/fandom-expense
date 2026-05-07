@@ -13,8 +13,14 @@
             tempImageBase64: [], // 即將上傳的圖片 Base64
             wishlist: JSON.parse(localStorage.getItem('fe_v11_wishlist')) || [],
             wishSourceId: null, // 用來暫存轉換中的願望 ID
-            filterYear: Number(new Date().getFullYear()),
-            filterMonth: Number(new Date().getMonth() + 1),
+        //     filterYear: Number(new Date().getFullYear()),
+        //     filterMonth: Number(new Date().getMonth() + 1),
+        // 年份：優先讀取 localStorage，若無則預設今年
+            filterYear: localStorage.getItem('fe_v11_filterYear') !== null 
+                ? Number(localStorage.getItem('fe_v11_filterYear')) : Number(new Date().getFullYear()),
+        // 月份：優先讀取 localStorage，若無則預設當月
+            filterMonth: localStorage.getItem('fe_v11_filterMonth') !== null 
+                ? Number(localStorage.getItem('fe_v11_filterMonth')) : Number(new Date().getMonth() + 1),
             reportRange: '6months', 
             reportOffset: 0,
             searchKeyword: '',

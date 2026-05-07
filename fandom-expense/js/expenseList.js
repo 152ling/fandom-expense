@@ -288,7 +288,19 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
         }
         window.jumpToPage = jumpToPage;
         
-        export function updateFilter(k, v) { if (k === 'year') state.filterYear = Number(v); else state.filterMonth = Number(v); renderContent(); }
+        export function updateFilter(k, v) { 
+            if (k === 'year') {
+                state.filterYear = Number(v);
+                if(v==0){
+                    localStorage.setItem('fe_v11_filterYear', state.filterYear);}//如果是不限才存
+                else {localStorage.removeItem('fe_v11_filterYear');}// 選擇具體年份，清除儲存紀錄
+            }
+            else {
+                state.filterMonth = Number(v);
+                if(v==0){localStorage.setItem('fe_v11_filterMonth', state.filterMonth);}
+                else {localStorage.removeItem('fe_v11_filterMonth');}
+            }
+            renderContent(); }
 
          // 顯示/隱藏金額函數
         export async function toggleAmountVisibility() {
