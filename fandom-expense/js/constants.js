@@ -30,7 +30,7 @@
         };
     export const wishCategories = ["專輯", "周邊商品", "娃娃", "小卡","演唱會 / 見面會門票"];
     export const wishCategoriesACGN = ["漫畫 / 輕小說", "立牌 / 吊飾", "小卡 / 色紙","明信片 / 海報","徽章 / 壓克力","公仔 / 娃娃","其他周邊"];
-    export const arrivalOptions = ['未到貨','待二補', '待出貨', '已取貨','已售出'];
+    export const arrivalOptions = ['未到貨','待二補', '待出貨','待取貨', '已取貨','已售出'];
     export const paymentOptions = ['待付款', '貨到付款', '匯款全額', '已付訂金','信用卡','現金','無卡'];
     export const excelHeaderMap = {
             type: "收支類型",name: "項目名稱", price: "單價", qty: "數量",shipping:"運費",category: "分類",
