@@ -815,7 +815,7 @@ import { renderExpenseList } from './expenseList.js';
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v9.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v10.0</span><span>▶</span></div>
                     </div>
                     <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                         <div class="flex items-center gap-4 text-brand">
@@ -1697,6 +1697,7 @@ import { renderExpenseList } from './expenseList.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                { version: 'v10.0', date: '2026.05.31',  updates: ['篩選功能升級：標籤支援複選，快速查看符合多個條件的紀錄','優化年月份篩選：記住「不限」篩選設定，避免每次開啟都切回當月']},
                 { version: 'v9.0', date: '2026.03.15', updates: ['帳本與功能新增:調整分類順序','新增消費紀錄可上傳最多 3 張照片','新增 FAQ 頁面，可直接回報問題或回饋建議']},
                 { version: 'v8.0', date: '2026.02.05', updates: ['生成分享圖功能：將當月消費與收藏照片整理成一張長圖 <br> 輕鬆分享你的追星 Photo Dump' ]},
                 { version: 'v7.0', date: '2026.01.24', updates: ['匯率換算工具，啟用後支援外幣金額與原幣別紀錄','新增日期功能，保持記帳順序不被打亂']},
@@ -1720,7 +1721,7 @@ import { renderExpenseList } from './expenseList.js';
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 9.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 10.0</p>
                     </div>
 
                     <div class="space-y-6">
@@ -1765,12 +1766,12 @@ import { renderExpenseList } from './expenseList.js';
                         <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
                         <h2 class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
                     </div>
-                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
+                    <h3 class="text-sm font-black text-brand uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
                     <div class="space-y-3 mb-10">
                         ${faqs.map((faq, i) => `
                             <div class="faq-item bg-white rounded-2xl p-4 card-shadow" onclick="toggleFaq(${i})">
                                 <div class="flex justify-between items-center cursor-pointer">
-                                    <h4 class="text-xs font-bold text-slate-700 pr-4">${faq.q}</h4>
+                                    <h4 class="text-xs font-bold text-slate-500 pr-4">${faq.q}</h4>
                                     <svg class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
                                 </div>
                                 <div class="faq-answer mt-2"><p class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
@@ -1779,7 +1780,7 @@ import { renderExpenseList } from './expenseList.js';
                     </div>
 
                     <div class="space-y-4">
-                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-slate-500 font-bold py-4 rounded-2xl text-center text-sm card-shadow active:scale-[0.98] transition-all">
+                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-brand font-bold py-4 rounded-2xl text-center text-sm card-shadow active:scale-[0.98] transition-all">
                             📝 問題回報與功能許願
                         </a>
                     </div>
