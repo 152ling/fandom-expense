@@ -653,6 +653,24 @@
             }
         }
         renderContent();
+        // ─── 【20260608新增:未登入限制新增按鈕邏輯】 ───
+        const addBtn = document.getElementById('fab');
+        if (addBtn) {
+            if (state.user) {
+                //  已登入狀態：按鈕恢復正常彩色
+                addBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
+                addBtn.onclick = () => {
+                    openAddModal(); // 正常打開新增視窗
+                };
+            } else {
+                // 未登入狀態：按鈕變灰色、變半透明
+                addBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                addBtn.onclick = () => {
+                    // 點擊時不開視窗，而是跳出警告提示
+                    showToast("請先登入帳號，才能開始記帳喔！", "error"); 
+                };
+            }
+        }
         const splash = document.getElementById('app-splash');
         if (splash) {
             setTimeout(() => {
