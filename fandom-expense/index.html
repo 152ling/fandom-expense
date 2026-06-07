@@ -588,15 +588,68 @@
 
     onAuthStateChanged(auth, async (user) => {
         state.user = (user && !user.isAnonymous) ? user : null;
+        // if (state.user) {
+        //     const data = await window.cloud.pull();
+        //     if (data) {
+        //         state.expenses = data.expenses || state.expenses;
+        //         state.wishlist = data.wishlist || state.wishlist;
+        //         state.catOrder = data.catOrder || state.catOrder;
+        //         localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
+        //         localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
+        //         localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
+        //     }
+        // }
         if (state.user) {
+            // 1. 先把使用者「未登入時」在本地新增的資料存好
+            const localExpensesArr = state.expenses || [];
+            const localWishlistArr = state.wishlist || [];
+            // 從雲端拉取該帳號原本的舊資料
             const data = await window.cloud.pull();
+            
             if (data) {
-                state.expenses = data.expenses || state.expenses;
-                state.wishlist = data.wishlist || state.wishlist;
+            // --- 【核心邏輯：以雲端為主體，高效合併本地增量資料】 ---
+                const cloudExpenses = data.expenses || [];
+                const cloudWishlist = data.wishlist || [];
+
+                // 複製一份雲端資料當作合併後的完全體基底
+                const mergedExpenses = [...cloudExpenses];
+                const mergedWishlist = [...cloudWishlist];
+
+                // 把雲端既有的所有 ID 收集起來做成 Set
+                const cloudExpenseIds = new Set(cloudExpenses.map(i => i.id));
+                const cloudWishlistIds = new Set(cloudWishlist.map(i => i.id));
+
+                // 遍歷本地消費，如果 Set 裡面「沒有」這個 ID，才判定是未登入新增的，塞進完全體
+                localExpensesArr.forEach(item => {
+                    if (!cloudExpenseIds.has(item.id)) {
+                        mergedExpenses.push(item);
+                    }
+                });
+
+                // 願望清單做一模一樣的高效處理
+                localWishlistArr.forEach(item => {
+                    if (!cloudWishlistIds.has(item.id)) {
+                        mergedWishlist.push(item);
+                    }
+                });
+
+                // 3. 讓全域狀態 state 繼承這份被合流後的完全體資料
+                state.expenses = mergedExpenses;
+                state.wishlist = mergedWishlist;
+                
+                // 分類排序依舊採用雲端的
                 state.catOrder = data.catOrder || state.catOrder;
+
+                // 4. 更新本地 LocalStorage
                 localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
                 localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
                 localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
+
+                // 5. 立刻把這包「合併新資料後」的雲端完全體重新同步回雲端
+                await window.cloud.sync(state.expenses, state.wishlist);
+            } else {
+                // 如果是新註冊的帳號（雲端完全沒資料），直接把本地資料同步上雲端
+                await window.cloud.sync(state.expenses, state.wishlist);
             }
         }
         renderContent();
