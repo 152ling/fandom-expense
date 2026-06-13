@@ -577,36 +577,37 @@
         },
         pull: async () => {
             if (!auth.currentUser || auth.currentUser.isAnonymous) return null;
-            try {
-                // 修正：路徑必須與 sync 一致
-                const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
-                const snap = await getDoc(userDoc);
-                return snap.exists() ? snap.data() : null;
-            } catch (e) { return null; }
+            // 修正：路徑必須與 sync 一致
+            const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
+            const snap = await getDoc(userDoc);
+            return snap.exists() ? snap.data() : null;
+            
         }
     };
 
     onAuthStateChanged(auth, async (user) => {
         state.user = (user && !user.isAnonymous) ? user : null;
-        // if (state.user) {
-        //     const data = await window.cloud.pull();
-        //     if (data) {
-        //         state.expenses = data.expenses || state.expenses;
-        //         state.wishlist = data.wishlist || state.wishlist;
-        //         state.catOrder = data.catOrder || state.catOrder;
-        //         localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
-        //         localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
-        //         localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
-        //     }
-        // }
         if (state.user) {
             // 1. 先把使用者「未登入時」在本地新增的資料存好
             const localExpensesArr = state.expenses || [];
             const localWishlistArr = state.wishlist || [];
             // 從雲端拉取該帳號原本的舊資料
-            const data = await window.cloud.pull();
+            // const data = await window.cloud.pull();
+            let data;
+            let pullFailed = false;
+
+            try {
+                data = await window.cloud.pull();
+            } catch (e) {
+                console.error("雲端讀取失敗，本次跳過合流與覆寫", e);
+                pullFailed = true;
+            }
             
-            if (data) {
+            if (pullFailed) {
+                // 讀取失敗：不確定雲端狀態，絕對不要 sync，
+                // 直接用本機快取資料繼續，並提示使用者
+                showToast("雲端連線異常，目前顯示的是本機快取資料");
+            } else if (data) {
             // --- 【核心邏輯：以雲端為主體，高效合併本地增量資料】 ---
                 const cloudExpenses = data.expenses || [];
                 const cloudWishlist = data.wishlist || [];
@@ -646,10 +647,20 @@
                 localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
 
                 // 5. 立刻把這包「合併新資料後」的雲端完全體重新同步回雲端
-                await window.cloud.sync(state.expenses, state.wishlist);
+                try {
+                    await window.cloud.sync(state.expenses, state.wishlist);
+                } catch (e) {
+                    console.error("合流後同步失敗", e);
+                    showToast("合併後同步失敗，請檢查網路");
+                }
             } else {
-                // 如果是新註冊的帳號（雲端完全沒資料），直接把本地資料同步上雲端
-                await window.cloud.sync(state.expenses, state.wishlist);
+                // --- data === null：確定是新帳號，雲端真的沒有文件，直接把本地資料同步上雲端 ---
+                try {
+                    await window.cloud.sync(state.expenses, state.wishlist);
+                } catch (e) {
+                    console.error("初次同步失敗", e);
+                    showToast("初次同步失敗，請檢查網路");
+                }
             }
         }
         renderContent();
