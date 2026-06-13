@@ -513,7 +513,34 @@
                 showToast("登入失敗，請檢查彈窗設定，請將網頁加入主畫面後重試。iOS建議使用safari開啟");
             }
         },
-        logout: async () => { await signOut(auth); localStorage.clear(); location.reload(); },
+        logout: async () => {
+            // 1. 登出前先嘗試把本機資料同步上雲端（保險動作）
+            if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                try {
+                    await window.cloud.sync(state.expenses, state.wishlist);
+                } catch (e) {
+                    console.error("登出前同步失敗", e);
+                    // 同步失敗時提示使用者，並讓他選擇是否仍要繼續登出
+                    const stillLogout = await askUser(
+                        "雲端同步失敗",
+                        "目前可能有尚未同步的資料，若繼續登出，這些本機資料將會被清除。確定要登出嗎？",
+                        "⚠️"
+                    );
+                    if (!stillLogout) return; // 使用者選擇取消，不登出
+                }
+            }
+
+            // 2. 確認可以登出後，才執行 signOut + 清除本機資料
+            await signOut(auth);
+             // 只清除本 app 相關的 key，不影響同網域下其他可能存在的資料
+            const KEY_PREFIXES = ['fe_v11_', 'fe_cat_set', 'fandom_rates_'];
+            Object.keys(localStorage).forEach(key => {
+                if (KEY_PREFIXES.some(prefix => key.startsWith(prefix))) {
+                    localStorage.removeItem(key);
+                }
+            });
+             location.reload();
+         },
         uploadFile: async (blob, fileName) => {
             if (!auth.currentUser) return null;
             try {
