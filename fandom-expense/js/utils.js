@@ -119,7 +119,8 @@ export    function shrinkImage(blob, targetSize) {
             const totalExp = currentMonthItems.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
             const totalInc = currentMonthItems.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const total = totalExp - totalInc;
-            const photoItems = currentMonthItems.filter(i => i.image).slice(0, 9);
+            const allPhotoItems = currentMonthItems.filter(i => i.image);
+            const photoItems = allPhotoItems.length <= 9 ? allPhotoItems : shuffleArray(allPhotoItems).slice(0, 9);
             
             // 關鍵優化：Cache Key 包含圖片 URL，網址一換快取就自動失效
             const imagesFingerprint = photoItems.map(i => i.image).join('|');
