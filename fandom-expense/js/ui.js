@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymentOptions } from './constants.js';
 import { renderExpenseList } from './expenseList.js';
+import { escapeHTML} from './utils.js';
 
     export function showToast(msg) {
         const t = document.getElementById("toast");
@@ -1295,6 +1296,16 @@ import { renderExpenseList } from './expenseList.js';
                     if (item.paymentMethod !== '已付訂金') {
                         item.paidAmount = item.total; // 非訂金制則視為全額付清
                     }
+                    const TEXT_FIELDS = ['name', 'platform', 'remark', 'category', 'arrivalStatus', 'paymentMethod'];
+                    TEXT_FIELDS.forEach(f => {
+                        if (typeof item[f] === 'string') {
+                            item[f] = escapeHTML(item[f]);
+                        }
+                    });
+                    if (Array.isArray(item.tags)) {
+                        item.tags = item.tags.map(t => escapeHTML(t));
+                    }
+
                     importedData.push(item);
                 }
 

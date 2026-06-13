@@ -276,6 +276,24 @@ export    function shrinkImage(blob, targetSize) {
                     await Promise.all([...loadPromises, document.fonts.ready]);
                     
                     await new Promise(resolve => setTimeout(resolve, 1200));
+
+                    // --- 行動裝置暖機擷取，第一次的結果直接丟棄 ---
+                    const isMobile = /Mobi|Android|iP(ad|hone|od)/.test(navigator.userAgent);
+                    if (isMobile) {
+                        try {
+                            await htmlToImage.toPng(node, {
+                                width: 1080,
+                                height: 1920,
+                                pixelRatio: 1,
+                                cacheBust: true,
+                            });
+                        } catch (e) {
+                            console.warn("warm-up render failed", e);
+                        }
+                        // 暖機後再多等一個 frame，確保合成完成
+                        await new Promise(resolve => requestAnimationFrame(resolve));
+                    }
+                    // --- 暖機結束 --
                     const dataUrl = await htmlToImage.toPng(node, { 
                         width: 1080, 
                         height: 1920,
@@ -301,7 +319,25 @@ export    function shrinkImage(blob, targetSize) {
                 }
             });
         }
+    // HTML escape：用於插入 innerHTML 的文字內容
+    export function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
+    // 用於插在 onclick="...('${xxx}')" 這種單引號字串參數裡
+    // 先做 HTML escape，再把單引號額外轉成 \' 避免跳出 JS 字串
+    export function escapeAttr(str) {
+        return escapeHTML(str).replace(/'/g, "\\'");
+    }
+
+window.escapeHTML = escapeHTML;
+window.escapeAttr = escapeAttr;
 // 掛載到全域（若 HTML 仍有 onclick 呼叫）
 window.compressImage = compressImage;
 window.showShareConfirm = showShareConfirm;

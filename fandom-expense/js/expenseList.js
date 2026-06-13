@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { baseCategories } from './constants.js';
 import { renderContent ,getCurrentCategories,askUser} from './ui.js';
+import { escapeHTML } from './utils.js';
 
         export function renderExpenseList(container) {
             // 自動生成從 2010 到 明年 的年份陣列
