@@ -168,6 +168,14 @@ export    function shrinkImage(blob, targetSize) {
                 document.getElementById('share-title').textContent = `${monthName}`;
                 document.getElementById('share-title-sub').textContent = `${state.filterYear}`;
             }
+            function shuffleArray(array) {
+                const items = [...array];
+                for (let i = items.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [items[i], items[j]] = [items[j], items[i]];
+                }
+                return items;
+            }
 
             // --- 隨機人格邏輯 ---
             const categoryPrefixTemplates = {

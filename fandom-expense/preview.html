@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享卡片視覺預覽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: "Noto Sans TC", sans-serif;
+        }
+        /* 模擬主程式的自訂變數與漸層色（以粉藍 svt 模式為預設預覽） */
+        :root {
+            --brand-gradient: linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%);
+        }
+        .bg-brand { 
+            background: var(--brand-gradient) !important; 
+        }
+        #share-capture-zone {
+            position: absolute;
+            top: 0;
+            width: 800px;
+        }
+        #share-photo-img{
+            background-color: #f7f3f9; /* 淡淡的紫色塊 */
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body class="bg-slate-800 min-h-screen flex flex-col items-center justify-center py-10">
+
+       <div id="share-capture-zone">
+        <div id="share-card" class="relative rounded-[60px] overflow-hidden bg-brand text-white flex flex-col">
+            <!-- 裝飾元素 -->
+            <!-- <div class="absolute -top-[300px] -right-[300px] w-[700px] h-[700px] rounded-full bg-white/10"></div>
+            <div class="absolute -bottom-[200px] -left-[200px] w-[500px] h-[500px] rounded-full bg-white/10"></div> -->
+
+            <div class="relative px-[20px] pt-[150px] flex-grow">
+                <!-- 標題區域 (英文月份) -->
+                <div class="flex items-end">
+                    <div id="share-title" class="text-[110px] font-black leading-none tracking-tighter italic uppercase">JANUARY</div>
+                    <div id="share-title-sub" class="text-[50px] font-black leading-none tracking-tighter italic uppercase">2026</div>
+                </div>
+
+                <div class="mt-4 text-[26px] tracking-[0.2em] opacity-60 font-black uppercase">Bankruptcy Report of the Month</div>
+                <div id="share-summary" class="px-[30px] py-[20px] rounded-[30px] bg-white mt-6 ">
+                    <!-- 追星人格區 -->
+                    <div class="mt-[1px]">
+                        <div class="text-[36px] font-bold text-gray-400 tracking-widest uppercase mb-4 text-center">追星消費分析</div>
+                        <div id="share-personality" class="text-[50px] text-black font-black leading-tight tracking-tighter drop-shadow-xl text-center">本月消費:秘密｜購買商品:10件</div>
+                    </div>
+
+                    <!-- 照片九宮格 (確保固定高度與格子間距) -->
+                    <div id="share-photo-grid" class="mt-[60px] grid grid-cols-3 gap-[30px]">
+                        <!-- JS 動態插入 9 個格子 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部浮水印 -->
+            <div class="relative pb-[50px] pt-[100px] px-[20px]">
+                <div class="flex items-center justify-between">
+                    <!-- 左側：Icon + 標題 -->
+                    <div class="flex items-center gap-6">
+                        <div class="flex bg-[#ffffff] w-[132px] h-[132px] rounded-xl justify-items-center content-center"><img src="qrcode.png"class="w-[120px] h-[120px] block mx-auto my-auto object-contain" alt=""></div>
+                        <div class="flex-row">
+                            <div class="text-[46px] font-black leading-tight">
+                                追星錢包<span class="ml-2 text-[25px] opacity-70 uppercase">FANDOM WALLET</span>
+                            </div>
+                            <div class="mt-2 text-[28px] opacity-70">管理你的周邊，記錄你的追星歷程</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const grid = document.getElementById("share-photo-grid");
+            if (grid) {
+                let html = "";
+                // 迴圈產生 9 個格子
+                for (let i = 1; i <= 9; i++) {
+                    html += `
+                        <div class="w-full px-[10px] py-[10px] aspect-square bg-white  border-2  border-white/30 rounded-[30px] flex flex-col items-center justify-center" style="box-shadow: 0px 2px 7px #8080808f;">
+                            <div class="bg-gray-500 w-full h-full rounded-[20px] flex flex-col items-center justify-center">
+                                <span class="text-[50px] opacity-40">📸</span>
+                                <span class="text-[20px] font-bold opacity-40 mt-2">PHOTO ${i}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                grid.innerHTML = html;
+            }
+        });
+    </script>
+</body>
+</html>
