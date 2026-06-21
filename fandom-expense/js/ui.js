@@ -253,7 +253,13 @@ import { escapeHTML} from './utils.js';
                                 `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="flex gap-4" id="shipping-state">
-                            <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label><input type="text" id="m-platform" autocomplete="one-time-code" autocorrect="off" placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="flex-1 space-y-1 relative" id="platform-combobox">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label>
+                                <input type="text" id="m-platform" autocomplete="off" autocorrect="off" 
+                                    placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" 
+                                    class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
+                            </div>
                             <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${filteredOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
                         </div>
                 
@@ -283,6 +289,7 @@ import { escapeHTML} from './utils.js';
                     </div>`;
                     if(state.enableExchange) {updateRateUI();}
                     initQtyPicker();
+                    initPlatformSuggest();
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
                     setTempType(currentType);
                     updateImagePreviewUI();
@@ -383,19 +390,53 @@ import { escapeHTML} from './utils.js';
                 amountContainer.classList.toggle('hidden', val !== '已付訂金');
             }
         }
-    export function initQtyPicker() { //數量選擇
-        const input = document.getElementById('m-qty');
-        const list = document.getElementById('qty-options');
-        const toggle = document.getElementById('qty-toggle');
-        const arrow = toggle.querySelector('svg');
-        list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-slate-50 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
-        const toggleShow = (show) => { list.classList.toggle('hidden', !show); arrow.style.transform = show ? 'rotate(180deg)' : 'rotate(0deg)'; };
-        input.addEventListener('focus', () => toggleShow(true));
-        toggle.onclick = (e) => { e.stopPropagation(); toggleShow(list.classList.contains('hidden')); };
-        list.querySelectorAll('li').forEach(li => { li.onclick = () => { input.value = li.dataset.val; toggleShow(false); }; });
-        document.addEventListener('click', (e) => { if (!document.getElementById('qty-combobox')?.contains(e.target)) toggleShow(false); }, { once: true });
-    }
+        export function initQtyPicker() { //數量選擇
+            const input = document.getElementById('m-qty');
+            const list = document.getElementById('qty-options');
+            const toggle = document.getElementById('qty-toggle');
+            const arrow = toggle.querySelector('svg');
+            list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-slate-50 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
+            const toggleShow = (show) => { list.classList.toggle('hidden', !show); arrow.style.transform = show ? 'rotate(180deg)' : 'rotate(0deg)'; };
+            input.addEventListener('focus', () => toggleShow(true));
+            toggle.onclick = (e) => { e.stopPropagation(); toggleShow(list.classList.contains('hidden')); };
+            list.querySelectorAll('li').forEach(li => { li.onclick = () => { input.value = li.dataset.val; toggleShow(false); }; });
+            document.addEventListener('click', (e) => { if (!document.getElementById('qty-combobox')?.contains(e.target)) toggleShow(false); }, { once: true });
+        }
+        export function initPlatformSuggest() {
+            const input = document.getElementById('m-platform');
+            const list = document.getElementById('platform-suggestions');
+            if (!input || !list) return;
 
+            const showSuggestions = (query) => {
+                const pool = [...new Set(
+                    state.expenses.map(ex => ex.platform).filter(p => p && p.trim())
+                )];
+                const q = query.trim().toLowerCase();
+                const matches = q 
+                    ? pool.filter(p => p.toLowerCase().includes(q))
+                    : pool.slice(0, 5); // 沒輸入時顯示最近常用的前幾個
+
+                if (matches.length === 0) {
+                    list.classList.add('hidden');
+                    return;
+                }
+                list.innerHTML = matches.map(p => `
+                    <li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-slate-50 last:border-0 font-medium" 
+                        onclick="document.getElementById('m-platform').value='${p.replace(/'/g, "\\'")}'; document.getElementById('platform-suggestions').classList.add('hidden');">
+                        ${p}
+                    </li>
+                `).join('');
+                list.classList.remove('hidden');
+            };
+
+            input.addEventListener('focus', () => showSuggestions(input.value));
+            input.addEventListener('input', () => showSuggestions(input.value));
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('platform-combobox')?.contains(e.target)) {
+                    list.classList.add('hidden');
+                }
+            });
+        }
             //--- 圖片預覽3張與處理 ---
     export function updateImagePreviewUI() {
             const container = document.getElementById('img-preview-row');

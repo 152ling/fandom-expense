@@ -502,13 +502,15 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
-
+    let isExplicitLogin = false; // 標記這次驗證狀態改變是否來自使用者主動點擊登入
     window.cloud = {
         login: async () => {
             const provider = new GoogleAuthProvider();
             try {
+                isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                 await signInWithPopup(auth, provider);
             } catch (err) {
+                isExplicitLogin = false; // 失敗就還原旗標
                 console.error("Login Error:", err);
                 showToast("登入失敗，請檢查彈窗設定，請將網頁加入主畫面後重試。iOS建議使用safari開啟");
             }
@@ -614,80 +616,92 @@
 
     onAuthStateChanged(auth, async (user) => {
         state.user = (user && !user.isAnonymous) ? user : null;
+        
         if (state.user) {
-            // 1. 先把使用者「未登入時」在本地新增的資料存好
-            const localExpensesArr = state.expenses || [];
-            const localWishlistArr = state.wishlist || [];
-            // 從雲端拉取該帳號原本的舊資料
-            // const data = await window.cloud.pull();
-            let data;
-            let pullFailed = false;
+            if (isExplicitLogin) {
+                // --- 情境一：使用者剛剛主動登入，才執行合流（含本機未同步資料的搶救）---
+                const localExpensesArr = state.expenses || [];
+                const localWishlistArr = state.wishlist || [];
 
-            try {
-                data = await window.cloud.pull();
-            } catch (e) {
-                console.error("雲端讀取失敗，本次跳過合流與覆寫", e);
-                pullFailed = true;
-            }
-            
-            if (pullFailed) {
-                // 讀取失敗：不確定雲端狀態，絕對不要 sync，
-                // 直接用本機快取資料繼續，並提示使用者
-                showToast("雲端連線異常，目前顯示的是本機快取資料");
-            } else if (data) {
-            // --- 【核心邏輯：以雲端為主體，高效合併本地增量資料】 ---
-                const cloudExpenses = data.expenses || [];
-                const cloudWishlist = data.wishlist || [];
-
-                // 複製一份雲端資料當作合併後的完全體基底
-                const mergedExpenses = [...cloudExpenses];
-                const mergedWishlist = [...cloudWishlist];
-
-                // 把雲端既有的所有 ID 收集起來做成 Set
-                const cloudExpenseIds = new Set(cloudExpenses.map(i => i.id));
-                const cloudWishlistIds = new Set(cloudWishlist.map(i => i.id));
-
-                // 遍歷本地消費，如果 Set 裡面「沒有」這個 ID，才判定是未登入新增的，塞進完全體
-                localExpensesArr.forEach(item => {
-                    if (!cloudExpenseIds.has(item.id)) {
-                        mergedExpenses.push(item);
-                    }
-                });
-
-                // 願望清單做一模一樣的高效處理
-                localWishlistArr.forEach(item => {
-                    if (!cloudWishlistIds.has(item.id)) {
-                        mergedWishlist.push(item);
-                    }
-                });
-
-                // 3. 讓全域狀態 state 繼承這份被合流後的完全體資料
-                state.expenses = mergedExpenses;
-                state.wishlist = mergedWishlist;
-                
-                // 分類排序依舊採用雲端的
-                state.catOrder = data.catOrder || state.catOrder;
-
-                // 4. 更新本地 LocalStorage
-                localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
-                localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
-                localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
-
-                // 5. 立刻把這包「合併新資料後」的雲端完全體重新同步回雲端
+                let data;
+                let pullFailed = false;
                 try {
-                    await window.cloud.sync(state.expenses, state.wishlist);
+                    data = await window.cloud.pull();
                 } catch (e) {
-                    console.error("合流後同步失敗", e);
-                    showToast("合併後同步失敗，請檢查網路");
+                    console.error("雲端讀取失敗，本次跳過合流與覆寫", e);
+                    pullFailed = true;
                 }
+
+                if (pullFailed) {
+                    showToast("雲端連線異常，目前顯示的是本機快取資料");
+                } else if (data) {
+                    const cloudExpenses = data.expenses || [];
+                    const cloudWishlist = data.wishlist || [];
+
+                    const mergedExpenses = [...cloudExpenses];
+                    const mergedWishlist = [...cloudWishlist];
+
+                    const cloudExpenseIds = new Set(cloudExpenses.map(i => i.id));
+                    const cloudWishlistIds = new Set(cloudWishlist.map(i => i.id));
+
+                    localExpensesArr.forEach(item => {
+                        if (!cloudExpenseIds.has(item.id)) mergedExpenses.push(item);
+                    });
+                    localWishlistArr.forEach(item => {
+                        if (!cloudWishlistIds.has(item.id)) mergedWishlist.push(item);
+                    });
+
+                    state.expenses = mergedExpenses;
+                    state.wishlist = mergedWishlist;
+                    state.catOrder = data.catOrder || state.catOrder;
+
+                    localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
+                    localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
+                    localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
+
+                    try {
+                        await window.cloud.sync(state.expenses, state.wishlist);
+                    } catch (e) {
+                        console.error("合流後同步失敗", e);
+                        showToast("合併後同步失敗，請檢查網路");
+                    }
+                } else {
+                    // data === null：新帳號，雲端真的沒有文件
+                    try {
+                        await window.cloud.sync(state.expenses, state.wishlist);
+                    } catch (e) {
+                        console.error("初次同步失敗", e);
+                        showToast("初次同步失敗，請檢查網路");
+                    }
+                }
+
+                isExplicitLogin = false; // 用完重設，避免下次重整誤判
             } else {
-                // --- data === null：確定是新帳號，雲端真的沒有文件，直接把本地資料同步上雲端 ---
+                // --- 情境二：重新整理頁面 / Firebase 自動恢復 session ---
+                // 直接以雲端資料為準覆蓋本機，不做合併、不搶救本機資料
+                // 因為如果本機真的有「未同步」的新增，會在使用者操作當下就即時 sync，
+                // 正常情況下重整時本機跟雲端應該已經一致
+                let data;
                 try {
-                    await window.cloud.sync(state.expenses, state.wishlist);
+                    data = await window.cloud.pull();
                 } catch (e) {
-                    console.error("初次同步失敗", e);
-                    showToast("初次同步失敗，請檢查網路");
+                    console.error("雲端讀取失敗，本次使用本機快取資料", e);
+                    showToast("雲端連線異常，目前顯示的是本機快取資料");
+                    renderContent();
+                    return; // 讀取失敗，直接用本機資料渲染，不覆寫、不同步
                 }
+
+                if (data) {
+                    state.expenses = data.expenses || state.expenses;
+                    state.wishlist = data.wishlist || state.wishlist;
+                    state.catOrder = data.catOrder || state.catOrder;
+
+                    localStorage.setItem(`fe_v11_expenses`, JSON.stringify(state.expenses));
+                    localStorage.setItem(`fe_v11_wishlist`, JSON.stringify(state.wishlist));
+                    localStorage.setItem(`fe_v11_catOrder`, JSON.stringify(state.catOrder));
+                }
+                // data 是 null 的情況（理論上重整時不該發生，因為使用者已經登入過、雲端應該有文件了）
+                // 這裡選擇保守處理：不做任何覆寫，維持本機現有資料
             }
         }
         renderContent();
