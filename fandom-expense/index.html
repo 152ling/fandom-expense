@@ -284,6 +284,15 @@
                         </svg>
                     </div>
                 </button>
+                <!-- 已取貨按鈕 -->
+                <button id="action-receive-btn" onclick="triggerQuickStatusToggle()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-slate-700 active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-4">
+                        <span>標記已取貨</span>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center ">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m400-570 80-40 80 40v-190H400v190ZM280-280v-80h200v80H280Zm-80 160q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-640v560-560Zm0 560h560v-560H640v320l-160-80-160 80v-320H200v560Z"/></svg>
+                    </div>
+                </button>
                 <!-- 刪除按鈕 -->
                 <button onclick="triggerDeleteFromAction()" class="w-full flex items-center justify-between p-2 bg-white rounded-2xl font-bold text-red-500 active:scale-[0.98] transition-all">
                     <div class="flex items-center gap-4">

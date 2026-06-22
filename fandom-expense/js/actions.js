@@ -403,6 +403,46 @@ export async function triggerDeleteFromAction() {
             closeActionModal(); // 先關閉操作選單
             await handleDelete(null, type, id);
         }
+
+        export async function triggerQuickStatusToggle() {
+            const { type, id } = state.actionTarget || {};
+            if (!id) return;
+            const itemIndex = state.expenses.findIndex(e => String(e.id) === String(id));
+            if (itemIndex === -1) return;
+
+            const item = state.expenses[itemIndex];
+            const newStatus = '已取貨';
+
+            // 1. 更新本機 state
+            state.expenses[itemIndex].arrivalStatus = newStatus;
+
+            // 2. 儲存至 localStorage
+            localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
+
+            // 3. 關閉彈出視窗
+            closeActionModal();
+
+            // 4. 即時回饋 Toast
+            const toastMsg = '狀態已更新為「已取貨」！';
+            if (window.showToast) {
+                window.showToast(toastMsg, "success");
+            } else {
+                alert(toastMsg);
+            }
+
+            // 5. 異步同步至雲端（不卡 UI 渲染）
+            if (window.cloud && window.cloud.sync) {
+                try {
+                    await window.cloud.sync(state.expenses, state.wishlist);
+                } catch (e) {
+                    console.error("更新失敗，請稍後在試:", e);
+                }
+            }
+
+            // 6. 重新渲染畫面
+            renderContent();
+        
+        }
         
 window.saveData = saveData;
 window.handleDelete = handleDelete;
@@ -412,3 +452,4 @@ window.triggerConvertToExpense = triggerConvertToExpense;
 window.triggerEditFromAction = triggerEditFromAction;
 window.triggerDeleteFromAction = triggerDeleteFromAction;
 window.triggerCopyFromAction = triggerCopyFromAction;
+window.triggerQuickStatusToggle = triggerQuickStatusToggle;

@@ -482,12 +482,26 @@ import { escapeHTML} from './utils.js';
             state.actionTarget = { type, id };
             
             const convertBtn = document.getElementById('action-convert-btn');
+            const receiveBtn = document.getElementById('action-receive-btn');
             if (convertBtn) {
                 // 如果點擊的是「心願清單 (wish)」，才顯示轉換按鈕
                 if (type === 'wish') {
                     convertBtn.classList.remove('hidden');
                 } else {
                     convertBtn.classList.add('hidden');
+                }
+            }
+            if (receiveBtn) {
+                if (type === 'expense') {
+                    const item = state.expenses.find(e => String(e.id) === String(id));
+                    // 只有支出且非收入且非已取貨的項目，才顯示到貨狀態切換
+                    if (item && item.type !== 'income' && item.arrivalStatus !== '已取貨') {
+                        receiveBtn.classList.remove('hidden');
+                    } else {
+                        receiveBtn.classList.add('hidden');
+                    }
+                } else {
+                    receiveBtn.classList.add('hidden');
                 }
             }
             
