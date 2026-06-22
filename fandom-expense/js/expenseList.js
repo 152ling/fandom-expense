@@ -10,37 +10,71 @@ import { escapeHTML } from './utils.js';
             const years = [];
             for (let y = 2010; y <= currentYear + 1; y++) { years.push(y); }
             const yearList = [0, ...years.reverse()];
+            const isDoubleUnlimited = (state.filterYear === 0 && state.filterMonth === 0);
+            const hideArrowsClass = isDoubleUnlimited ? 'hidden' : ''; //如果年月都是不限隱藏左右箭頭
             container.innerHTML = `
                 <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
-                            <div class="relative inline-block text-left" id="year-filter-box">
-                                <button onclick="toggleSelect('year-options')" 
-                                        class="flex items-center justify-between gap-2 bg-white border rounded-lg h-[28px] px-2 py-1 text-xs outline-none min-w-[80px] shadow-sm">
-                                    <span class="text-slate-700">${state.filterYear === 0 ? '不限' : state.filterYear + '年'}</span>
-                                    <div class="absolute right-1 cursor-pointer"><svg class="w-4 h-4 transition-transform" fill="none" stroke="black" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
-                                </button>
-                                <ul id="year-options" 
-                                    class="absolute hidden z-50 mt-1 w-[100px] bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar">
-                                    ${yearList.map(y => `
-                                        <li onclick="updateFilter('year', ${y});" 
-                                            class="px-3 py-2 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-none">
-                                            ${y === 0 ? '不限' : y + '年'}
-                                        </li>
-                                    `).join('')}
-                                </ul>
+                            <div class="relative" id="date-picker-box">
+                                <div class="flex items-center gap-1 bg-white border rounded-lg shadow-sm px-1">
+                                    <!-- 左箭頭：上個月 -->
+                                    <button onclick="shiftMonth(-1)" class="${hideArrowsClass} p-1.5 text-slate-400 active:text-brand active:scale-90 transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+
+                                    <!-- 中間：點擊彈出年/月下拉選單 -->
+                                    <button onclick="toggleSelect('date-picker-panel')" class="flex items-center gap-1 px-2 py-1 text-xs font-bold text-slate-700">
+                                        <span id="date-display-text">${getDateDisplayText()}</span>
+                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 9l-7 7-7-7" stroke-width="2.5"/>
+                                        </svg>
+                                    </button>
+
+                                    <!-- 右箭頭：下個月 -->
+                                    <button onclick="shiftMonth(1)" class="${hideArrowsClass} p-1.5 text-slate-400 active:text-brand active:scale-90 transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="date-picker-panel" class="hidden absolute z-50  right-0 bg-white border border-slate-100 rounded-xl shadow-xl p-3 flex gap-2 min-w-[210px]">
+                                    <!-- 年份下拉選單 -->
+                                    <select onchange="updateFilter('year', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none shadow-sm text-slate-700 cursor-pointer flex-1">
+                                        ${yearList.map(y => `
+                                            <option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>
+                                                ${y === 0 ? '不限年份' : y + '年'}
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                        
+                                     <!-- 月份下拉選單 -->
+                                    <select onchange="updateFilter('month', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none shadow-sm text-slate-700 cursor-pointer flex-1">
+                                        <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限月份</option>
+                                        ${Array.from({length: 12}, (_, i) => i + 1).map(m => `
+                                            <option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
                             </div>
-                            <select onchange="updateFilter('month', this.value)" class="bg-white border rounded-lg px-2 py-1 text-xs outline-none shadow-sm">
-                                <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限</option>
-                                ${Array.from({length: 12}, (_, i) => i + 1).map(m => `<option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>`).join('')}
-                            </select>
                         </div>
                     </div>
                     <div class="relative mb-3">
-                        <input type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;state.currentPage=1;renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                        <input id="search-input" type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                         <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
+                        <button id="search-clear-btn" onclick="clearSearch()" 
+                                class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
+                                title="清空搜尋">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
+                    
                     <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
                     <div id="tag-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
                 </div>
@@ -57,10 +91,77 @@ import { escapeHTML } from './utils.js';
 
             // 點擊外面時自動關閉
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('#year-filter-box')) {
-                    document.getElementById('year-options')?.classList.add('hidden');
+                if (!e.target.closest('#date-picker-box')) {
+                    document.getElementById('date-picker-panel')?.classList.add('hidden');
                 }
             });
+        }
+        
+        export function clearSearch() { // 新增：清除搜尋內容函數
+            state.searchKeyword = '';
+            state.currentPage = 1;
+            const input = document.getElementById('search-input');
+            if (input) {
+                input.value = '';
+            }
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (clearBtn) {
+                clearBtn.classList.add('hidden');
+            }
+            // 重新渲染清單
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
+        window.clearSearch = clearSearch;
+
+        export function shiftMonth(delta) { //左右箭頭切換月份或年份
+            let currentMonth = state.filterMonth;
+            let currentYear = state.filterYear;
+            // 雙不限狀態不處理
+            if (currentYear === 0 && currentMonth === 0) return;
+
+            if (currentYear !== 0 && currentMonth === 0) {
+                // 情境 1：特定數字年份 + 不限月份 -> 點擊左右箭頭切換年份增減 (不影響月份)
+                currentYear += delta;
+            } else if (currentYear === 0 && currentMonth !== 0) {
+                // 情境 2：不限年份 + 特定數字月份 -> 僅切換月份 (1月與12月之間循環)
+                currentMonth += delta;
+                if (currentMonth > 12) currentMonth = 1;
+                if (currentMonth < 1) currentMonth = 12;
+            } else {
+                // 情境 3：特定數字年份 + 特定數字月份 -> 正常的跨年份月份切換
+                currentMonth += delta;
+                if (currentMonth > 12) {
+                    currentMonth = 1;
+                    currentYear += 1;
+                } else if (currentMonth < 1) {
+                    currentMonth = 12;
+                    currentYear -= 1;
+                }
+            }
+            state.filterYear = currentYear;
+            state.filterMonth = currentMonth;
+
+            // 儲存狀態同步
+            if (currentYear === 0) { //只記住不限的選擇
+                localStorage.setItem('fe_v11_filterYear', 0);
+            } else {
+                localStorage.removeItem('fe_v11_filterYear');
+            }
+            if (currentMonth === 0) {
+                localStorage.setItem('fe_v11_filterMonth', 0);
+            } else {
+                localStorage.removeItem('fe_v11_filterMonth');
+            }
+            
+            renderContent();
+        }
+        window.shiftMonth = shiftMonth;
+
+        function getDateDisplayText() { // 顯示目前選擇的年月文字
+            if (state.filterYear === 0 && state.filterMonth === 0) return '不限';
+            if (state.filterYear === 0) return `不限年份${state.filterMonth}月`;
+            if (state.filterMonth === 0) return `${state.filterYear}整年`;
+            return `${state.filterYear}年${state.filterMonth}月`;
         }
         function renderExpenseListItems(container) { //消費清單渲染
             if(!container) return;
