@@ -938,7 +938,7 @@ import { escapeHTML} from './utils.js';
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v11.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v12.0</span><span>▶</span></div>
                     </div>
                     <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                         <div class="flex items-center gap-4 text-brand">
@@ -1830,6 +1830,7 @@ import { escapeHTML} from './utils.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                {version: 'v12.0',date: '2026.06.22',updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
                 { version: 'v11.0', date: '2026.06.13', updates: ['設定自動記憶：修正帳本模式（KPOP/ACGN）與匯率工具，重開 App 不再跳回預設值','優化登入合流機制，重新登入時會自動將登出期間新增的資料合併上雲端','未登入限制與提示：未登入時會鎖定新增功能並跳出提示，避免資料沒同步到雲端而遺失']},
                 { version: 'v10.0', date: '2026.05.31', updates: ['篩選功能升級：標籤支援複選，快速查看符合多個條件的紀錄','優化年月份篩選：記住「不限」篩選設定，避免每次開啟都切回當月']},
                 { version: 'v9.0', date: '2026.03.15', updates: ['帳本與功能新增:調整分類順序','新增消費紀錄可上傳最多 3 張照片','新增 FAQ 頁面，可直接回報問題或回饋建議']},
@@ -1855,7 +1856,7 @@ import { escapeHTML} from './utils.js';
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 11.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 12.0</p>
                     </div>
 
                     <div class="space-y-6">
