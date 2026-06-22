@@ -322,21 +322,6 @@ import { escapeHTML } from './utils.js';
                 </div>`;
             }).join('');
 
-            // 添加分頁按鈕 UI
-            // if (totalPages > 1) {
-            //     html += `
-            //     <div class="flex justify-center items-center gap-6 mt-8 mb-4">
-            //         <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
-            //             <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            //         </button>
-            //         <div class="text-xs font-black text-slate-400 uppercase tracking-widest">
-            //             <span class="text-brand mx-1">${state.currentPage}</span> / ${totalPages}
-            //         </div>
-            //         <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
-            //             <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            //         </button>
-            //     </div>`;
-            // }
             if (totalPages > 1) {
                 html += `
                 <div class="flex justify-center items-center gap-2 mt-8 mb-4">

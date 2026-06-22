@@ -38,6 +38,7 @@
             enableExchange: localStorage.getItem('fe_v11_enableExchange') === 'true',
             defaultCurrency: localStorage.getItem('fe_v11_defaultCurrency') || 'TWD',
             currentPage: 1, // 新增：分頁功能
+            reportDimension: 'category', // 財務報表維度：'category' (按分類) 或 'tag' (按標籤)
         };
 
 window.state = state;

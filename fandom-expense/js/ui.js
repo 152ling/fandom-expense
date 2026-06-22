@@ -709,13 +709,54 @@ import { escapeHTML} from './utils.js';
                 const targetRecords = periodRecords.filter(i => (isInc ? i.type === 'income' : i.type !== 'income'));
                 chartTitle = isInc ? "總收入" : "總支出";
                 centerAmount = isInc ? totalInc : totalExp;
-                const currentCats = getCurrentCategories();
-                stats = currentCats.map(cat => ({
-                    ...cat,
-                    amount: targetRecords
-                        .filter(ex => ex.category === cat.id)
-                        .reduce((sum, item) => sum + (Number(item.total) || 0), 0)
-                })).filter(s => s.amount > 0).sort((a, b) => b.amount - a.amount);
+                if (state.reportDimension === 'tag') {
+                    // =================【標籤分析維度】=================
+                    let tagMap = {};
+                    targetRecords.forEach(ex => {
+                        const amt = Number(ex.total) || 0;
+                        if (Array.isArray(ex.tags) && ex.tags.length > 0) {
+                            ex.tags.forEach(tag => {
+                                const cleanTag = tag.trim();
+                                if (!cleanTag) return;
+                                if (!tagMap[cleanTag]) {
+                                    tagMap[cleanTag] = { 
+                                        id: `#${cleanTag}`, 
+                                        amount: 0, 
+                                        color: '#92A8D1', // 可以使用品牌色，或設計一套標籤隨機色彩機制
+                                        icon: '🏷️' 
+                                    };
+                                }
+                                tagMap[cleanTag].amount += amt;
+                            });
+                        } else {
+                            // 未貼標籤的項目歸納
+                            if (!tagMap['未貼標籤']) {
+                                tagMap['未貼標籤'] = { id: '未貼標籤', amount: 0, color: '#cbd5e1', icon: '📁' };
+                            }
+                            tagMap['未貼標籤'].amount += amt;
+                        }
+                    });
+                    // 轉成陣列並按照金額降冪排序
+                    stats = Object.values(tagMap).filter(s => s.amount > 0).sort((a, b) => b.amount - a.amount);
+                    
+                    // 可選優化：為標籤列表動態著色，讓 Donut 圖呈現更漂亮
+                    const tagColors = ['#f43f5e', '#f97316', '#eec448', '#22c55e', '#0ea5e9', '#6366f1', '#d946ef'];
+                    stats.forEach((s, idx) => {
+                        if (s.id !== '未貼標籤') {
+                            s.color = tagColors[idx % tagColors.length];
+                        }
+                    });
+
+                } else {
+                        // =================【分類分析維度】=================
+                        const currentCats = getCurrentCategories();
+                        stats = currentCats.map(cat => ({
+                            ...cat,
+                            amount: targetRecords
+                                .filter(ex => ex.category === cat.id)
+                                .reduce((sum, item) => sum + (Number(item.total) || 0), 0)
+                        })).filter(s => s.amount > 0).sort((a, b) => b.amount - a.amount);
+                    }
             }
 
             const formatAmt = (num) => state.hideAmount ? '•••' : num.toLocaleString();
@@ -771,9 +812,29 @@ import { escapeHTML} from './utils.js';
                         </div>
 
                         <div class="space-y-3">
+                            ${(reportMode !== 'net' && stats.length > 0) ? `
+                                <div class="flex border-b border-gray-100 mb-2">
+                                    <button  onclick="changeReportDimension('category')" 
+                                        class="report-tab flex-1 pb-3 text-sm font-bold  ${state.reportDimension === 'category' ? 'active' : 'text-slate-400'}">
+                                        依分類
+                                    </button>
+                                    <button onclick="changeReportDimension('tag')" 
+                                        class="report-tab flex-1 pb-3 text-sm font-bold ${state.reportDimension === 'tag' ? 'active' : 'text-slate-400'}">
+                                        依標籤
+                                    </button>
+                                </div>
+                            ` : ''}
+        
+                    
+                            
                             <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">
                                 ${reportMode === 'net' ? '收支平衡分析' : (reportMode === 'income' ? '收入來源排名' : '支出佔比排名')}
                             </h3>
+                            ${(reportMode !== 'net' && state.reportDimension === 'tag') ? `
+                            <p class="text-[10px] font-bold text-slate-400/70 mt-1  tracking-wide">
+                                提示：複選標籤之項目會重複計算，佔比以該時段總金額為基準
+                            </p>
+                        ` : ''}
                             ${stats.map(s => { 
                                 const p = ((s.amount / (reportMode === 'net' ? (totalExp + totalInc) : centerAmount)) * 100).toFixed(1); 
                                 return `
@@ -797,6 +858,7 @@ import { escapeHTML} from './utils.js';
                             目前時段尚無數據可分析
                         </div>
                     `}
+                    
                 </div>`;
 
             if (stats.length > 0) initChart(stats);
@@ -813,7 +875,12 @@ import { escapeHTML} from './utils.js';
             state.reportOffset += delta;
             renderContent();
         }
-        
+
+        window.changeReportDimension = (dimension) => {
+            state.reportDimension = dimension;
+            renderContent(); // 重新渲染報表
+        };
+                
         function calculateReportRange() {
             let start, end, label; const now = new Date();
             if (state.reportRange === 'month') { start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1); end = new Date(start.getFullYear(), start.getMonth() + 1, 0); label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; }
