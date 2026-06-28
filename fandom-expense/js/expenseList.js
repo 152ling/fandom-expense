@@ -235,6 +235,19 @@ import { escapeHTML } from './utils.js';
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
             const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
+            // 判斷使用者目前有沒有啟用任何「非時間」的篩選條件
+            const hasActiveFilters = state.searchKeyword || state.selectedCategory || state.selectedTags.length > 0;
+
+            // 根據有沒有開篩選，給予不同的提示文案
+            let emptyMessage = "";
+            if (hasActiveFilters) {
+                emptyMessage = "沒有符合目前篩選條件的紀錄唷 🔍";
+            } else {
+                // 沒開篩選時，再根據時間給予對應文案
+                emptyMessage = state.filterYear === 0 && state.filterMonth === 0 
+                    ? "目前還沒有任何消費紀錄唷，快來記第一筆吧！" 
+                    : "這個月份目前沒有紀錄唷";
+            }
             if (filtered.length === 0) {
                 if (!state.user) { // 檢查是否未登入
                     container.innerHTML = `
@@ -248,7 +261,7 @@ import { escapeHTML } from './utils.js';
                         </div>
                     `;
                 } else {// 已登入但真的沒資料
-                    container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">這個月份目前沒有紀錄唷</div>`;
+                    container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">${emptyMessage}</div>`;
                 }
                 return;
             }

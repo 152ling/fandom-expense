@@ -133,6 +133,11 @@ export async function saveData() {
 
             // 儲存至本地 (修正引號問題)
             localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
+            // 防呆：儲存後清理已不存在的 selectedTags
+            if (state.selectedTags && state.selectedTags.length > 0) {
+                const remainingTags = new Set(state.expenses.flatMap(ex => ex.tags || []));
+                state.selectedTags = state.selectedTags.filter(t => remainingTags.has(t));
+            }
             // --- 核心修正：如果是從願望轉過來的，刪除該願望 ---
             if (isExp && state.wishSourceId) {
                 state.wishlist = state.wishlist.filter(w => String(w.id) !== state.wishSourceId);
@@ -349,7 +354,11 @@ export  async function handleDelete(e, type, id) {
                     // 4. 刪除本地與雲端的文字紀錄
                     state[key] = state[key].filter(i => String(i.id) !== String(id));
                     localStorage.setItem(`fe_v11_${key}`, JSON.stringify(state[key]));
-                    
+                    // 防呆：刪除後清理已不存在的 selectedTags
+                    if (state.selectedTags && state.selectedTags.length > 0) {
+                        const remainingTags = new Set(state.expenses.flatMap(ex => ex.tags || []));
+                        state.selectedTags = state.selectedTags.filter(t => remainingTags.has(t));
+                    }
                     if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
                     
                     renderContent();
