@@ -507,8 +507,17 @@ import { escapeHTML } from './utils.js';
             if (type === 'category') {
                 state.selectedCategory = value;
             } else {
-                state.searchKeyword = value;
-                if (input) input.value = value;
+                const clearBtn = document.getElementById('search-clear-btn');
+                // 如果已經是相同的搜尋關鍵字，再點一次則清除搜尋
+                if (state.searchKeyword === value) {
+                    state.searchKeyword = '';
+                    if (input) input.value = '';
+                    if (clearBtn) clearBtn.classList.add('hidden');
+                } else {
+                    state.searchKeyword = value;
+                    if (input) input.value = value;
+                    if (clearBtn) clearBtn.classList.toggle('hidden', false);
+                }
             }
             state.currentPage = 1; // 重設分頁
             // 執行渲染：更新分類列與清單內容
