@@ -746,7 +746,8 @@
             message: String(message),
             source,
             lineno,
-            colno
+            colno,
+            stack: error && error.stack ? String(error.stack) : 'No stack trace available'
         });
     };
     function reportEvent(name, params = {}) {
