@@ -742,11 +742,19 @@
         }
     });
     window.onerror = function (message, source, lineno, colno, error) {
+        const frames = error?.stack
+        ? error.stack.split('\n').map(f => f.trim())
+        : [];
         reportEvent('js_error', {
             message: String(message),
             source,
             lineno,
             colno,
+            // 真正 throw 的地方
+            throwFrame: frames[1] || '',
+
+            // 哪個 UI 點擊觸發的？
+            callerFrame: frames[frames.length - 1] || '',
             stack: error && error.stack ? String(error.stack) : 'No stack trace available'
         });
     };
