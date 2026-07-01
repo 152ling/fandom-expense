@@ -465,6 +465,34 @@
 
     // 啟動 App
     window.onload = () => {
+        // 🚀 新增：安全清除 Service Worker 快取檔案，不影響 localStorage 記帳資料
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+                console.log('🌐 網頁檔案快取已清空（資料安全無虞）');
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+                console.log('🤖 舊版 Service Worker 已登出');
+            });
+        }
+
+        // 利用特製的 key 控制重整，fe_v11_ 開頭不會影響你原本的記帳資料
+        const hasCleaned = localStorage.getItem('fe_v11_pwa_fix_v2');
+        if (!hasCleaned) {
+            localStorage.setItem('fe_v11_pwa_fix_v2', 'true');
+            // 加上時間戳記強迫繞過 Vercel 快取取得最新 index.html
+            window.location.href = window.location.pathname + '?v=' + Date.now();
+            return; // 轉跳後直接中斷後續執行
+        }
+        
         // 1. 初始化主題
         applyTheme(state.themeColor);
         
@@ -483,7 +511,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./service-worker.js')
-            .then(() => console.log('Service Worker registered'))
+            .then(() => console.log('Service-Worker registered'))
             .catch(err => console.error('SW registration failed:', err));
         }
     </script>
