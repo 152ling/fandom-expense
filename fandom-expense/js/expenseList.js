@@ -18,7 +18,7 @@ import { escapeHTML } from './utils.js';
                         <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
                             <div class="relative" id="date-picker-box">
-                                <div class="flex items-center gap-1 bg-white border rounded-lg shadow-sm px-1">
+                                <div class="flex items-center gap-1 bg-white border-brand rounded-lg shadow-sm px-1">
                                     <!-- 左箭頭：上個月 -->
                                     <button onclick="shiftMonth(-1)" class="${hideArrowsClass} p-1.5 text-slate-400 active:text-brand active:scale-90 transition-all">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

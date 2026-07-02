@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fe-v11-cache-v12';
+const CACHE_NAME = 'fe-v11-cache-v12-1';
 const ASSETS = [
   './',
   './index.html',
