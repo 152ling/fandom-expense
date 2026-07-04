@@ -24,6 +24,7 @@ const translations = {
     btn_add:    '新增',
     btn_edit:   '編輯資料',
     btn_delete: '刪除資料',
+    btn_receive: '標記已取貨',
     btn_copy:   '複製並新增',
     btn_login:  '登入',
     btn_logout: '登出',
@@ -38,9 +39,9 @@ const translations = {
     expense_search_ph:    '搜尋項目、到貨狀態、備註...',
     expense_no_tag:       '此分類暫無標籤',
     expense_total:        '總計',
-    expense_yearly:       '本年淨支出',
-    expense_monthly:      '本月淨支出',
-    expense_count:        '{n} 項紀錄',
+    expense_本年淨支出:    '本年淨支出',
+    expense_本月淨支出:    '本月淨支出',
+    expense_count:        '共 {n} 項紀錄',
     expense_total_label:  'Total Cost',
 
     // === 新增/編輯彈窗 ===
@@ -49,8 +50,7 @@ const translations = {
     modal_add_wish:     '新增心願',
     modal_edit_wish:    '編輯心願',
     modal_add_from_wish:'加入消費清單',
-    field_name:         '商&#8203;品&#8203;名&#8203;稱',
-    field_name_required:'商品名稱 *',
+    field_name:         '商品名稱',
     field_price:        '單價',
     field_qty:          '數量',
     field_shipping:     '運費/二補',
@@ -71,7 +71,7 @@ const translations = {
     field_wish_cat:     '分類',
     field_wish_remark:  '心願備註',
     field_wish_date_toggle: '記錄發售日期與時間',
-    field_release_date: '發售日期',
+    field_release_date: '日期',
     field_release_time: '時間',
     type_expense:       '支出',
     type_income:        '售出',
@@ -84,7 +84,7 @@ const translations = {
     arrival_待取貨: '待取貨',
     arrival_已取貨: '已取貨',
     arrival_已售出: '已售出',
-    
+
     // 付款方式
     pay_待付款:   '待付款',
     pay_貨到付款: '貨到付款',
@@ -93,6 +93,30 @@ const translations = {
     pay_信用卡:   '信用卡',
     pay_現金:     '現金',
     pay_無卡:     '無卡',
+
+    // === KPOP分類 (categories) ===
+    cat_專輯: '專輯',
+    cat_小卡: '小卡',
+    'cat_演唱會/見面會門票': '演唱會 / 見面會門票', // 含有斜線符號，建議保留引號以防語法報錯
+    cat_周邊商品: '周邊商品',
+    cat_娃娃: '娃娃',
+    cat_會員費: '會員費',
+    'cat_應援物/飯製商品': '應援物 / 飯製商品', // 含有斜線符號
+    'cat_交通/住宿': '交通 / 住宿',         // 含有斜線符號
+    cat_聯名商品: '聯名商品',
+    cat_其他追星支出: '其他追星支出',
+
+    // === ACGN分類 (categoriesACGN) ===
+    'cat_漫畫/輕小說': '漫畫 / 輕小說',       // 含有斜線符號
+    'cat_立牌/吊飾': '立牌 / 吊飾',         // 含有斜線符號
+    'cat_小卡/色紙': '小卡 / 色紙',         // 含有斜線符號
+    'cat_明信片/海報': '明信片 / 海報',       // 含有斜線符號
+    'cat_徽章/壓克力': '徽章 / 壓克力',       // 含有斜線符號
+    'cat_公仔/娃娃': '公仔 / 娃娃',         // 含有斜線符號
+    cat_一番賞: '一番賞',
+    cat_聯名服飾: '聯名服飾',
+    'cat_活動門票/展覽/電影票': '活動門票 / 展覽 / 電影票', // 含有斜線符號
+    cat_其他支出: '其他支出',
 
     // === 願望清單 ===
     wish_title:       '願望清單',
@@ -209,6 +233,7 @@ const translations = {
     btn_edit:   'Edit',
     btn_delete: 'Delete',
     btn_copy:   'Duplicate',
+    btn_receive: 'Mark as Received',
     btn_login:  'Login',
     btn_logout: 'Logout',
     btn_back:   'Back',
@@ -221,8 +246,8 @@ const translations = {
     expense_search_ph:   'Search items, status, notes...',
     expense_no_tag:      'No tags in this category',
     expense_total:       'Total',
-    expense_yearly:      'Annual Net',
-    expense_monthly:     'Monthly Net',
+    expense_本年淨支出:   'Annual Net',
+    expense_本月淨支出:   'Monthly Net',
     expense_count:       '{n} items',
     expense_total_label: 'Total Cost',
 
@@ -273,6 +298,30 @@ const translations = {
     pay_信用卡:   'Credit Card',
     pay_現金:     'Cash',
     pay_無卡:     'Card-free',
+
+    // === 追星分類 (categories) ===
+    cat_專輯: 'Album',
+    cat_小卡: 'Photo Card',
+    'cat_演唱會/見面會門票': 'Concert / Fan Meeting Ticket',
+    cat_周邊商品: 'Merchandise',
+    cat_娃娃: 'Plushie',
+    cat_會員費: 'Membership Fee',
+    'cat_應援物/飯製商品': 'Cheering Supplies / Fan-made Goods',
+    'cat_交通/住宿': 'Transportation / Accommodation',
+    cat_聯名商品: 'Collaboration Goods',
+    cat_其他追星支出: 'Other Fandom Expenses',
+
+    // === ACGN分類 (categoriesACGN) ===
+    'cat_漫畫/輕小說': 'Manga / Light Novel',
+    'cat_立牌/吊飾': 'Acrylic Stand / Keychain',
+    'cat_小卡/色紙': 'Photo Card / Shikishi (Art Board)',
+    'cat_明信片/海報': 'Postcard / Poster',
+    'cat_徽章/壓克力': 'Pin Badge / Acrylic',
+    'cat_公仔/娃娃': 'Figure / Plushie',
+    cat_一番賞: 'Ichiban Kuji',
+    cat_聯名服飾: 'Collaboration Apparel',
+    'cat_活動門票/展覽/電影票': 'Event Ticket / Exhibition / Movie Ticket',
+    cat_其他支出: 'Other Expenses',
 
     wish_title:       'Wishlist',
     wish_empty:       'Make a wish!',
@@ -391,7 +440,28 @@ const translations = {
     confirm_cancel: 'キャンセル',
     toast_saved:  '保存・同期しました',
     toast_deleted: '削除しました',
-    // ... 必要に応じて追加
+  
+    cat_專輯: 'アルバム',
+    cat_小卡: 'トレカ',
+    'cat_演唱會/見面會門票': 'コンサート / ファンミチケット',
+    cat_周邊商品: 'グッズ',
+    cat_娃娃: 'ぬいぐるみ',
+    cat_會員費: 'ファンクラブ会費',
+    'cat_應援物/飯製商品': '応援グッズ / ファンメイドグッズ',
+    'cat_交通/住宿': '交通費 / 宿泊費',
+    cat_聯名商品: 'コラボ商品',
+    cat_其他追星支出: 'その他推し活支出',
+
+    'cat_漫畫/輕小說': '漫画 / ライトノベル',
+    'cat_立牌/吊飾': 'アクスタ / キーホルダー',
+    'cat_小卡/色紙': 'トレカ / 色紙',
+    'cat_明信片/海報': 'ポストカード / ポスター',
+    'cat_徽章/壓克力': '缶バッジ / アクリル',
+    'cat_公仔/娃娃': 'フィギュア / ぬいぐるみ',
+    cat_一番賞: '一番くじ',
+    cat_聯名服飾: 'コラボ服飾',
+    'cat_活動門票/展覽/電影票': 'イベントチケット / 展示会 / 映画券',
+    cat_其他支出: 'その他支出'
   },
 
   'ko': {

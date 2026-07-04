@@ -262,13 +262,13 @@ import './i18n.js';
                         </div>
                     `;
                 } else {// 已登入但真的沒資料
-                    container.innerHTML = `<div class="text-center py-24 text-slate-300 font-bold">${emptyMessage}</div>`;
+                    container.innerHTML = `<div data-i18n="expense_empty" class="text-center py-24 text-slate-300 font-bold">${emptyMessage}</div>`;
                 }
                 return;
             }
             let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
                 <div>
-                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
+                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${t('expense_' + summaryLabel)}</p>                     
                         <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
                                 ${state.hideAmount ? 
                                     `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>` : 
@@ -278,9 +278,9 @@ import './i18n.js';
                     <h3 class="text-3xl font-black">${totalDisplay}</h3>
                     </div>
                     <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1">支出: ${totalExpDisplay}</p>` : ''}
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg">售出: +$${totalInc.toLocaleString()}</p>` : ''}
-                        <p class="text-xs text-white/80 font-medium">共 ${filtered.length} 項紀錄</p>
+                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1"><span data-i18n="type_expense">支出</span>: ${totalExpDisplay}</p>` : ''}
+                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg"><span data-i18n="type_income">售出</span>: +$${totalInc.toLocaleString()}</p>` : ''}
+                        <p class="text-xs text-white/80 font-medium">${t('expense_count', { n: filtered.length })}</p> 
                     </div>
                 </div>` 
             html += paginatedItems.map(item => {
@@ -448,6 +448,9 @@ import './i18n.js';
             // --- 第一層：分類 (Categories) 渲染 ---
             catBar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat.id;
+                const cleanId = cat.id.replace(/\s+/g, '');
+                let translatedText = typeof t === 'function' ? t(`cat_${cleanId}`) : cat.id;
+                const shortText = translatedText.split(' ')[0];
                 return `
                     <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
                                 state.currentPage=1;            
@@ -455,9 +458,12 @@ import './i18n.js';
                                 renderExpenseListItems(document.getElementById('expense-list-items'))" 
                         class="chip ${isActive ? 'active-cat text-white' : ''}" 
                         style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
-                        ${cat.icon} ${cat.id.split(' ')[0]}
+                        <span>${cat.icon}</span><span>${shortText}</span>
                     </div>`;
             }).join('');
+            if (typeof updateStaticTranslations === 'function') {
+                updateStaticTranslations(catBar);
+            }
 
             // --- 第二層：連動標籤 (Filtered Tags) 邏輯 ---
             const tagBar = document.getElementById('tag-bar');
@@ -479,7 +485,7 @@ import './i18n.js';
 
             // 3. 渲染標籤列
             if (relevantTags.length === 0) {
-                tagBar.innerHTML = `<span class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
+                tagBar.innerHTML = `<span data-i18n="expense_no_tag" class="text-[10px] text-slate-300 py-2 ml-1">此分類暫無標籤</span>`;
             } else {
                 tagBar.innerHTML = relevantTags.map(tag => {
                     const isActive = state.selectedTags.includes(tag);
