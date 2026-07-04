@@ -219,19 +219,19 @@
     <footer class="fixed bottom-0 w-full bg-white backdrop-blur-md border-t border-gray-100 flex justify-around items-center h-20 safe-area-bottom z-50 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
         <button onclick="switchTab('expense')" id="tab-expense" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="2"/></svg>
-            <span class="text-[10px] font-bold">消費清單</span>
+            <span data-i18n="nav_expense" class="text-[10px] font-bold">消費清單</span>
         </button>
         <button onclick="switchTab('report')" id="tab-report" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-width="2"/><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-width="2"/></svg>
-            <span class="text-[10px] font-bold">財務報表</span>
+            <span data-i18n="nav_report" class="text-[10px] font-bold">財務報表</span>
         </button>
         <button onclick="switchTab('wish')" id="tab-wish" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-width="2"/></svg>
-            <span class="text-[10px] font-bold">願望清單</span>
+            <span data-i18n="nav_wish" class="text-[10px] font-bold">願望清單</span>
         </button>
         <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 flex flex-col items-center gap-1 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/></svg>
-            <span class="text-[10px] font-bold">設定</span>
+            <span data-i18n="nav_settings" class="text-[10px] font-bold">設定</span>
         </button>
     </footer>
 
@@ -245,8 +245,8 @@
                 </div>
                 <form id="data-form" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar pb-6 px-1"></form>
                 <div class="pt-4 border-t border-gray-50 flex gap-3">
-                    <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl active:scale-95 transition-transform">取消</button>
-                    <button onclick="saveData()" class="bg-brand flex-[2] text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">確認儲存</button>
+                    <button data-i18n="btn_cancel" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl active:scale-95 transition-transform">取消</button>
+                    <button data-i18n="btn_save" onclick="saveData()" class="bg-brand flex-[2] text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">確認儲存</button>
                 </div>
             </div>
         </div>
@@ -312,11 +312,11 @@
     <div id="common-confirm-overlay" class="fixed inset-0 bg-black/70 hidden z-[110] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-xs rounded-3xl overflow-hidden p-6 text-center shadow-2xl scale-95">
             <div id="confirm-icon" class="w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
-            <h3 id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">確定要刪除嗎？</h3>
-            <p id="confirm-desc" class="text-sm text-gray-400 mb-6">紀錄刪除後將無法恢復。</p>
+            <h3 data-i18n-title="confirm_delete_title" id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">確定要刪除嗎？</h3>
+            <p data-i18n="confirm_delete_desc" id="confirm-desc" class="text-sm text-gray-400 mb-6">紀錄刪除後將無法恢復。</p>
             <div class="flex gap-3">
-                <button id="confirm-btn-cancel" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
-                <button id="confirm-btn-ok" class="bg-brand flex-1 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定</button>
+                <button id="confirm-btn-cancel" data-i18n="btn_cancel" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl active:scale-95">取消</button>
+                <button id="confirm-btn-ok" data-i18n="btn_ok" class="bg-brand flex-1 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">確定</button>
             </div>
         </div>
     </div>
@@ -464,14 +464,18 @@
     import './js/utils.js';
     import './js/tag.js';
 
+
+
     // 啟動 App
     window.onload = () => {
+
     
         // 1. 初始化主題
         applyTheme(state.themeColor);
         
         // 2. 決定預設分頁
         switchTab('expense');
+        updateStaticTranslations(); // 啟動時跑一次靜態翻譯
         
         // 3. 執行 UI 監聽初始化 (原本放在 script 裡的動作)
         if (window.initSwipeToClose) window.initSwipeToClose();

@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { baseCategories } from './constants.js';
 import { renderContent ,getCurrentCategories,askUser} from './ui.js';
 import { escapeHTML } from './utils.js';
+import './i18n.js';
 
         export function renderExpenseList(container) {
             // 自動生成從 2010 到 明年 的年份陣列
@@ -15,7 +16,7 @@ import { escapeHTML } from './utils.js';
             container.innerHTML = `
                 <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-black tracking-tight">消費清單</h2>
+                        <h2 data-i18n="expense_title" class="text-2xl font-black tracking-tight">消費清單</h2>
                         <div class="flex gap-2 text-gray-800">
                             <div class="relative" id="date-picker-box">
                                 <div class="flex items-center gap-1 bg-white border-brand rounded-lg shadow-sm px-1">
@@ -64,7 +65,7 @@ import { escapeHTML } from './utils.js';
                         </div>
                     </div>
                     <div class="relative mb-3">
-                        <input id="search-input" type="text" placeholder="搜尋項目、到貨狀態、備註..." oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                        <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                         <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
                         <button id="search-clear-btn" onclick="clearSearch()" 
                                 class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
@@ -502,7 +503,7 @@ import { escapeHTML } from './utils.js';
                 };
         }
         export function quickFilter(type, value) {
-            const input = document.querySelector('input[placeholder*="搜尋"]');
+            const input = document.getElementById('search-input');
             
             if (type === 'category') {
                 state.selectedCategory = value;

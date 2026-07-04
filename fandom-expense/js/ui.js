@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymentOptions } from './constants.js';
 import { renderExpenseList } from './expenseList.js';
 import { escapeHTML} from './utils.js';
-
+import  './i18n.js';
     export function showToast(msg) {
         const t = document.getElementById("toast");
         if(!t) return;
@@ -110,7 +110,15 @@ import { escapeHTML} from './utils.js';
                 else if (state.subPage === 'faq') renderFAQView(container);
                 else renderSettings(container);
             }
+              // 渲染完動態內容後，統一更新靜態翻譯
+            requestAnimationFrame(() => updateStaticTranslations());
     }
+        // 語言切換函數
+        window.changeLang = (lang) => {
+            setLang(lang);
+            updateStaticTranslations(); // 先更新靜態部分（導覽列等）
+            renderContent();             // 再重繪動態內容
+        };
 
 
         export function openAddModal(itemData = null) {
@@ -153,18 +161,18 @@ import { escapeHTML} from './utils.js';
 
          // --- 標題判斷邏輯優化 ---
             if (isWishMode) {
-                modalTitle.textContent = state.editingId ? "編輯心願" : "新增心願";
+                modalTitle.textContent = state.editingId ? t('modal_edit_wish') : t('modal_add_wish');//"編輯心願" : "新增心願";
             } else {
                 // 消費模式下的三種情況：
                 if (state.wishSourceId) {
                     // 1. 從願望清單轉換而來
-                    modalTitle.textContent = "加入消費清單";
+                    modalTitle.textContent = t('modal_add_from_wish'); // "加入消費清單";
                 } else if (state.editingId) {
                     // 2. 編輯現有消費紀錄
-                    modalTitle.textContent = "編輯紀錄";
+                    modalTitle.textContent = t('modal_edit_expense'); // "編輯紀錄";
                 } else {
                     // 3. 一般新增消費
-                    modalTitle.textContent = "新增紀錄";
+                    modalTitle.textContent = t('modal_add_expense'); // "新增紀錄";
                 }
             }
             if (!isWishMode) { //新增消費
@@ -195,17 +203,17 @@ import { escapeHTML} from './utils.js';
                 form.innerHTML = `
                     <div class="space-y-4">
                         <div id="type-switcher" class="flex bg-slate-100 p-1 rounded-2xl mb-6 type-switcher">
-                            <button type="button" onclick="setTempType('expense')" id="btn-type-exp" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all active shadow-sm">支出</button>
-                            <button type="button" onclick="setTempType('income')" id="btn-type-inc" ${isConvertingWish ? 'disabled' : ''} class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-400">售出</button>
+                            <button data-i18n="type_expense" type="button" onclick="setTempType('expense')" id="btn-type-exp" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all active shadow-sm">支出</button>
+                            <button data-i18n="type_income" type="button" onclick="setTempType('income')" id="btn-type-inc" ${isConvertingWish ? 'disabled' : ''} class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-400">售出</button>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
+                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase"><span data-i18n="field_name">商&#8203;品&#8203;名&#8203;稱</span><span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
                         <div class="flex gap-4">
                             <div class="flex-1 space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
+                                <label data-i18n="field_price" class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
                                 <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                             <div class="flex-1 space-y-1 relative" id="qty-combobox">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
+                                <label data-i18n="field_qty" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
                                 <div class="relative flex items-center">
                                     <input type="number" id="m-qty" inputmode="numeric" value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
                                     <div id="qty-toggle" class="absolute right-3 cursor-pointer text-slate-400"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
@@ -213,7 +221,7 @@ import { escapeHTML} from './utils.js';
                                 <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1" id="shipping-fee">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
+                                <label data-i18n="field_shipping" class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
                                 <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             </div>
                         </div>
@@ -221,7 +229,7 @@ import { escapeHTML} from './utils.js';
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
+                                    <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
                                     <span id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -248,38 +256,38 @@ import { escapeHTML} from './utils.js';
                             </div>
                         ` : ''}
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
-                            <div class="space-y-1 flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date"     value="${itemData?.year && itemData?.month ? 
+                            <div data-i18n-label="field_category" class="space-y-1"><label data-i18n="field_category" class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`).join('')}</select></div>
+                            <div class="space-y-1 flex flex-col"><label data-i18n="field_date" class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date"     value="${itemData?.year && itemData?.month ? 
                                 `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="flex gap-4" id="shipping-state">
                             <div class="flex-1 space-y-1 relative" id="platform-combobox">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label>
+                                <label data-i18n="field_platform" class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label>
                                 <input type="text" id="m-platform" autocomplete="off" autocorrect="off" 
-                                    placeholder="LINE社群、WVS" value="${itemData?.platform || ''}" 
+                                    data-i18n-placeholder="field_platform_ph" value="${itemData?.platform || ''}" 
                                     class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                                 <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
-                            <div class="flex-1 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${filteredOptions.map(o => `<option ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+                            <div class="flex-1 space-y-1"><label data-i18n="field_status" class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${filteredOptions.map(o => `<option value="${o}" ${itemData?.arrivalStatus == o ? 'selected' : ''}>${t('arrival_' + o)}</option>`).join('')}</select></div>
                         </div>
                 
                         <div class="grid grid-cols-2 gap-4" id="shipping-payment">
-                            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option ${itemData?.paymentMethod == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
-                            <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="one-time-code" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <div class="space-y-1"><label data-i18n="field_payment" class="text-[10px] font-bold text-slate-400 uppercase">付款方式</label><select id="m-pay-method" onchange="handlePaymentChange(this.value)" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${paymentOptions.map(o => `<option value="${o}" ${itemData?.paymentMethod == o ? 'selected' : ''}>${t('pay_' + o)}</option>`).join('')}</select></div>
+                            <div id="paid-amount-container" class="space-y-1 ${isPaidDeposit ? '' : 'hidden'}"><label data-i18n="field_paid_amount" class="text-[10px] font-bold text-slate-400 uppercase">已付金額</label><input type="number" id="m-paid-amount" autocomplete="one-time-code" autocorrect="off" value="${itemData?.paidAmount || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase">標籤</label>
+                            <label data-i18n="field_tags" class="text-[10px] font-bold text-slate-400 uppercase">標籤</label>
                             <div class="relative">
                                 <div id="m-tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border-2 border-transparent focus-within:border-brand min-h-[46px] items-center transition-all">
-                                    <input type="text" id="m-tag-input" autocomplete="off" placeholder="輸入完標籤後，記得加逗號加入" class="flex-1 bg-transparent outline-none text-sm text-gray-800 min-w-[120px]">
+                                    <input type="text" data-i18n-placeholder="field_tags_ph" id="m-tag-input" autocomplete="off" class="flex-1 bg-transparent outline-none text-sm text-gray-800 min-w-[120px]">
                                 </div>
                                 <ul id="m-tag-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" placeholder="通路、oo代購、預計出貨日期等等" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div class="space-y-1"><label data-i18n="field_remark" class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" data-i18n-placeholder="field_remark_ph" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
                        
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">圖片紀錄 (上限 3 張)</label>
+                            <label data-i18n="field_img_limit" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">圖片紀錄 (上限 3 張)</label>
                             <div id="img-preview-row" class="flex gap-2 overflow-x-auto no-scrollbar img-scroll-container">
                                 
                             </div>
@@ -293,6 +301,7 @@ import { escapeHTML} from './utils.js';
                     const currentType = (itemData?.type === 'income') ? 'income' : 'expense';
                     setTempType(currentType);
                     updateImagePreviewUI();
+                    updateStaticTranslations(form); // 更新動態內容的翻譯
                     window.getSmartTags = initSmartTags(itemData?.tags || []);
                         
             } else {
@@ -379,6 +388,7 @@ import { escapeHTML} from './utils.js';
                     <input type="file" id="m-img" accept="image/*" style="position: fixed;bottom: 0;left: 0;width: 48px;height: 48px;opacity: 0;z-index: 10;" onchange="handleImage(this)">
                 </div>`;
                 if(state.enableExchange) {updateRateUI();}
+                updateStaticTranslations(form);
             }
                         
             document.getElementById('modal-overlay').classList.remove('hidden');
@@ -897,6 +907,7 @@ import { escapeHTML} from './utils.js';
 
         //設定
         function renderSettings(container) {
+
             container.innerHTML = `
             <div class="p-6 h-screen"><h2 class="text-2xl font-black mb-8 tracking-tight" onclick="handleSecretClick()">設定</h2>
                 <div class="bg-white rounded-3xl p-5 card-shadow mb-8 flex items-center gap-4 ">
@@ -1476,6 +1487,12 @@ import { escapeHTML} from './utils.js';
 
         // --- 帳本與功能設定 ---
         function renderAccountConfig(container) {
+            const langOptions = [
+            { code: 'zh-TW', label: '繁體中文' },
+            { code: 'en',    label: 'English' },
+            { code: 'ja',    label: '日本語' },
+            { code: 'ko',    label: '한국어' },
+            ];
         container.innerHTML = `
             <div class="p-6">
                 <div class="flex items-center gap-3 mb-8">
@@ -1535,9 +1552,36 @@ import { escapeHTML} from './utils.js';
                             </div>
                         </div>
                     </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-100">
+                        <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-slate-100/50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg shadow-inner">
+                                    🌐
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800">顯示語言</h4>
+                                    <p class="text-[11px] text-slate-400 font-medium tracking-wide uppercase">Language</p>
+                                </div>
+                            </div>
+                            <div>
+                                <!-- 語言切換下拉選單 -->
+                                <select 
+                                    onchange="changeLang(this.value)" 
+                                    class="bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand focus:bg-white transition-all cursor-pointer"
+                                >
+                                    ${langOptions.map(l => 
+                                        `<option value="${l.code}" ${getLang() === l.code ? 'selected' : ''}>${l.label}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 
             </div>`;
+
         }
         export function switchCatSet(setName) {
             state.categorySet = setName;
@@ -1982,4 +2026,10 @@ window.updateDefaultCurrency = updateDefaultCurrency;
 window.toggleExchange = toggleExchange;
 window.convertCurrency= convertCurrency;
 //分類排序
+
+//              // 切換後重新渲染
+//  window.changeLang = (lang) => {
+//     setLang(lang);
+//     renderContent();
+//     updateStaticTranslations()    };
 
