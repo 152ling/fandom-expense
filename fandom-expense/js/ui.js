@@ -916,8 +916,8 @@ import  './i18n.js';
                     
                     <div>
                         ${state.user 
-                        ? `<button data-i18n="btn_logout" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-2 rounded-xl active:scale-95 transition-all">登出</button>` 
-                        : `<button data-i18n="btn_login" class="text-xs bg-brand text-white font-bold px-4 py-2 rounded-xl shadow-md active:scale-95 transition-transform">登入</button>`}
+                        ? `<button  onclick="window.cloud.logout()" data-i18n="btn_logout" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-2 rounded-xl active:scale-95 transition-all">登出</button>` 
+                        : `<button  onclick="window.cloud.login()" data-i18n="btn_login" class="text-xs bg-brand text-white font-bold px-4 py-2 rounded-xl shadow-md active:scale-95 transition-transform">登入</button>`}
                     </div>
                     </div>
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">

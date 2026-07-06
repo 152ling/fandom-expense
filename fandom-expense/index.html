@@ -496,6 +496,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <script type="module">
     import { state } from './js/state.js';
+    import { getDocFromServer } from "...firestore.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -617,6 +618,14 @@
             try {
                 // 修正：路徑增加 'main' 使其變為偶數對 (6層)
                 const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
+                const snap = await getDoc(userDoc);
+                const existing = snap.exists() ? snap.data() : null;
+                if (existing && (existing.expenses?.length > 0 || existing.wishlist?.length > 0)) {
+                    if ((!expenses || expenses.length === 0) && (!wishlist || wishlist.length === 0)) {
+                        console.warn("偵測到即將用空資料覆蓋雲端，已阻止 sync");
+                        return;
+                    }
+                }
                 await setDoc(userDoc, { expenses, wishlist, catOrder: state.catOrder }, { merge: true });
             } catch (e) { console.error("Sync failed:", e); }
         },
@@ -624,7 +633,7 @@
             if (!auth.currentUser || auth.currentUser.isAnonymous) return null;
             // 修正：路徑必須與 sync 一致
             const userDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'userData', 'main');
-            const snap = await getDoc(userDoc);
+            const snap = await getDocFromServer(userDoc); // 強制打伺服器，離線會直接 reject
             return snap.exists() ? snap.data() : null;
             
         }
@@ -684,7 +693,12 @@
                 } else {
                     // data === null：新帳號，雲端真的沒有文件
                     try {
-                        await window.cloud.sync(state.expenses, state.wishlist);
+                        // 只有本地也有資料，或明確是新帳號時才 sync
+                        if (localExpensesArr.length > 0 || localWishlistArr.length > 0) {
+                            await window.cloud.sync(state.expenses, state.wishlist);
+                        }
+                        // 若本地也是空的，且 data 是 null，先不要寫入雲端，
+                        // 改成再次確認網路狀態或延遲重試，避免誤判「新帳號」
                     } catch (e) {
                         console.error("初次同步失敗", e);
                         showToast("初次同步失敗，請檢查網路");
