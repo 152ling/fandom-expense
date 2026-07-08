@@ -4,6 +4,7 @@
 import { state } from './state.js';
 import { showToast,askUser, renderContent, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
 import { compressImage } from './utils.js';
+import './i18n.js'
 
 // 全域鎖定變數，防止連點導致重複存檔或刪除
 let isSaving = false;
@@ -15,7 +16,7 @@ export async function saveData() {
             const pVal = document.getElementById('m-u-p')?.value; 
             const p = Number(pVal) || 0;
             if (!n) {
-                showToast("請輸入商品名稱");
+                showToast(t('toast_name_required'));
                 return;
             }
 
@@ -161,24 +162,24 @@ export async function saveData() {
             }
             closeModal(); 
             renderContent(); 
-            showToast("已成功儲存並同步");
+            showToast(t('toast_saved'));//已成功儲存並同步
         } catch (error) {
             console.error("儲存失敗：", error);
-            showToast("儲存發生錯誤，請檢查輸入內容");
+            showToast(t('toast_save_error')); //"儲存發生錯誤，請檢查輸入內容"
         } finally {
             isSaving = false; // 關鎖
         }
     }
 export    async function handleImage(input) { //願望清單用的上傳
             if (!state.user) {
-                showToast("請先登入以開啟圖片上傳功能☁️");
+                showToast(t('toast_login_required')); //請先登入以開啟圖片上傳功能☁️
                 input.value = "";
                 return;
             }
             const file = input.files[0];
             if (!file) {
                 reportEvent('image_picker_error', {reason: 'empty_file',userAgent: navigator.userAgent})
-                showToast('圖片取得失敗');
+                showToast(t('toast_img_error'));
                 return;
             }
             showToast("正在讀取圖片...");
@@ -327,7 +328,7 @@ export  async function handleDelete(e, type, id) {
             if (e) e.stopPropagation();
             
             // 使用通用工具
-            const confirmed = await askUser("確定要刪除嗎？", "紀錄刪除後將無法恢復。", "🗑️");
+            const confirmed = await askUser('msg_delete_title', 'msg_delete_desc', "🗑️");
 
             if (confirmed) {
                 try{

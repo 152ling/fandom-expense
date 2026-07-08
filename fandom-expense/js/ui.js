@@ -10,10 +10,12 @@ import  './i18n.js';
         setTimeout(() => t.classList.remove("show"), 2000);
     }
         // 通用確認工具，會回傳 true 或 false
-    export function askUser(title, desc, icon = '💸') {
+    export function askUser(titleKey, descKey, icon = '💸') {
             const overlay = document.getElementById('common-confirm-overlay');
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-desc').textContent = desc;
+            // document.getElementById('confirm-title').textContent = title;
+            // document.getElementById('confirm-desc').textContent = desc;
+            document.getElementById('confirm-title').textContent = typeof t === 'function' ? t(titleKey) : titleKey;
+            document.getElementById('confirm-desc').textContent = typeof t === 'function' ? t(descKey) : descKey;
             document.getElementById('confirm-icon').textContent = icon;
             
             // 根據圖示自動調整背景色（如果是垃圾桶就變紅色系，否則用品牌色）
@@ -240,7 +242,7 @@ import  './i18n.js';
                         ` : ''}
                         <div class="grid grid-cols-2 gap-4">
                             <div data-i18n-label="field_category" class="space-y-1"><label data-i18n="field_category" class="text-[10px] font-bold text-slate-400 uppercase">分類</label>
-                            <select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => {const cleanId = c.id.replace(/\s+/g, ''); return `<option data-i18n="cat_${cleanId}" ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`}).join('')}</select></div>
+                            <select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => {const cleanId = c.id.replace(/\s+/g, ''); return `<option value="${c.id}" data-i18n="cat_${cleanId}" ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`}).join('')}</select></div>
                             <div class="space-y-1 flex flex-col"><label data-i18n="field_date" class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date"     value="${itemData?.year && itemData?.month ? 
                                 `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
@@ -695,7 +697,7 @@ import  './i18n.js';
 
             if (reportMode === 'net') {
                 // --- 淨支出模式：顯示 支出 vs 收入 的對比 ---
-                chartTitle = "淨支出";
+                chartTitle = t('report_net');
                 centerAmount = netBalance;
                 stats = [
                     { id: '總支出', amount: totalExp, color: '#92A8D1', icon: '💸' },
@@ -705,7 +707,7 @@ import  './i18n.js';
                 // --- 支出或收入模式：顯示詳細分類 ---
                 const isInc = reportMode === 'income';
                 const targetRecords = periodRecords.filter(i => (isInc ? i.type === 'income' : i.type !== 'income'));
-                chartTitle = isInc ? "總收入" : "總支出";
+                chartTitle = isInc ? t('report_total_inc') : t('report_total_exp');
                 centerAmount = isInc ? totalInc : totalExp;
                 if (state.reportDimension === 'tag') {
                     // =================【標籤分析維度】=================
@@ -761,13 +763,13 @@ import  './i18n.js';
             
             container.innerHTML = `
                 <div class="p-6">
-                    <h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
+                    <h2 data-i18n="report_title" class="text-2xl font-black text-slate-800 mb-6 tracking-tight">財務分析報告</h2>
                     
                     <div class="flex flex-col gap-4 mb-8">
                         <div class="flex bg-slate-200/50 p-1 rounded-2xl">
                             ${['month', '6months', 'year'].map(r => `
                                 <button onclick="changeReportRange('${r}')" class="report-range-btn flex-1 py-2 text-xs font-bold rounded-xl transition-all ${state.reportRange === r ? 'active' : ''}">
-                                    ${r === 'month' ? '月' : r === 'year' ? '年' : '近 6 個月'}
+                                    ${r === 'month' ? t('report_month') : r === 'year' ? t('report_year') : t('report_6months')}
                                 </button>
                             `).join('')}
                         </div>
@@ -781,17 +783,17 @@ import  './i18n.js';
                         <div class="grid grid-cols-3 gap-3 mb-8">
                             <div onclick="changeReportType('expense')" 
                                 class="cursor-pointer transition-all ${reportMode === 'expense' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'expense' ? 'text-white' : 'text-slate-400'} uppercase mb-1">總支出</p>
+                                <p data-i18n="report_total_exp" class="text-[9px] font-bold ${reportMode === 'expense' ? 'text-white' : 'text-slate-400'} uppercase mb-1">總支出</p>
                                 <p class="text-sm font-black ${reportMode === 'expense' ? 'text-white' : 'text-slate-700'}">$${formatAmt(totalExp)}</p>
                             </div>
                             <div onclick="changeReportType('income')" 
                                 class="cursor-pointer transition-all ${reportMode === 'income' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'} uppercase mb-1">總收入</p>
+                                <p data-i18n="report_total_inc" class="text-[9px] font-bold ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'} uppercase mb-1">總收入</p>
                                 <p class="text-sm font-black ${reportMode === 'income' ? 'text-white' : 'text-emerald-400'}">+$${formatAmt(totalInc)}</p>
                             </div>
                             <div onclick="changeReportType('net')" 
                                 class="cursor-pointer transition-all ${reportMode === 'net' ? 'bg-brand shadow-lg' : 'bg-white/60'} p-3 rounded-2xl card-shadow text-center">
-                                <p class="text-[9px] font-bold ${reportMode === 'net' ? 'text-white' : 'text-slate-400'} uppercase mb-1">淨支出</p>
+                                <p data-i18n="report_net" class="text-[9px] font-bold ${reportMode === 'net' ? 'text-white' : 'text-slate-400'} uppercase mb-1">淨支出</p>
                                 <p class="text-sm font-black ${reportMode === 'net' ? 'text-white' : 'text-slate-700'}">$${formatAmt(netBalance)}</p>
                             </div>
                         </div>
@@ -812,11 +814,11 @@ import  './i18n.js';
                         <div class="space-y-3">
                             ${(reportMode !== 'net' && stats.length > 0) ? `
                                 <div class="flex border-b border-gray-100 mb-2">
-                                    <button  onclick="changeReportDimension('category')" 
+                                    <button data-i18n="report_byCat" onclick="changeReportDimension('category')" 
                                         class="report-tab flex-1 pb-3 text-sm font-bold  ${state.reportDimension === 'category' ? 'active' : 'text-slate-400'}">
                                         依分類
                                     </button>
-                                    <button onclick="changeReportDimension('tag')" 
+                                    <button data-i18n="report_byTag" onclick="changeReportDimension('tag')" 
                                         class="report-tab flex-1 pb-3 text-sm font-bold ${state.reportDimension === 'tag' ? 'active' : 'text-slate-400'}">
                                         依標籤
                                     </button>
@@ -826,7 +828,7 @@ import  './i18n.js';
                     
                             
                             <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">
-                                ${reportMode === 'net' ? '收支平衡分析' : (reportMode === 'income' ? '收入來源排名' : '支出佔比排名')}
+                                ${reportMode === 'net' ? t('report_rank_net') : (reportMode === 'income' ? t('report_rank_inc') : t('report_rank_exp'))}
                             </h3>
                             ${(reportMode !== 'net' && state.reportDimension === 'tag') ? `
                             <p class="text-[10px] font-bold text-slate-400/70 mt-1  tracking-wide">
@@ -835,12 +837,13 @@ import  './i18n.js';
                         ` : ''}
                             ${stats.map(s => { 
                                 const p = ((s.amount / (reportMode === 'net' ? (totalExp + totalInc) : centerAmount)) * 100).toFixed(1); 
+                                const cleanId = s.id.replace(/\s+/g, '');
                                 return `
                                     <div class="bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 border-l-4" style="border-color:${s.color}">
                                         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div>
                                         <div class="flex-grow">
                                             <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-bold text-slate-700">${s.id}</span>
+                                                <span ${state.reportDimension === 'category' ? `data-i18n="cat_${cleanId}"` : ''} class="text-sm font-bold text-slate-700">${s.id}</span>
                                                 <span class="text-xs font-black text-slate-400">${p} %</span>
                                             </div>
                                             <div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden">
@@ -881,9 +884,27 @@ import  './i18n.js';
                 
         function calculateReportRange() {
             let start, end, label; const now = new Date();
-            if (state.reportRange === 'month') { start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1); end = new Date(start.getFullYear(), start.getMonth() + 1, 0); label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; }
+            // if (state.reportRange === 'month') { start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1); end = new Date(start.getFullYear(), start.getMonth() + 1, 0); label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; }
+
+            if (state.reportRange === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth() + state.reportOffset, 1);
+                end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+                const currentLang = typeof getLang === 'function' ? getLang() : (localStorage.getItem('fe_v11_lang') || 'zh-TW');
+                if (currentLang === 'en') {
+                    const monthsEN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    label = `${monthsEN[start.getMonth()]} ${start.getFullYear()}`; // 產出: Jul 2026
+                } else if (currentLang === 'ja') {
+                    label = `${start.getFullYear()}年${start.getMonth() + 1}月`;    // 日文格式也是 2026年7月
+                }
+                else if (currentLang === 'ko') {
+                    label = `${start.getFullYear()}년${start.getMonth() + 1}월`;    // 韓文格式也是 2026년7월
+                }
+                else {
+                    label = `${start.getFullYear()} 年 ${start.getMonth() + 1} 月`; // 繁體中文格式
+                }
+            }
             else if (state.reportRange === '6months') { end = new Date(now.getFullYear(), now.getMonth() + state.reportOffset + 1, 0); start = new Date(end.getFullYear(), end.getMonth() - 5, 1); label = `${start.getFullYear()}.${start.getMonth()+1} ～ ${end.getFullYear()}.${end.getMonth()+1}`; }
-            else { start = new Date(now.getFullYear() + state.reportOffset, 0, 1); end = new Date(start.getFullYear(), 11, 31); label = `${start.getFullYear()} 年度報告`; }
+            else { start = new Date(now.getFullYear() + state.reportOffset, 0, 1); end = new Date(start.getFullYear(), 11, 31); label = `${start.getFullYear()} ${t('report_yearly')}`; }
             return { start, end, label };
         }
         let myChart = null;
@@ -907,10 +928,10 @@ import  './i18n.js';
                     
                     <div class="flex-grow">
                         <h4 class="font-bold text-slate-800 text-sm">
-                        ${state.user ? (state.user.displayName || 'Google 用戶') : '訪客模式'}
+                        ${state.user ? (state.user.displayName || 'Google 用戶') : t('settings_guest')}
                         </h4>
                         <p class="text-[10px] text-slate-400">
-                        ${state.user ? '雲端資料已同步 ☁️' : '登入後開啟雲端備份'}
+                        ${state.user ? t('settings_cloud_sync') : t('settings_login_hint')}
                         </p>
                     </div>
                     
@@ -1318,11 +1339,7 @@ import  './i18n.js';
     export async function importFromExcel(input) {
         const file = input.files[0];
         if (!file) return;
-        const confirmed = await askUser(
-            "確定要匯入資料嗎？", 
-            "注意：匯入 Excel 會「完全覆蓋」目前的消費清單，原本的舊資料將會消失。建議匯入前先執行一次匯出備份。", 
-            "⚠️"
-        );
+        const confirmed = await askUser('msg_import_title', 'msg_import_desc', "⚠️" );
 
         // 2. 如果使用者點擊取消，則清空輸入框並中斷執行
         if (!confirmed) {

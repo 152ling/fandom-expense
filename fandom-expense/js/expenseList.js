@@ -48,17 +48,36 @@ import './i18n.js';
                                     <select onchange="updateFilter('year', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none shadow-sm text-slate-700 cursor-pointer flex-1">
                                         ${yearList.map(y => `
                                             <option value="${y}" ${Number(y) === Number(state.filterYear) ? 'selected' : ''}>
-                                                ${y === 0 ? '不限年份' : y + '年'}
+                                                ${y === 0 ? t('filter_all_years') : y }
                                             </option>
                                         `).join('')}
                                     </select>
                                         
                                      <!-- 月份下拉選單 -->
                                     <select onchange="updateFilter('month', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none shadow-sm text-slate-700 cursor-pointer flex-1">
-                                        <option value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限月份</option>
-                                        ${Array.from({length: 12}, (_, i) => i + 1).map(m => `
-                                            <option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>${m}月</option>
-                                        `).join('')}
+                                        <option data-i18n="filter_all_months" value="0" ${state.filterMonth === 0 ? 'selected' : ''}>不限月份</option>
+
+                                        ${(() => {
+                                        const currentLang = typeof getLang === 'function' ? getLang() : (localStorage.getItem('fe_v11_lang') || 'zh-TW');
+                                        const monthsEN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                                        return Array.from({length: 12}, (_, i) => i + 1).map(m => {
+                                            let displayText = `${m}月`; // 預設繁中
+                                            if (currentLang === 'en') {
+                                                displayText = monthsEN[m - 1]; // 英文版顯示 Jan, Feb...
+                                            } else if (currentLang === 'ja') {
+                                                displayText = `${m}月`; // 日文剛好也是 1月、2月
+                                            }else if (currentLang === 'ko') {
+                                                displayText = `${m}월`;
+                                            }
+
+                                            return `
+                                                <option value="${m}" ${Number(m) === Number(state.filterMonth) ? 'selected' : ''}>
+                                                    ${displayText}
+                                                </option>
+                                            `;
+                                        }).join('');
+                                    })()}
                                     </select>
                                 </div>
                             </div>
@@ -159,10 +178,30 @@ import './i18n.js';
         window.shiftMonth = shiftMonth;
 
         function getDateDisplayText() { // 顯示目前選擇的年月文字
-            if (state.filterYear === 0 && state.filterMonth === 0) return '不限';
-            if (state.filterYear === 0) return `不限年份${state.filterMonth}月`;
-            if (state.filterMonth === 0) return `${state.filterYear}整年`;
-            return `${state.filterYear}年${state.filterMonth}月`;
+            const currentLang = typeof getLang === 'function' ? getLang() : (localStorage.getItem('fe_v11_lang') || 'zh-TW');
+            const monthsEN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const y = state.filterYear;
+            const m = state.filterMonth;
+            if (state.filterYear === 0 && state.filterMonth === 0) return t('filter_all'); //不限
+            // 處理「不限年份」
+            if (y === 0) {
+                if (currentLang === 'en') return `${monthsEN[m - 1]}`;
+                if (currentLang === 'ko') return `${m}월`;
+                return `${m}月`; // 中、日
+            }
+            // 處理「不限月份 (整年)」
+            if (m === 0) {
+                // 中文："年", 英文："Year", 韓文："년"
+                return `${y}${t('filter_full_year')}`; 
+            }
+            // 正常年月都有的情況
+            if (currentLang === 'en') {
+                return `${monthsEN[m - 1]} ${y}`; //(改為 Jan 2026)
+            } else if (currentLang === 'ko') {
+                return `${y}년 ${m}월`;
+            } else {
+                return `${y}年${m}月`; // 中、日
+            }
         }
         function renderExpenseListItems(container) { //消費清單渲染
             if(!container) return;
@@ -235,7 +274,7 @@ import './i18n.js';
             const netTotal = totalExp - totalInc;
             const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
             const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
-            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? '本年淨支出' : '本月淨支出');
+            const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? t('report_year_net') : t('report_month_net'));
             // 判斷使用者目前有沒有啟用任何「非時間」的篩選條件
             const hasActiveFilters = state.searchKeyword || state.selectedCategory || state.selectedTags.length > 0;
 
@@ -253,11 +292,11 @@ import './i18n.js';
                 if (!state.user) { // 檢查是否未登入
                     container.innerHTML = `
                         <div class="text-center py-20 px-6">
-                            <div class="text-slate-300 font-bold text-lg mb-2">目前處於訪客模式</div>
-                            <p class="text-slate-300 text-sm font-bold mb-6">點擊登入以同步雲端備份<br/>隨時隨地查看你的紀錄</p>
+                            <div data-i18n="expense_unlogin_title" class="text-slate-300 font-bold text-lg mb-2">目前處於訪客模式</div>
+                            <p data-i18n="expense_unlogin_desc" class="text-slate-300 text-sm font-bold mb-6">點擊登入以同步雲端備份<br/>隨時隨地查看你的紀錄</p>
                             <button onclick="switchTab('settings')" 
                                     class="bg-brand text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-lg active:scale-95 transition-transform">
-                                前往登入
+                                <span data-i18n="expense_unlogin_doLogin">前往登入</span>
                             </button>
                         </div>
                     `;
@@ -268,7 +307,7 @@ import './i18n.js';
             }
             let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
                 <div>
-                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${t('expense_' + summaryLabel)}</p>                     
+                    <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
                         <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
                                 ${state.hideAmount ? 
                                     `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>` : 
@@ -284,11 +323,24 @@ import './i18n.js';
                     </div>
                 </div>` 
             html += paginatedItems.map(item => {
-                const cat = [...baseCategories.categories, ...baseCategories.categoriesACGN].find(c => c.id === item.category) || {icon: '🌈', color: '#92A8D1'};
+                const cat = [...baseCategories.categories, ...baseCategories.categoriesACGN].find(c => c.id === item.category) || {id: '其他支出',icon: '🌈', color: '#92A8D1'};
+                const cleanId = cat.id.replace(/\s+/g, ''); //把有分號的分類轉換
+                let translatedText = typeof t === 'function' ? t(`cat_${cleanId}`) : cat.id;
+                const CategoriesText = translatedText.split(' ')[0]; //分類名稱
+
                 const imgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
                 const isIncome = item.type === 'income';
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
-                const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
+                // const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
+                // 💡 1. 處理付款方式的 Key（拿掉空格）
+                const payKey = `pay_${item.paymentMethod}`;
+                let depositText = '';
+                if (item.paymentMethod === '已付訂金') {
+                    depositText = typeof t === 'function' 
+                        ? ` (${t('pay_deposit_hint', { amount: item.paidAmount })})` 
+                        : ` (已付:$${item.paidAmount})`;
+                }
+                const translatedPayMethod = typeof t === 'function' ? t(payKey) : item.paymentMethod;
                 return `<div class="${cardBg} rounded-3xl p-4 card-shadow relative overflow-hidden group">
                     <div class="absolute top-4 right-4 z-10">
                         <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
@@ -310,8 +362,8 @@ import './i18n.js';
                         </div>
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
-                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon} ${item.category}</span>
-                                <span onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
+                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon}<span>${CategoriesText}</span></span>
+                                <span data-i18n="arrival_${item.arrivalStatus}" onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
                                  ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400">${item.month}月</span>` : ''}
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
@@ -327,8 +379,8 @@ import './i18n.js';
                     <div class="mt-4 pt-3 border-t border-slate-100">
                             <div class="flex justify-between items-center">
                                 <div class="text-[10px] text-slate-400">
-                                    <span class="font-bold text-brand">付款:</span> ${item.paymentMethod} ${item.paymentMethod === '已付訂金' ? `(已付:$${item.paidAmount})` : ''}</div>
-                                    ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span class="opacity-70">運費:</span> $${item.shipping}</div>
+                                    <span data-i18n="payment" class="font-bold text-brand">付款:</span>${translatedPayMethod}${depositText}</div>
+                                    ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span data-i18n="shipping" class="opacity-70">運費:</span> $${item.shipping}</div>
                                 ` : ''}
                                 </div>
                             ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>` : ''}
@@ -365,6 +417,7 @@ import './i18n.js';
             }
 
             container.innerHTML = html;
+            updateStaticTranslations(container);
         }
         function getStatusClass(s) {
             if (s === '未到貨') return 'status-unArrived';
@@ -406,7 +459,7 @@ import './i18n.js';
          // 顯示/隱藏金額函數
         export async function toggleAmountVisibility() {
             // 關鍵邏輯：如果是 true (要顯示)，就等待彈窗回傳。如果使用者按取消 (!true)，就中斷
-            if (state.hideAmount && !(await askUser("確定要顯示金額嗎？", "顯示後將可查看完整的消費明細與總計。"))) {
+            if (state.hideAmount && !(await askUser('msg_show_amount_title', 'msg_show_amount_desc'))) {
                 return;
             }
             state.hideAmount = !state.hideAmount;
@@ -448,7 +501,7 @@ import './i18n.js';
             // --- 第一層：分類 (Categories) 渲染 ---
             catBar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat.id;
-                const cleanId = cat.id.replace(/\s+/g, '');
+                const cleanId = cat.id.replace(/\s+/g, ''); //把有分號的分類轉換
                 let translatedText = typeof t === 'function' ? t(`cat_${cleanId}`) : cat.id;
                 const shortText = translatedText.split(' ')[0];
                 return `
