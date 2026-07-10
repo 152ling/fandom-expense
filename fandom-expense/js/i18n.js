@@ -73,7 +73,7 @@ const translations = {
     field_paid_amount:  '已付金額',
     field_tags:         '標籤',
     field_tags_ph:      '輸入完標籤後，記得加逗號加入',
-    field_remark:       '備註',
+    field_remark:       '備註:',
     field_remark_ph:    '通路、oo代購、預計出貨日期等等',
     field_upload_img:   '上傳相片',
     field_img_limit:    '圖片紀錄 (上限 3 張)',
@@ -86,6 +86,11 @@ const translations = {
     type_expense:       '支出',
     type_income:        '售出',
     currency_label:     '原始幣值',
+    currency_loading:        '正在載入匯率...',
+    rate_cached: "匯率已就緒 (快取)",
+    rate_updating: "正在更新最新匯率...",
+    rate_updated: "匯率已更新(網路)",
+    rate_failed: "匯率連線失敗，使用離線數據",
 
     // 到貨狀態
     arrival_未到貨: '未到貨',
@@ -171,12 +176,19 @@ const translations = {
 
     // === 外觀設定 ===
     appear_title:         '外觀設定',
+    appear_lang:          '語言',
     appear_preset:        '選擇預設主題',
     appear_dark:          '深色模式',
     appear_custom_hex:    '輸入自訂色碼',
     appear_hex_hint:      '請輸入包含 # 的六位數色碼，例如 #92A8D1',
     appear_eyedropper:    '滴管選色',
     appear_custom_grad:   '自訂漸層',
+    theme_svt: "粉藍",
+    theme_purple: "幻紫",
+    theme_blue: "沁藍",
+    theme_green: "螢綠",
+    theme_aurora: "極光",
+    theme_gold: "熠金",
 
     // === 照片牆 ===
     photowall_title:      '照片牆',
@@ -198,9 +210,28 @@ const translations = {
     account_acgn:         'ACGN 模式',
     account_exchange:     '開啟匯率換算工具',
     account_exchange_sub: '在新增紀錄時顯示外幣換算區',
+    account_exchange_desc:'若在關閉時編輯紀錄，匯率資料會消失',
     account_currency:     '預設記帳幣別',
+    account_currency_sub: '更改此處將會影響匯率換算的基準幣別',
     account_cat_order:    '調整分類順序',
     account_cat_order_sub:'自訂最常用的分類顯示在最前面',
+    account_cat_order_desc:'可拖曳左側手柄或使用箭頭調整順序',
+
+    //=== 常見問題===
+    faq_title:            '常見問題 FAQ',
+    faq_submit:        '📝 問題回報與功能許願',
+    faq_q1:               '追星錢包會上架到APP商店嗎？',
+    faq_a1:               '目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！',
+    faq_q2:               '如何加入主畫面？',
+    faq_a2:               '使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。',
+    faq_q3:               '一鍵匯入匯出功能如何使用？',
+    faq_a3:               '使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨',
+    faq_q4:               '如何查詢未到貨商品？',
+    faq_a4:               '在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。',
+    faq_q5:               '可以自行新增分類嗎？',
+    faq_a5:               '目前不支援。<br/>為了維持報表統計的一致性，採用固定分類。<br/>💡記帳小貼士：<br/>1. 標籤功能：細節（如：成員）請用 #標籤，能更靈活地記錄細節並支援搜尋篩選。<br/>2. 切換模式：在「設定 > 帳本與功能」可依照喜好切換預設分類。<br/>3. 許願功能：歡迎點擊下方前往許願，會評估後新增！',
+    faq_q6:               '為什麼在網頁版新增了資料，打開 App (加入主畫面) 卻沒看到？',
+    faq_a6:               '這通常是因為 App 端的登入狀態尚未同步更新。<br/><b>檢查登入</b>：進入「設定」，確認目前是否為登入狀態。若顯示未登入，請重新登入即可抓回雲端資料。<br/><br/>追星錢包採用即時雲端儲存，只要是登入狀態新增的資料都會安全存在雲端囉！',
 
     // === 確認彈窗 ===
     // 彈窗系列文案
@@ -230,16 +261,28 @@ const translations = {
     toast_kpop_mode:      '已切換至 KPOP分類',
     toast_acgn_mode:      '已切換至 ACGN分類',
     toast_cat_updated:    '分類排序已更新 ✨',
+    toast_cat_updated_local: '本地排序已更新 ✨',
     toast_exchange_on:    '已開啟換算工具',
     toast_exchange_off:   '已關閉換算工具',
     toast_grad_updated:   '漸層已更新！',
+    toast_hex_updated:    '已更換自訂主題色',
     toast_hex_error:      '格式錯誤！請輸入如 #92A8D1 的色碼',
+    toast_switch_kpop:    '已切換至 KPOP分類',
+    toast_switch_acgn:    '已切換至 ACGN分類',
+    toast_currency_changed: '預設幣別已更改為 {n}',
+    toast_exchange_on:    '已開啟換算工具',
+    toast_exchange_off:   '已關閉換算工具',
     toast_name_required:  '請輸入商品名稱',
     toast_save_error:     '儲存發生錯誤，請檢查輸入內容',
     toast_login_fail:     '登入失敗，請檢查彈窗設定',
     toast_cleanup_done:   '清理完成！共刪除了 {n} 個冗餘圖檔',
     toast_cleanup_clean:  '雲端非常整潔，沒有需要清理的檔案',
     toast_cleanup_error:  '清理過程發生錯誤',
+    toast_no_sheet: "找不到「消費清單」工作表",
+    toast_file_empty: "檔案為空",
+    toast_no_name_field: "找不到「項目名稱」欄位",
+    toast_import_success: "匯入成功：共 {n} 筆，若無填寫日期請查看上個月的消費清單",
+    toast_format_error: "檔案格式錯誤",
   },
 
   'en': {
@@ -301,7 +344,7 @@ const translations = {
     field_paid_amount:   'Paid Amount',
     field_tags:          'Tags',
     field_tags_ph:       'Type a tag then add comma',
-    field_remark:        'Notes',
+    field_remark:        'Notes:',
     field_remark_ph:     'Proxy, expected ship date...',
     field_upload_img:    'Upload Photo',
     field_img_limit:     'Photos (max 3)',
@@ -314,6 +357,11 @@ const translations = {
     type_expense:        'Expense',
     type_income:         'Sold',
     currency_label:      'Original Currency',
+    currency_loading:        'Exchange rate is loading...',
+    rate_cached: "Exchange rates ready (Cached)",
+    rate_updating: "Updating latest exchange rates...",
+    rate_updated: "Exchange rates updated",
+    rate_failed: "Connection failed, using offline data",
 
     arrival_未到貨: 'Not Arrived',
     arrival_待二補: 'Awaiting Restock',
@@ -394,12 +442,19 @@ const translations = {
     settings_cleanup_sub: 'Free up space',
 
     appear_title:       'Appearance',
+    appear_lang:        'Language',
     appear_preset:      'Choose Theme',
     appear_dark:        'Dark Mode',
     appear_custom_hex:  'Enter Hex Color',
     appear_hex_hint:    'Enter a 6-digit hex code, e.g. #92A8D1',
     appear_eyedropper:  'Color Picker',
     appear_custom_grad: 'Custom Gradient',
+    theme_svt: "Pink & Blue",
+    theme_purple: "Purple",
+    theme_blue: "Aqua Blue",
+    theme_green: "Neon Green",
+    theme_aurora: "Aurora",
+    theme_gold: "Gold",
 
     photowall_title:     'Photo Wall',
     photowall_purchased: 'Purchased',
@@ -418,9 +473,27 @@ const translations = {
     account_acgn:         'ACGN Mode',
     account_exchange:     'Enable Currency Converter',
     account_exchange_sub: 'Show currency field when adding records',
+    account_exchange_desc: 'If you edit a record while this is off, the exchange rate data will disappear.',
     account_currency:     'Default Currency',
+    account_currency_sub: 'Changing this will affect the base currency for exchange rate calculations',
     account_cat_order:    'Reorder Categories',
     account_cat_order_sub:'Pin your favorites to the top',
+    account_cat_order_desc:'Drag the handle or use the arrows to reorder categories',
+
+    faq_title:            'Frequently Asked Questions (FAQ)',
+    faq_submit:           '📝 Report Issues & Make Feature Requests',
+    faq_q1:               'Will Fandom Wallet be available on app stores?',
+    faq_a1:               'Due to technical limitations and complex review processes, there are currently no plans to launch on the App Store or Google Play. However, you can add it directly to your home screen for an experience that feels just like a native app!',
+    faq_q2:               'How do I add it to the home screen?',
+    faq_a2:               'Open the site in Safari or Chrome, tap the "Share" icon, and select "Add to Home Screen".',
+    faq_q3:               'How do I use the one-click import/export feature?',
+    faq_a3:               'How to use:<br/>1. Export an Excel file from "Data Import & Export" to get the system\'s template format.<br/>2. Copy your existing Excel data into the corresponding columns of the template.<br/>3. Import the updated file back into the app.<br/>Notes:<br/>•  Item Name and Price are required fields.<br/>•  Other fields can be left blank.<br/>•  If no date is specified, the system will automatically import the data into "last month". This allows you to quickly migrate your old records into Fandom Wallet! ✨',
+    faq_q4:               'How do I search for items that haven\'t arrived yet?',
+    faq_a4:               'Enter the keyword "Not Arrived" (未到貨) in the search bar, or tap the "#未到貨" tag.',
+    faq_q5:               'Can I add custom categories?',
+    faq_a5:               'Currently not supported.<br/>To maintain consistency in report statistics, we use fixed categories.<br/>💡 Quick Bookkeeping Tips:<br/>1. Tags Feature: Use #tags for details (e.g., member names) to flexibly record and filter your data.<br/>2. Switch Modes: Go to "Settings > Ledger & Features" to switch the default category set according to your preference.<br/>3. Wishlist Feature: Feel free to tap below to make a wish; we will evaluate and add new categories accordingly!',
+    faq_q6:               'Why can\'t I see the data I added on the web version when I open the App (added to home screen)?',
+    faq_a6:               'This usually happens because the login status on the App side hasn\'t synchronized yet.<br/><b>Check Login</b>: Go to "Settings" and check if you are currently logged in. If it shows you are logged out, simply log in again to fetch your cloud data.<br/><br/>Fandom Wallet uses real-time cloud storage, so any data added while logged in is safely saved in the cloud!',
 
     msg_delete_title: 'Delete this record?',
     msg_delete_desc:  'This action cannot be undone.',
@@ -445,16 +518,28 @@ const translations = {
     toast_kpop_mode:      'Switched to KPOP categories',
     toast_acgn_mode:      'Switched to ACGN categories',
     toast_cat_updated:    'Category order updated ✨',
+    toast_cat_updated_local: 'Local sort updated ✨',
     toast_exchange_on:    'Currency converter enabled',
     toast_exchange_off:   'Currency converter disabled',
     toast_grad_updated:   'Gradient updated!',
+    toast_hex_updated:    'Custom theme color updated!',
     toast_hex_error:      'Invalid format! Use e.g. #92A8D1',
+    toast_switch_kpop: 'Switched to KPOP category',
+    toast_switch_acgn: 'Switched to ACGN category',
+    toast_currency_changed: 'Default currency changed to {n}',
+    toast_exchange_on: 'Currency converter enabled',
+    toast_exchange_off: 'Currency converter disabled',
     toast_name_required:  'Please enter an item name',
     toast_save_error:     'Save failed, please check your input',
     toast_login_fail:     'Login failed, please check popup settings',
     toast_cleanup_done:   'Cleaned! Removed {n} orphaned files',
     toast_cleanup_clean:  'Cloud storage is clean, nothing to remove',
     toast_cleanup_error:  'Cleanup encountered an error',
+    toast_no_sheet: "Worksheet '消費清單' not found",
+    toast_file_empty: "The file is empty",
+    toast_no_name_field: "Column '項目名稱' not found",
+    toast_import_success: "Import successful: {n} items in total. If no date was specified, please check last month's list.",
+    toast_format_error: "Invalid file format",
   },
 
   'ja': {
@@ -504,7 +589,21 @@ const translations = {
     cat_一番賞: '一番くじ',
     cat_聯名服飾: 'コラボ服飾',
     'cat_活動門票/展覽/電影票': 'イベントチケット / 展示会 / 映画券',
-    cat_其他支出: 'その他支出'
+    cat_其他支出: 'その他支出',
+
+    faq_title:            'よくある質問 FAQ',
+    faq_q1:               '推し活お財布はアプリストアにリリースされますか？',
+    faq_a1:               '現在、技術的な制限や審査手続きが複雑なため、App Store や Google Play へのリリースの予定は一時的にございません。しかし、ブラウザから直接「ホーム画面に追加」していただければ、通常のアプリとほぼ変わらない操作感でご利用いただけます！',
+    faq_q2:               'ホーム画面に追加する方法は？',
+    faq_q2:               'Safari または Chrome でページを開き、「共有」アイコンをタップして「ホーム画面に追加」を選択してください。',
+    faq_q3:               'ワンクリックインポート・エクスポート機能の使い方は？',
+    faq_a3:               '使い方：<br/>1. まず「データのインポートとエクスポート」から Excel ファイルをエクスポートし、システムが提供するサンプルファイルの形式を取得します。<br/>2. 元々お持ちの Excel データを、サンプルファイルの対応する列にコピーします。<br/>3. 整理したファイルをアプリにインポートすれば完了です。<br/>注意事項：<br/>•  「項目名稱（アイテム名）」と「單價（単価）」は必須項目です。<br/>•  その他の項目は空欄のままでも構いません。<br/>•  日付が未入力の場合、システムは自動的に「先月」のデータとしてインポートします。これにより、元の記録を素早く推し活お財布に移行できます！ ✨',
+    faq_q4:               '未発送（未到着）のグッズを確認するには？',
+    faq_a4:               '検索ボックスに「未到貨」というキーワードを入力するか、「#未到貨」タグをタップしてください。',
+    faq_q5:               '自分で新しいカテゴリーを追加できますか？',
+    faq_a5:               '現在は対応しておりません。<br/>レポート統計の一貫性を維持するため、固定のカテゴリーを採用しています。<br/>💡 家計簿のコツ：<br/>1. タグ機能：詳細（例：メンバー名など）は #タグ を使用すると、より柔軟に記録や検索・絞り込みが可能です。<br/>2. モード切り替え：「設定 > 家計簿と機能」でお好みに合わせてデフォルトのカテゴリーセットを切り替えることができます。<br/>3. リクエスト機能：下のボタンから追加の要望（リクエスト）を送っていただければ、検討の上、新しいカテゴリーを追加いたします！',
+    faq_q6:               'ウェブ版でデータを追加したのに、アプリ（ホーム画面に追加したもの）を開くと反映されていないのはなぜですか？',
+    faq_a6:               'これは通常、アプリ側のログイン状態がまだ同期・更新されていないことが原因です。<br/><b>ログインの確認</b>：「設定」に移動し、現在ログイン状態であるか確認してください。未ログインと表示されている場合は、再度ログインし直すことでクラウドからデータを取得できます。<br/><br/>推し活お財布はリアルタイムのクラウド保存を採用しているため、ログイン状態で追加されたデータは安全にクラウドに保存されています！',
   },
 
   'ko': {
@@ -530,6 +629,20 @@ const translations = {
     toast_saved:  '저장 및 동기화 완료',
     toast_deleted: '삭제되었습니다',
     toast_duplicate:'복제된 데이터를 불러왔습니다. 수정 후 저장해주세요.',
+
+    faq_title:            '자주 묻는 질문 FAQ',
+    faq_q1:               '덕질 가계부가 앱 스토어에 출시되나요?',
+    faq_a1:               '현재 기술적 제한 및 번거로운 출시 절차로 인해 당분간 App Store / Google Play 출시 계획은 없습니다. 하지만 지금 바로 \'홈 화면에 추가\'하여 사용하시면 앱과 거의 동일한 환경으로 편리하게 이용하실 수 있습니다!',
+    faq_q2:               '홈 화면에 어떻게 추가하나요?',
+    faq_a2:               'Safari 또는 Chrome 브라우저로 접속한 후, \'공유\' 아이콘을 클릭하고 \'홈 화면에 추가\'를 선택해 주세요.',
+    faq_q3:               '원클릭 가져오기/내보내기 기능은 어떻게 사용하나요?',
+    faq_a3:               '사용 방법:<br/>1. 먼저 \'데이터 가져오기 및 내보내기\'에서 Excel을 내보내어 시스템에서 제공하는 샘플 파일 양식을 확인합니다.<br/>2. 기존에 가지고 있던 Excel 데이터를 샘플 파일의 알맞은 열에 복사합니다.<br/>3. 정리가 완료된 파일을 앱으로 가져오기(업로드)하면 끝납니다.<br/>주의 사항:<br/>•  \'項目名稱(품목명)\'과 \'單價(단가)\'는 필수 입력 항목입니다.<br/>•  기타 항목은 비워두셔도 됩니다.<br/>•  날짜를 입력하지 않은 경우, 시스템이 자동으로 \'지난달\' 데이터로 가져옵니다. 이 기능을 통해 기존 기록을 덕질 가계부로 빠르게 옮길 수 있습니다! ✨',
+    faq_q4:               '미도착(미배송) 상품은 어떻게 조회하나요?',
+    faq_a4:               '검색창에 \'未到貨\' 키워드를 입력하거나 \'#未到貨\' 태그를 클릭해 주세요.',
+    faq_q5:               '카테고리를 직접 추가할 수 있나요?',
+    faq_a5:               '현재는 지원하지 않습니다.<br/>통계 리포트의 일관성을 유지하기 위해 고정된 카테고리를 사용하고 있습니다.<br/>💡 작성 팁:<br/>1. 태그 기능: 상세 내용(예: 멤버 이름)은 #태그를 사용하시면 더욱 유연하게 기록하고 검색 필터링을 할 수 있습니다.<br/>2. 모드 전환: \'설정 > 장부 및 기능\'에서 취향에 따라 기본 카테고리 세트를 전환할 수 있습니다.<br/>3. 건의 기능: 아래 링크를 통해 원하시는 카테고리를 건의해 주시면 검토 후 추가하도록 하겠습니다!',
+    faq_q6:               '웹 버전에서 데이터를 추가했는데, 앱(홈 화면에 추가된 버전)을 열었을 때 안 보이는 이유는 무엇인가요?',
+    faq_a6:               '이는 보통 앱 쪽의 로그인 상태가 아직 동기화되어 업데이트되지 않았기 때문입니다.<br/><b>로그인 상태 확인</b>: \'설정\'으로 이동하여 현재 로그인 상태인지 확인해 주세요. 로그아웃 상태로 표시된다면 다시 로그인하시면 클라우드 데이터를 즉시 불러올 수 있습니다.<br/><br/>덕질 가계부는 실시간 클라우드 저장을 적용하고 있으므로, 로그인 상태에서 추가한 데이터는 모두 클라우드에 안전하게 보관됩니다!',
   }
 };
 
@@ -589,6 +702,10 @@ export function updateStaticTranslations(root = document) {
   // textContent
   root.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  //含有 HTML 標籤的文字：使用 innerHTML (會解析 <br/>, <b> 等)
+  root.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.getAttribute('data-i18n-html'));
   });
 
   // placeholder

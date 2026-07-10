@@ -214,8 +214,8 @@ import  './i18n.js';
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end">
-                                    <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
-                                    <span id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
+                                    <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase">原始幣值</label>
+                                    <span  id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
@@ -316,7 +316,7 @@ import  './i18n.js';
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end ml-1">
-                                    <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">原始幣值</label>
+                                    <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase">原始幣值</label>
                                     <span id="rate-tag" class="text-[9px] text-slate-300 italic">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -342,7 +342,11 @@ import  './i18n.js';
                                 </div>
                             </div>
                         ` : ''}
-                    <div class="space-y-1"><label data-i18n="field_wish_cat" class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => `<option value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+                    <div class="space-y-1"><label data-i18n="field_wish_cat" class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                    ${dropdownOptions.map(c => {
+                        const cleanId = c.replace(/\s+/g, '');
+                        return `<option data-i18n="cat_${cleanId}" value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`;
+                    }).join('')}</select></div>
                     <div class="space-y-1"><label data-i18n="field_wish_remark" class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
                     
                     <div class="space-y-1">
@@ -364,7 +368,7 @@ import  './i18n.js';
                             </div>
                             <div class="space-y-1 flex flex-col">
                                 <label data-i18n="field_release_time" class="text-[10px] font-bold text-slate-400">時間</label>
-                                <input type="time" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold">
+                                <input type="time" step="60" id="m-release-time" value="${itemData?.releaseTime || defaultTime}" class="w-full bg-slate-50 rounded-xl p-3 text-sm text-gray-800 font-bold">
                             </div>
                         </div>
                     </div>
@@ -599,7 +603,9 @@ import  './i18n.js';
                         ? `<div class="text-center py-24 text-slate-300 font-bold">
                             ${state.selectedCategory ? '<span data-i18n="wish_cat_empty">此分類暫無願望</span>' : '<span data-i18n="wish_empty">快許下新的願望吧！</span>'}
                         </div>` 
-                        : filtered.map(item => `
+                        : filtered.map(item =>{
+                            const cleanId = item.category ? item.category.toLowerCase().replace(/\s+/g, '') : 'default';
+                        return `
                         <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
                             <div class="absolute top-4 right-4 z-10">
                                 <button onclick="openActionModal(event,'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
@@ -609,7 +615,7 @@ import  './i18n.js';
                             <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox(['${item.image}'], '${item.name}', '${item.releaseDate || ''}')` : ''}">
                                 ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                                 <div class="flex-grow pr-24">
-                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
+                                    <span data-i18n="cat_${cleanId}" class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
                                     <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
                                     <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
                                     ${item.releaseDate ? `<p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate} ${item.releaseTime || ''}</p>` : ''}
@@ -618,10 +624,10 @@ import  './i18n.js';
                             ${item.remark ? `
                                 <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1">
                                     <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
-                                        <span class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
+                                        <span data-i18n="field_remark" class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
                                     </div>
                                 </div>` : ''}
-                        </div>`).join('')}
+                        </div>`}).join('')}
                 </div>`;
 
             // 渲染完 HTML 後，填充分類列
@@ -635,8 +641,9 @@ import  './i18n.js';
             
             bar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat;
+                const cleanId = cat.replace(/\s+/g, '');
                 return `
-                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat}'?'':'${cat}'); renderContent();"
+                    <div data-i18n="cat_${cleanId}" onclick="state.selectedCategory=(state.selectedCategory==='${cat}'?'':'${cat}'); renderContent();"
                         class="chip ${isActive ? 'active-tag' : ''}">
                         ${cat}
                     </div>
@@ -931,7 +938,7 @@ import  './i18n.js';
                         ${state.user ? (state.user.displayName || 'Google 用戶') : t('settings_guest')}
                         </h4>
                         <p class="text-[10px] text-slate-400">
-                        ${state.user ? t('settings_cloud_sync') : t('settings_login_hint')}
+                        ${state.user ? t('settings_synced') : t('settings_login_hint')}
                         </p>
                     </div>
                     
@@ -1030,29 +1037,29 @@ import  './i18n.js';
                             <button onclick="state.subPage=null;state.photoFilterCat='';renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                             </button>
-                            <h2 class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
+                            <h2 data-i18n="photowall_title" class="text-2xl font-black tracking-tight text-slate-800">照片牆</h2>
                         </div>
                     </div>
 
                     <div class="flex border-b border-gray-100 mb-2">
                         <button onclick="state.photoWallTab='purchased';state.photoFilterCat='';renderContent()" 
-                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}">已購買</button>
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='purchased'?'active':'text-gray-400'}" data-i18n="photowall_purchased">已購買</button>
                         <button onclick="state.photoWallTab='wish';state.photoFilterCat='';renderContent()" 
-                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}">心願牆</button>
+                            class="photo-tab flex-1 pb-3 text-sm font-bold ${state.photoWallTab==='wish'?'active':'text-gray-400'}" data-i18n="photowall_wish">心願牆</button>
                     </div>
 
                     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
                         <div onclick="state.photoFilterCat='';renderContent()" 
-                            class="chip ${state.photoFilterCat === '' ? 'active-tag' : ''}">全部</div>
+                            class="chip ${state.photoFilterCat === '' ? 'active-tag' : ''}" data-i18n="photowall_all">全部</div>
                         ${currentCats.map(c => `
                             <div onclick="state.photoFilterCat='${c}';renderContent()" 
-                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}">${c.split(' ')[0]}</div>
+                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}" data-i18n="cat_${c.toLowerCase().replace(/\s+/g, '')}">${c.split(' ')[0]}</div>
                         `).join('')}
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">
                         ${photos.length > 0 ? photos.map(item => `
-                            <div onclick="openLightbox('${item.image}', '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
+                            <div onclick="openLightbox(['${item.image}'], '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
                                 class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
                                 <img src="${item.image}" class="w-full h-full object-cover">
                             </div>
@@ -1077,28 +1084,34 @@ import  './i18n.js';
         // --- 外觀設定 ---
         function renderAppearanceView(container) {
             const presets = [
-                {name:'粉藍', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
-                {name:'幻紫', c:'#BB96FF'},
-                {name:'沁藍', c:'#69C4E0'},
-                {name:'螢綠', c:'#B6ED00'},
-                {name:'極光', c:'#6C3591'},
-                {name:'熠金', c:'#E2B216'}
+                {key: 'theme_svt', name:'粉藍', c:'svt', g: 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)'},
+                {key: 'theme_purple', name:'幻紫', c:'#BB96FF'},
+                {key: 'theme_blue', name:'沁藍', c:'#69C4E0'},
+                {key: 'theme_green', name:'螢綠', c:'#B6ED00'},
+                {key: 'theme_aurora', name:'極光', c:'#6C3591'},
+                {key: 'theme_gold', name:'熠金', c:'#E2B216'}
             ];
             const currentHex = (state.themeColor && state.themeColor.startsWith('#')) ? state.themeColor : '';
             const isCustomGrad = state.themeColor.includes('gradient') && state.themeColor !== 'svt';
             const btnGrad = isCustomGrad ? state.themeColor : 'linear-gradient(135deg, #FEBEBE 0%,#85D0FF 100%)';
+            const langOptions = [
+                { code: 'zh-TW', label: '繁體中文' },
+                { code: 'en',    label: 'English' },
+                { code: 'ja',    label: '日本語' },
+                { code: 'ko',    label: '한국어' },
+            ];
             container.innerHTML = `
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-8">
                             <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                             </button>
-                            <h2 class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2>
+                            <h2 data-i18n="appear_title" class="text-2xl font-black tracking-tight text-slate-800">外觀設定</h2>
                         </div>
                         
                         <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800">
                             <div class="flex mb-6 justify-between">
-                                <h3 class="text-sm font-bold text-slate-500 tracking-wide">選擇預設主題</h3>
+                                <h3 data-i18n="appear_preset" class="text-sm font-bold text-slate-500 tracking-wide">選擇預設主題</h3>
                                 <div class="flex justify-center border-slate-50">
                                     <label class="inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="grad-dark-toggle" class="sr-only peer" onchange="toggleDarkMode(this.checked)" ${document.body.classList.contains('dark-mode') ? 'checked' : ''}>
@@ -1108,7 +1121,7 @@ import  './i18n.js';
                                                     after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all 
                                                     peer-checked:bg-slate-700"></div>
                                         
-                                        <span class="select-none text-sm font-bold text-slate-500">深色模式</span>
+                                        <span class="select-none text-sm font-bold text-slate-500" data-i18n="appear_dark">深色模式</span>
                                     </label>
                                 </div>
                             </div>
@@ -1118,43 +1131,67 @@ import  './i18n.js';
                                         <div onclick="applyTheme('${p.c}');renderContent()" 
                                             class="color-preset ${state.themeColor===p.c?'active':''}" 
                                             style="background:${p.g || p.c}"></div>
-                                        <span class="text-[10px] font-bold text-slate-400">${p.name}</span>
+                                        <span class="text-[10px] font-bold text-slate-400 text-center" data-i18n="${p.key}">${p.name}</span>
                                     </div>
                                 `).join('')}
                                 <div class="flex flex-col items-center gap-2">
                                     <input type="color" onchange="applyTheme(this.value);renderContent()" 
                                         value="${state.themeColor==='svt'?'#92A8D1':state.themeColor==='bp'?'#FF85D0':state.themeColor}" 
                                         class="w-10 h-10 rounded-full border-none cursor-pointer bg-slate-200 shadow-sm">
-                                    <span class="text-[10px] font-bold text-slate-400">滴管選色</span>
+                                    <span data-i18n="appear_eyedropper" class="text-[10px] font-bold text-slate-400 text-center">滴管選色</span>
                                 </div>
                                 <div class="flex flex-col items-center gap-2">
                                     <div onclick="openGradModal()" 
                                         class="color-preset flex items-center justify-center text-white text-[10px] font-bold ${state.themeColor.includes('gradient') && state.themeColor!=='svt'?'active':''}" 
                                         style="background:white">🎨</div>
-                                    <span class="text-[10px] font-bold text-slate-400">自訂漸層</span>
+                                    <span data-i18n="appear_custom_grad" class="text-[10px] font-bold text-slate-400 text-center">自訂漸層</span>
                                 </div>
                             </div>
 
                             <div class="mt-8 pt-6 border-t border-slate-50">
-                                <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">輸入自訂色碼</h3>
+                                <h3 data-i18n="appear_custom_hex" class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">輸入自訂色碼</h3>
                                 <div class="flex gap-2">
                                     <input type="text" id="custom-hex-input" placeholder="#RRGGBB" 
                                         value="${currentHex}"
                                         class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-2xl px-4 py-3 text-sm outline-none font-mono text-slate-700">
-                                    <button onclick="applyHexColor()" 
+                                    <button data-i18n="btn_apply" onclick="applyHexColor()" 
                                             class="bg-brand text-white font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">
                                         套用
                                     </button>
                                 </div>
-                                <p class="text-[10px] text-slate-300 mt-2 ml-1">請輸入包含 # 的六位數色碼，例如 #92A8D1</p>
+                                <p data-i18n="appear_hex_hint" class="text-[10px] text-slate-300 mt-2 ml-1">請輸入包含 # 的六位數色碼，例如 #92A8D1</p>
                             </div>
                         </div>
+                        
+                        <div class="mt-6 pt-2 border-t border-slate-100">
+                            <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-slate-100/50">
+                                <div class="flex items-center gap-1">
+                                    <div class="w-10 h-10 flex items-center justify-center ">
+                                        <svg class="text-brand" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m476-80 182-480h84L924-80h-84l-43-122H603L560-80h-84ZM160-200l-56-56 202-202q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H40v-80h280v-80h80v80h280v80H564q-21 72-63 148t-83 116l96 98-30 82-122-125-202 201Zm468-72h144l-72-204-72 204Z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-500" data-i18n="appear_lang">語言</h4>
+                                    </div>
+                                </div>
+                                <div>
+                                    <select 
+                                        onchange="changeLang(this.value)" 
+                                        class="bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand focus:bg-white transition-all cursor-pointer"
+                                    >
+                                        ${langOptions.map(l => 
+                                            `<option value="${l.code}" ${getLang() === l.code ? 'selected' : ''}>${l.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>`;
             }
         export function toggleDarkMode(isDark) {
             // 套用目前的顏色，但傳入新的深淺設定
             applyTheme(state.themeColor, isDark);
-            showToast(isDark ? "深色模式已開啟" : "深色模式已關閉");
+            showToast(isDark ? t('toast_dark_on') : t('toast_dark_off'));
         }
         export function applyHexColor() {
             const hexInput = document.getElementById('custom-hex-input');
@@ -1166,9 +1203,9 @@ import  './i18n.js';
             if (isHex) {
                 applyTheme(color);
                 renderContent();
-                showToast("已更換自訂主題色！");
+                showToast(t('toast_hex_updated')); //更新自訂主題色
             } else {
-                showToast("格式錯誤！請輸入如 #92A8D1 的色碼");
+                showToast(t('toast_hex_error')); //格式錯誤 
             }
         }
         //漸層工具
@@ -1254,7 +1291,7 @@ import  './i18n.js';
             applyTheme(grad, isDark);
             document.getElementById('grad-modal').classList.add('hidden');
             renderContent();
-            showToast("漸層已更新！");
+            showToast(t('toast_grad_updated')); //更新自訂漸層
         }
 
         //應用主題顏色
@@ -1299,8 +1336,12 @@ import  './i18n.js';
 
         // --- 數據匯入與匯出 ---
         function renderBackupView(container) {
-            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
-                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4">本地 Excel 備份不包含圖片資料<br>⚠️匯入後會覆蓋現有資料並清除圖片</p><div class="grid grid-cols-1 gap-4"><button onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button><label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label></div></div></div>`;
+            container.innerHTML = `<div class="p-6"><div class="flex items-center gap-3 mb-8"><button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button><h2 data-i18n="backup_title" class="text-2xl font-black tracking-tight text-slate-800">匯入與匯出</h2></div>
+                <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 data-i18n="backup_excel_title" class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4"><span data-i18n="backup_excel_desc">本地 Excel 備份不包含圖片資料</span><br><span data-i18n="backup_excel_warn" class="text-yellow-500 font-bold">⚠️匯入後會覆蓋現有資料並清除圖片</span></p>
+                <div class="grid grid-cols-1 gap-4">
+                    <button data-i18n="btn_export" onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button>
+                <label data-i18n="btn_import" class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label>
+                </div></div></div>`;
         }
         export function exportToExcel() {
             const wb = XLSX.utils.book_new();
@@ -1352,21 +1393,21 @@ import  './i18n.js';
             try {
                 const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 if (!workbook.SheetNames.includes("消費清單")) {
-                    showToast("找不到「消費清單」工作表");
+                    showToast(t('toast_no_sheet')); //找不到「消費清單」工作表
                     return;
                 }
 
                 const worksheet = workbook.Sheets["消費清單"];
                 const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 if (aoa.length < 1) {
-                    showToast("檔案為空");
+                    showToast(t('toast_file_empty')); //檔案為空
                     return;
                 }
 
                 const fileHeaders = aoa[0].map(h => String(h || "").trim());
                 const nameIdx = fileHeaders.indexOf("項目名稱");
                 if (nameIdx === -1) {
-                    showToast("找不到「項目名稱」欄位");
+                    showToast(t('toast_no_name_field')); //找不到「項目名稱」欄位
                     return;
                 }
 
@@ -1452,11 +1493,11 @@ import  './i18n.js';
                     localStorage.setItem('fe_v11_expenses', JSON.stringify(state.expenses));
                     if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
                     renderContent();
-                    showToast(`匯入成功：共 ${importedData.length} 筆，若無填寫日期請查看上個月的消費清單`);
+                    showToast(t('toast_import_success', { n: importedData.length }));
                 }
             } catch (err) {
-                console.error(err);
-                showToast("檔案格式錯誤");
+                console.error(err); 
+                showToast(t('toast_format_error'));
             }
         };
         reader.readAsArrayBuffer(file);
@@ -1492,12 +1533,6 @@ import  './i18n.js';
 
         // --- 帳本與功能設定 ---
         function renderAccountConfig(container) {
-            const langOptions = [
-            { code: 'zh-TW', label: '繁體中文' },
-            { code: 'en',    label: 'English' },
-            { code: 'ja',    label: '日本語' },
-            { code: 'ko',    label: '한국어' },
-            ];
         container.innerHTML = `
             <div class="p-6">
                 <div class="flex items-center gap-3 mb-8">
@@ -1509,18 +1544,18 @@ import  './i18n.js';
                 </div>
                 <div class="space-y-6">
                     <div class="bg-white rounded-3xl p-6 card-shadow">
-                        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 tracking-widest">帳本分類模式</h3>
+                        <h3 data-i18n="account_cat_mode" class="text-sm font-bold text-slate-500 uppercase mb-4 tracking-widest">帳本分類模式</h3>
                         <div class="flex bg-slate-100 p-1 rounded-2xl">
-                            <button onclick="switchCatSet('categories')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categories' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">KPOP 模式</button>
-                            <button onclick="switchCatSet('categoriesACGN')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categoriesACGN' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">ACGN 模式</button>
+                            <button data-i18n="account_kpop" onclick="switchCatSet('categories')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categories' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">KPOP 模式</button>
+                            <button data-i18n="account_acgn" onclick="switchCatSet('categoriesACGN')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all ${state.categorySet === 'categoriesACGN' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}">ACGN 模式</button>
                         </div>
                     </div>
                     <div class="bg-white rounded-3xl p-6 card-shadow">
                         <div class="flex items-center justify-between ${state.enableExchange ? 'mb-6 border-b border-slate-50' : ''}">
                             <div>
-                                <h3 class="text-sm font-bold text-slate-500 tracking-widest">開啟匯率換算工具</h3>
-                                <p class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
-                                <p class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
+                                <h3 data-i18n="account_exchange" class="text-sm font-bold text-slate-500 tracking-widest">開啟匯率換算工具</h3>
+                                <p data-i18n="account_exchange_sub" class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
+                                <p data-i18n="account_exchange_desc" class="text-[10px] text-slate-400">若在關閉時編輯紀錄，匯率資料會消失</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" class="sr-only peer" onchange="toggleExchange(this.checked)" ${state.enableExchange ? 'checked' : ''}>
@@ -1529,7 +1564,7 @@ import  './i18n.js';
                         </div>
                      ${state.enableExchange ? `
                     <div class="animate-enter">
-                        <h3 class="text-xs  text-slate-400 mb-4 tracking-widest uppercase">預設記帳幣別</h3>
+                        <h3 data-i18n="account_currency" class="text-xs  text-slate-400 mb-4 tracking-widest uppercase">預設記帳幣別</h3>
                         <div class="relative">
                             <select onchange="updateDefaultCurrency(this.value)" class="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none border-2 border-transparent focus:border-brand appearance-none">
                                 <option value="TWD" ${state.defaultCurrency === 'TWD' ? 'selected' : ''}>TWD - 新台幣</option>
@@ -1544,7 +1579,7 @@ import  './i18n.js';
                             </select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2 px-1">更改此處將會影響匯率換算的基準幣別。</p>
+                        <p data-i18n="account_currency_sub" class="text-[10px] text-slate-400 mt-2 px-1">更改此處將會影響匯率換算的基準幣別</p>
                     </div>
                     ` : ''}
                     </div>
@@ -1552,37 +1587,11 @@ import  './i18n.js';
                     <div class="space-y-4">
                         <div class="bg-white p-6 rounded-3xl card-shadow" onclick="state.subPage='catOrder'; renderContent();">
                             <div class="flex justify-between items-center cursor-pointer">
-                                <div><h3 class="text-sm font-bold text-slate-500 tracking-widest">調整分類順序</h3><p class="text-[10px] text-slate-400">自訂最常用的分類顯示在最前面</p></div>
+                                <div><h3 data-i18n="account_cat_order" class="text-sm font-bold text-slate-500 tracking-widest">調整分類順序</h3><p data-i18n="account_cat_order_sub" class="text-[10px] text-slate-400">自訂最常用的分類顯示在最前面</p></div>
                                 <span class="text-slate-300">▶</span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-8 pt-6 border-t border-slate-100">
-                        <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-slate-100/50">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg shadow-inner">
-                                    🌐
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-slate-800">顯示語言</h4>
-                                    <p class="text-[11px] text-slate-400 font-medium tracking-wide uppercase">Language</p>
-                                </div>
-                            </div>
-                            <div>
-                                <!-- 語言切換下拉選單 -->
-                                <select 
-                                    onchange="changeLang(this.value)" 
-                                    class="bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand focus:bg-white transition-all cursor-pointer"
-                                >
-                                    ${langOptions.map(l => 
-                                        `<option value="${l.code}" ${getLang() === l.code ? 'selected' : ''}>${l.label}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
                 
             </div>`;
@@ -1594,14 +1603,14 @@ import  './i18n.js';
             state.selectedCategory = ''; // 切換組別時重設選擇
             localStorage.setItem('fe_cat_set', setName);
             renderContent();
-            showToast(`已切換至 ${setName === 'categories' ? 'KPOP分類' : 'ACGN分類'}`);
+            showToast(`${setName === 'categories' ? t('toast_switch_kpop') : t('toast_switch_acgn')}`);
         }
         export function updateDefaultCurrency(val) {
             state.defaultCurrency = val;
             localStorage.setItem('fe_v11_defaultCurrency', val);
             localStorage.removeItem('fandom_rates_timestamp'); //清除原本快取
             fetchRates(); 
-            showToast(`預設幣別已更改為 ${val}`);
+            showToast(t('toast_currency_changed', { n: val })); //預設幣別已更改為
             renderContent();
         }
 
@@ -1610,7 +1619,7 @@ import  './i18n.js';
             localStorage.setItem('fe_v11_enableExchange', val);
             if (val) fetchRates();
             renderContent(); // 重新渲染以實現 toggle 效果
-            showToast(val ? "已開啟換算工具" : "已關閉換算工具");
+            showToast(val ? t('toast_exchange_on') : t('toast_exchange_off'));
         }
      // 快取獲取匯率
         async function fetchRates() {
@@ -1626,13 +1635,13 @@ import  './i18n.js';
             // 如果有快取且未過期，直接使用
             if (cachedData && cachedTime && (now - cachedTime < FIVE_DAY)) {
                 state.rates = JSON.parse(cachedData);
-                state.rateStatusText = "匯率已就緒 (快取)";
+                state.rateStatusText = "rate_cached"; //匯率已就緒 (快取)
                 console.log("Using cached rates from:", new Date(parseInt(cachedTime)).toLocaleString());
                 return;
             }
 
             // 否則，向網路請求新的匯率
-            state.rateStatusText = "正在更新最新匯率...";
+            state.rateStatusText = "rate_updating"; //正在更新最新匯率...
             updateRateUI();
             try {
                 const base = state.defaultCurrency || 'TWD';
@@ -1654,24 +1663,33 @@ import  './i18n.js';
                     state.rates = newRates;
                     localStorage.setItem(CACHE_KEY, JSON.stringify(newRates));
                     localStorage.setItem(CACHE_TIME_KEY, now.toString());
-                    state.rateStatusText = "匯率已更新(網路)";
+                    state.rateStatusText = "rate_updated"; //匯率已更新(網路);
                     console.log("Rates updated from API");
                 }
                 else {
                     if (cachedData) state.rates = JSON.parse(cachedData);
-                    state.rateStatusText = "匯率連線失敗，使用離線數據";
+                    state.rateStatusText = "rate_failed"; //匯率連線失敗，使用離線數據
                 }
             } catch (e) {
                 console.warn("API 抓取失敗，使用預設值或舊快取",e);
                 if (cachedData) state.rates = JSON.parse(cachedData);
-                state.rateStatusText = "匯率連線失敗，使用離線數據";
+                state.rateStatusText = "rate_failed"; //匯率連線失敗，使用離線數據
             }
             updateRateUI();
         }
         // 更新介面上的文字 (若元素存在)
         function updateRateUI() {
             const tag = document.getElementById('rate-tag');
-            if (tag) tag.innerText = state.rateStatusText;
+            if (tag){
+                const currentKey = state.rateStatusText;
+                tag.setAttribute('data-i18n', currentKey);
+        
+                if (typeof t === 'function') {
+                    tag.innerText = t(currentKey);
+                } else {
+                    tag.innerText = currentKey; // 防呆
+                };
+            }
         }
         export function convertCurrency() { //匯率換算
             const currency = document.getElementById('currency-select').value;
@@ -1705,19 +1723,20 @@ import  './i18n.js';
                 return finalA - finalB;
             });
             // const sorted = [...currentCats].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-
+            
             container.innerHTML = `
                 <div class="p-6">
                     <div class="flex items-center gap-3 mb-8">
                         <button onclick="state.subPage='accountConfig';renderContent()" class="p-2 -ml-2 text-slate-400 font-bold active:scale-90 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
                         </button>
-                        <h2 class="text-2xl font-black text-slate-800">排序分類</h2>
+                        <h2 data-i18n="account_cat_order" class="text-2xl font-black text-slate-800">調整分類順序</h2>
                     </div>
 
                     <div class="bg-white rounded-3xl m-4 p-2 card-shadow overflow-hidden" id="drag-list" style="touch-action: none;">
-                        ${sorted.map((c, i) => `
-                            <div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
+                        ${sorted.map((c, i) =>{ 
+                            const cleanId = c.id.replace(/\s+/g, '');
+                            return `<div class="drag-item flex items-center justify-between p-4 border-b last:border-0 bg-white group" 
                                 data-id="${c.id}">
                                 
                                 <div class="flex items-center gap-3 flex-grow cursor-move handle">
@@ -1726,7 +1745,7 @@ import  './i18n.js';
                                             <path d="M7 10h10M7 14h10" stroke-linecap="round"/>
                                         </svg>
                                     </span>
-                                    <span class="font-bold text-slate-700 select-none">${c.icon} ${c.id}</span>
+                                    <span class="font-bold text-slate-700 select-none">${c.icon} <span data-i18n="cat_${cleanId}">${c.id}<span></span>
                                 </div>
 
                                 <div class="flex gap-1">
@@ -1737,13 +1756,14 @@ import  './i18n.js';
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                     </button>
                                 </div>
-                            </div>`).join('')}
+                            </div>`}).join('')}
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-6 text-center font-bold uppercase tracking-widest">可拖曳左側手柄或使用箭頭調整順序</p>
+                    <p data-i18n="account_cat_order_desc" class="text-[10px] text-slate-400 mt-6 text-center font-bold uppercase tracking-widest">可拖曳左側手柄或使用箭頭調整順序</p>
                 </div>`;
 
             // 啟動拖曳監聽
             initUniversalSort();
+            updateStaticTranslations(container);
         }
 
 /**
@@ -1836,7 +1856,7 @@ import  './i18n.js';
 
             // 3. 設定延遲執行耗時動作 (2秒後沒動作才執行)
             debounceTimer = setTimeout(() => {
-                showToast("分類排序已更新 ✨")
+                showToast(t('toast_cat_updated')); //分類排序已更新
                 // 執行雲端同步
                 if (window.cloud?.sync) {
                     window.cloud.sync(state.expenses, state.wishlist)
@@ -1844,7 +1864,7 @@ import  './i18n.js';
                         .catch(err => console.error("雲端同步失敗", err));
                 } else {
                     // 如果沒登入雲端，至少給個本地存檔完成的提示
-                    showToast("本地排序已更新 ✨");
+                    showToast(t('toast_cat_updated_local')); //分類排序已更新 (本地)
                 }
             }, 2000); 
         }
@@ -1899,7 +1919,7 @@ import  './i18n.js';
                         <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                         </button>
-                        <h2 class="text-2xl font-black tracking-tight text-slate-800">版本說明</h2>
+                        <h2 data-i18n="settings_version" class="text-2xl font-black tracking-tight text-slate-800">版本說明</h2>
                     </div>
                     
                     <div class="flex flex-col items-center mb-10">
@@ -1936,35 +1956,35 @@ import  './i18n.js';
         // 常見問題 FAQ 
         function renderFAQView(container) { 
             const faqs = [
-                { q: "追星錢包會上架到APP商店嗎？", a: "目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！" },
-                { q: "如何加入主畫面？", a: "使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。" },
-                { q: "一鍵匯入匯出功能如何使用？", a: "使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨" },
-                { q: "如何查詢未到貨商品？", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" },
-                { q: "可以自行新增分類嗎？", a: "目前不支援。<br/>為了維持報表統計的一致性，採用固定分類。<br/>💡記帳小貼士：<br/>1. 標籤功能：細節（如：成員）請用 #標籤，能更靈活地記錄細節並支援搜尋篩選。<br/>2. 切換模式：在「設定 > 帳本與功能」可依照喜好切換預設分類。<br/>3. 許願功能：歡迎點擊下方前往許願，會評估後新增！" },
-                { q: "為什麼在網頁版新增了資料，打開 App (加入主畫面) 卻沒看到？", a: "這通常是因為 App 端的登入狀態尚未同步更新。<br/><b>檢查登入</b>：進入「設定」，確認目前是否為登入狀態。若顯示未登入，請重新登入即可抓回雲端資料。<br/><br/>追星錢包採用即時雲端儲存，只要是登入狀態新增的資料都會安全存在雲端囉！" }
+                { key_q: "faq_q1", q: "追星錢包會上架到APP商店嗎？",key_a: "faq_a1", a: "目前因為技術限制與上架流程較繁瑣，因此暫時沒有上架 App Store / Google Play 的計畫。但現在可以直接加入主畫面使用，體驗會和 App 很接近！" },
+                { key_q: "faq_q2", q: "如何加入主畫面？", key_a: "faq_a2", a: "使用 Safari/Chrome 開啟，點擊右上方「分享」圖示後選擇「加入主畫面」。" },
+                { key_q: "faq_q3", q: "一鍵匯入匯出功能如何使用？", key_a: "faq_a3", a: "使用方式：<br/>1. 先在「數據匯入與匯出」內匯出 Excel，取得系統提供的範例檔案格式。<br/>2. 將你原本的 Excel 資料 複製到範例檔案的對應欄位。<br/>3. 再把整理好的檔案 匯入 App 即可。<br/>注意事項：<br/>•  項目名稱與單價為必填欄位<br/>•  其他欄位都可以留空<br/>•  如果沒有填寫時間，系統會自動匯入到「上個月」這樣就可以快速把原本的紀錄搬進追星錢包了 ✨" },
+                { key_q: "faq_q4", q: "如何查詢未到貨商品？", key_a: "faq_a4", a: "在搜尋框輸入「未到貨」關鍵字，或點擊「#未到貨」標籤。" },
+                { key_q: "faq_q5", q: "可以自行新增分類嗎？", key_a: "faq_a5", a: "目前不支援。<br/>為了維持報表統計的一致性，採用固定分類。<br/>💡記帳小貼士：<br/>1. 標籤功能：細節（如：成員）請用 #標籤，能更靈活地記錄細節並支援搜尋篩選。<br/>2. 切換模式：在「設定 > 帳本與功能」可依照喜好切換預設分類。<br/>3. 許願功能：歡迎點擊下方前往許願，會評估後新增！" },
+                { key_q: "faq_q6", q: "為什麼在網頁版新增了資料，打開 App (加入主畫面) 卻沒看到？", key_a: "faq_a6", a: "這通常是因為 App 端的登入狀態尚未同步更新。<br/><b>檢查登入</b>：進入「設定」，確認目前是否為登入狀態。若顯示未登入，請重新登入即可抓回雲端資料。<br/><br/>追星錢包採用即時雲端儲存，只要是登入狀態新增的資料都會安全存在雲端囉！" }
             ];
 
             container.innerHTML = `
                 <div class="p-6 pb-32">
                     <div class="flex items-center gap-3 mb-8">
                         <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
-                        <h2 class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
+                        <h2 data-i18n="settings_faq" class="text-2xl font-black tracking-tight text-slate-800">常見問題與幫助</h2>
                     </div>
-                    <h3 class="text-sm font-black text-brand uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
+                    <h3 data-i18n="faq_title" class="text-sm font-black text-brand uppercase tracking-widest mb-4 ml-1">常見問題 FAQ</h3>
                     <div class="space-y-3 mb-10">
                         ${faqs.map((faq, i) => `
                             <div class="faq-item bg-white rounded-2xl p-4 card-shadow" onclick="toggleFaq(${i})">
                                 <div class="flex justify-between items-center cursor-pointer">
-                                    <h4 class="text-xs font-bold text-slate-500 pr-4">${faq.q}</h4>
+                                    <h4 data-i18n="${faq.key_q}" class="text-xs font-bold text-slate-500 pr-4">${faq.q}</h4>
                                     <svg class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
                                 </div>
-                                <div class="faq-answer mt-2"><p class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
+                                <div class="faq-answer mt-2"><p data-i18n-html="${faq.key_a}" class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
                             </div>
                         `).join('')}
                     </div>
 
                     <div class="space-y-4">
-                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" class="block w-full bg-white text-brand font-bold py-4 rounded-2xl text-center text-sm card-shadow active:scale-[0.98] transition-all">
+                        <a href="https://forms.gle/vF1hfL3RTs6TMuw17" target="_blank" data-i18n="faq_submit" class="block w-full bg-white text-brand font-bold py-4 rounded-2xl text-center text-sm card-shadow active:scale-[0.98] transition-all">
                             📝 問題回報與功能許願
                         </a>
                     </div>
