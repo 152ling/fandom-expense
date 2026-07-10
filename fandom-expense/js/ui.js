@@ -29,8 +29,8 @@ import  './i18n.js';
             overlay.classList.remove('hidden');
 
             return new Promise((resolve) => {
-                document.getElementById('confirm-btn-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
-                document.getElementById('confirm-btn-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
+                document.getElementById('confirm-ok').onclick = () => { overlay.classList.add('hidden'); resolve(true); };
+                document.getElementById('confirm-cancel').onclick = () => { overlay.classList.add('hidden'); resolve(false); };
             });
         }
     /**滑動關閉編輯邏輯 */
@@ -677,6 +677,7 @@ import  './i18n.js';
         // --- 財務報表 ---
         function changeReportType(type) {
             state.reportType = type;
+            state.reportDimension = (type === 'net') ? 'category' : state.reportDimension; // 淨支出模式強制使用分類維度方便多語系判斷
             renderContent(); // 重新渲染報表
         }
         function renderReport(container) {
@@ -838,7 +839,7 @@ import  './i18n.js';
                                 ${reportMode === 'net' ? t('report_rank_net') : (reportMode === 'income' ? t('report_rank_inc') : t('report_rank_exp'))}
                             </h3>
                             ${(reportMode !== 'net' && state.reportDimension === 'tag') ? `
-                            <p class="text-[10px] font-bold text-slate-400/70 mt-1  tracking-wide">
+                            <p data-i18n="report_hint" class="text-[10px] font-bold text-slate-400/70 mt-1  tracking-wide">
                                 提示：複選標籤之項目會重複計算，佔比以該時段總金額為基準
                             </p>
                         ` : ''}
@@ -850,7 +851,7 @@ import  './i18n.js';
                                         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background-color:${s.color}20">${s.icon}</div>
                                         <div class="flex-grow">
                                             <div class="flex justify-between items-center mb-1">
-                                                <span ${state.reportDimension === 'category' ? `data-i18n="cat_${cleanId}"` : ''} class="text-sm font-bold text-slate-700">${s.id}</span>
+                                                <span ${state.reportDimension === 'category' || (state.reportDimension === 'tag' && cleanId === '未貼標籤') ? `data-i18n="cat_${cleanId}"` : ''} class="text-sm font-bold text-slate-700">${s.id}</span>
                                                 <span class="text-xs font-black text-slate-400">${p} %</span>
                                             </div>
                                             <div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden">
@@ -862,7 +863,7 @@ import  './i18n.js';
                             }).join('')}
                         </div>
                     ` : `
-                        <div class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">
+                        <div data-i18n="report_no_data" class="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 font-bold text-slate-300">
                             目前時段尚無數據可分析
                         </div>
                     `}
@@ -958,14 +959,13 @@ import  './i18n.js';
                             <span data-i18n="settings_account" class="font-bold text-slate-700">帳本與功能</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-slate-300 font-bold">${state.categorySet === 'categories' ? 'KPOP' : 'ACGN'}${state.enableExchange ? ' / 匯率開' : ''}</span>
                             <span>▶</span>
                         </div>
                     </div>              
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v12.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
                     </div>
                     <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
                         <div class="flex items-center gap-4 text-brand">
@@ -1064,7 +1064,7 @@ import  './i18n.js';
                                 <img src="${item.image}" class="w-full h-full object-cover">
                             </div>
                         `).join('') : `
-                            <div class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
+                            <div data-i18n="photowall_empty" class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
                         `}
                     </div>
                 </div>`;
@@ -1097,8 +1097,8 @@ import  './i18n.js';
             const langOptions = [
                 { code: 'zh-TW', label: '繁體中文' },
                 { code: 'en',    label: 'English' },
-                { code: 'ja',    label: '日本語' },
                 { code: 'ko',    label: '한국어' },
+                { code: 'ja',    label: '日本語' },
             ];
             container.innerHTML = `
                     <div class="p-6">
@@ -1899,7 +1899,8 @@ import  './i18n.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
-                {version: 'v12.0',date: '2026.06.22',updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
+                { version: 'v13.0', date: '2026.07.10', updates: ['支援多語系:繁體中文、英文、韓文、日文，可前往外觀設定中切換語系','非專業翻譯若有遇到翻譯錯誤或不通順的地方，歡迎回報','成功馴服AI了所以抱著大胖貓慶祝🐈‍⬛']},
+                { version: 'v12.0', date: '2026.06.22', updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
                 { version: 'v11.0', date: '2026.06.13', updates: ['設定自動記憶：修正帳本模式（KPOP/ACGN）與匯率工具，重開 App 不再跳回預設值','優化登入合流機制，重新登入時會自動將登出期間新增的資料合併上雲端','未登入限制與提示：未登入時會鎖定新增功能並跳出提示，避免資料沒同步到雲端而遺失']},
                 { version: 'v10.0', date: '2026.05.31', updates: ['篩選功能升級：標籤支援複選，快速查看符合多個條件的紀錄','優化年月份篩選：記住「不限」篩選設定，避免每次開啟都切回當月']},
                 { version: 'v9.0', date: '2026.03.15', updates: ['帳本與功能新增:調整分類順序','新增消費紀錄可上傳最多 3 張照片','新增 FAQ 頁面，可直接回報問題或回饋建議']},
@@ -1925,7 +1926,7 @@ import  './i18n.js';
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 12.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 13.0</p>
                     </div>
 
                     <div class="space-y-6">

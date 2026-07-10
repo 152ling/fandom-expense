@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { showToast,askUser, renderContent, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
 import { compressImage } from './utils.js';
 import './i18n.js'
+import { t } from './i18n.js';
 
 // 全域鎖定變數，防止連點導致重複存檔或刪除
 let isSaving = false;
@@ -24,7 +25,7 @@ export async function saveData() {
             const isExp = (state.activeTab === 'expense' || document.getElementById('m-qty'));
             const key = isExp ? 'expenses' : 'wishlist';
             isSaving = true; // 開鎖
-            showToast("正在上傳並同步...");
+            showToast(t('toast_uploading_sync')); // "正在上傳並同步..."
 
              // --- 核心轉移邏輯：清理孤兒圖片與舊格式 ---
             if (state.editingId) {
@@ -182,7 +183,7 @@ export    async function handleImage(input) { //願望清單用的上傳
                 showToast(t('toast_img_error'));
                 return;
             }
-            showToast("正在讀取圖片...");
+            showToast(t('toast_uploading')); //正在上傳圖片...
         // 2. 處理 file.type 為空的情況 (針對部分 Android/OPPO 系統)
             let isImage = false;
             if (file.type) {
@@ -194,13 +195,13 @@ export    async function handleImage(input) { //願望清單用的上傳
             }
 
             if (!isImage) {
-                showToast("不支援的檔案格式，請選擇圖片檔");
+                showToast(t('toast_format_error')); //檔案格式錯誤
                 input.value = ""; // 清空選取
                 return;
             }
             // 3. 檢查檔案大小 (超過 15MB 預警)
             if (file.size > 15 * 1024 * 1024) {
-                showToast("圖片太大囉！請選擇較小的照片");
+                showToast(t('toast_img_too_large')); //圖片太大囉！請選擇較小的照片
                 input.value = "";
                 return;
             }
@@ -208,7 +209,7 @@ export    async function handleImage(input) { //願望清單用的上傳
                 const reader = new FileReader();
                 // 檔案讀取失敗的處理
                 reader.onerror = () => {
-                    showToast("檔案讀取發生錯誤，請重試");
+                    showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
                     input.value = "";
                 };
                 reader.onload = async (e) => {
@@ -233,11 +234,11 @@ export    async function handleImage(input) { //願望清單用的上傳
                         state.tempImageBlob = await fetch(compressedBase64).then(r => r.blob());
                         state.tempImages = []; // 清空舊圖，確保只傳這張新的
                         state.tempImageBase64 = [];
-                        showToast("圖片上傳成功");
+                        showToast(t('toast_img_success')); //圖片上傳成功
 
                     } catch (error) {
                         console.error("Image processing error:", error);
-                        showToast("圖片處理失敗，請換一張試試");
+                        showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
                         // 重置狀態
                         state.tempImageBlob = null;
                         document.getElementById('img-placeholder').innerHTML = `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`;
@@ -249,7 +250,7 @@ export    async function handleImage(input) { //願望清單用的上傳
         }
 export async function handleMultiImage(input) {
             if (!state.user) {
-                showToast("請先登入以開啟圖片上傳功能☁️");
+                showToast(t('toast_login_required')); //請先登入以開啟圖片上傳功能☁️
                 input.value = "";
                 return;
             }
@@ -266,7 +267,7 @@ export async function handleMultiImage(input) {
             }
 
             const toProcess = files.slice(0, remain);
-            showToast("正在讀取圖片...");
+            showToast(t('toast_uploading')); //正在上傳圖片...
 
             for (const file of toProcess) {
                 // 1. 類型檢查 (每一張圖片都會個別執行此檢查)
@@ -279,13 +280,13 @@ export async function handleMultiImage(input) {
                 }
 
                 if (!isImage) {
-                    showToast(`不支援的檔案格式，請選擇圖片檔: ${file.name}`);
+                    showToast(t('toast_format_error')); //檔案格式錯誤
                     continue;
                 }
 
                 // 2. 大小檢查 (上限 15MB)
                 if (file.size > 15 * 1024 * 1024) {
-                    showToast(`圖片太大囉: ${file.name}`);
+                    showToast(t('toast_img_too_large')); //圖片太大囉！請選擇較小的照片
                     continue;
                 }
 
@@ -293,7 +294,7 @@ export async function handleMultiImage(input) {
                     const b64 = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onerror = () => {
-                            showToast("讀取失敗");
+                            showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
                             reject(new Error("Read failed"));
                         };
                         reader.onload = async (e) => {
@@ -316,11 +317,11 @@ export async function handleMultiImage(input) {
                     }
                 } catch (error) {
                     console.error("Image processing error:", error);
-                    showToast(`處理失敗: ${file.name}`);
+                    showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
                 }
             }
             
-            showToast("圖片處理完成");
+            showToast(t('toast_img_success')); //圖片上傳成功
             input.value = ""; // 清空 input 以便下次選擇
         }
             // 點擊刪除按鈕觸發
@@ -363,10 +364,10 @@ export  async function handleDelete(e, type, id) {
                     if (window.cloud) window.cloud.sync(state.expenses, state.wishlist);
                     
                     renderContent();
-                    showToast("已成功刪除紀錄");
+                    showToast(t('toast_deleted')); //已成功刪除紀錄
                 } catch (error) {
                     console.error("刪除失敗：", error);
-                    showToast("刪除過程發生錯誤，請稍後再試");
+                    showToast(t('toast_delete_error')); //刪除過程發生錯誤，請稍後再試
                 }
             }
         }
@@ -391,7 +392,7 @@ export function triggerCopyFromAction() {
                     isCopy: true // 標記這是一筆複製件
                 };
                 openAddModal(copiedData);
-                showToast("已載入複製資料，修改後請儲存");
+                showToast(t('toast_duplicate')); //已載入複製資料，修改後請儲存
             }
         }
 
