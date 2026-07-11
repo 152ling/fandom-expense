@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>正在修復連線...</title>
+    <script>
+        // 1. 既然目前畫面是壞的，立刻在前端把壞掉的快取和 SW 清掉
+        if ('caches' in window) {
+            caches.keys().then(names => names.forEach(name => caches.delete(name)));
+        }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+        }
+        // 2. 核心關鍵：立刻用 replace 導回首頁，不留錯誤歷史紀錄
+        window.location.replace('/');
+    </script>
+</head>
+<body>
+    <p style="text-align: center; margin-top: 50px; color: #666; font-family: sans-serif;">
+        系統正在重新連線，請稍候...
+    </p>
+</body>
+</html>
