@@ -1,10 +1,9 @@
 {
   "cleanUrls": true,
-  "redirects": [
+  "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html",
-      "permanent": false
+      "source": "/((?!index\\.html|assets/|sw\\.js|favicon\\.ico).*)",
+      "destination": "/index.html"
     }
   ]
 }
