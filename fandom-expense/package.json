@@ -1,0 +1,7 @@
+{
+  "name": "fandom-expense",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Static build success'"
+  }
+}
