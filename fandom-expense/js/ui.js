@@ -1320,14 +1320,17 @@ import  './i18n.js';
 
             if (color === 'svt') {
                 root.style.setProperty('--brand-color', '#92A8D1');
+                root.style.setProperty('--brand-color-one', '#F7CAC9');
                 root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)');
             } else if (color.includes('gradient')) {
                 root.style.setProperty('--brand-gradient', color);
                 const match = color.match(/#[A-Fa-f0-9]{6}/);
                 root.style.setProperty('--brand-color', match ? match[0] : '#92A8D1');
+                root.style.setProperty('--brand-color-one', match ? match[0] : '#92A8D1');
             } else {
                 root.style.setProperty('--brand-color', color);
                 root.style.setProperty('--brand-gradient', color);
+                root.style.setProperty('--brand-color-one', match ? match[0] : '#92A8D1');
             }
             localStorage.setItem('fe_v11_theme', color);
         }

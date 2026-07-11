@@ -25,6 +25,7 @@
         }
         :root {
             --brand-color: #92A8D1; 
+            --brand-color-one: #F7CAC9;
             --brand-gradient: linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%);
             --app-bg: #f8fafc;
             --card-bg: #ffffff;
@@ -66,6 +67,7 @@
         }
 
         .bg-brand { background: var(--brand-gradient) !important; }
+        .bg-brand-one{background: var(--brand-color-one) !important; }
         .border-brand { border-color: var(--brand-color) !important; }
         .text-brand { color: var(--brand-color) !important; }
         .text-income { color: var(--income-color) !important; }
@@ -109,6 +111,7 @@
             border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-sub);
         }
         .chip.active-tag { background: var(--brand-gradient) !important; color: #fff !important;}
+        .chip.active-cat { color: #fff !important;}
         .report-range-btn.active { background: var(--brand-gradient); color: white; }
         
         .color-preset { width: 42px; height: 42px; border-radius: 50%; cursor: pointer; border: 2px solid #e2e8f0; transition: all 0.2s; }
@@ -483,7 +486,33 @@
 
     // 啟動 App
     window.onload = () => {
+        // 🚀 新增：安全清除 Service Worker 快取檔案，不影響 localStorage 記帳資料
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+                console.log('🌐 網頁檔案快取已清空（資料安全無虞）');
+            });
+        }
 
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+                console.log('🤖 舊版 Service Worker 已登出');
+            });
+        }
+
+        // 利用特製的 key 控制重整，fe_v11_ 開頭不會影響你原本的記帳資料
+        const hasCleaned = localStorage.getItem('fe_v11_pwa_fix_v2');
+        if (!hasCleaned) {
+            localStorage.setItem('fe_v11_pwa_fix_v2', 'true');
+            // 加上時間戳記強迫繞過 Vercel 快取取得最新 index.html
+            window.location.href = window.location.pathname + '?v=' + Date.now();
+            return; // 轉跳後直接中斷後續執行
+        }
     
         // 1. 初始化主題
         applyTheme(state.themeColor);
