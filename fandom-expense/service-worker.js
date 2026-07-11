@@ -40,7 +40,12 @@ self.addEventListener('activate', (event) => {
     .then(() => self.clients.matchAll())
     .then((clients) => {
       // 2. 讓所有打開的 PWA 分頁立刻重新整理，脫離操控
-      clients.forEach(client => client.navigate(client.url));
+      // clients.forEach(client => client.navigate(client.url));
+      clients.forEach(client => {
+        if (client.url) {
+          client.navigate('/'); 
+        }
+      });
     });
 
   // 3. 順便把 Cache Storage 的網頁檔案快取全部清空（不傷 localStorage）
