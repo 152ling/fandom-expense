@@ -195,6 +195,17 @@
         #app-splash {
             background-color: #ffffff;
         }
+        /* 展開/收合狀態過渡動畫 */
+        .filter-panel {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .filter-panel.show {
+            max-height: 200px;
+            opacity: 1;
+        }
 
     </style>
 </head>

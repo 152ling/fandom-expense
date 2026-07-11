@@ -5,6 +5,10 @@ import { renderContent ,getCurrentCategories,askUser} from './ui.js';
 import { escapeHTML } from './utils.js';
 import './i18n.js';
 
+            let showStatusFilter = false;
+            let shippingStatusTab = 'all'; // 'all', 'pending', 'received', 'sold'
+            let detailedPendingFilter = null; // null, '未到貨', '待二補', '待出貨', '待取貨'
+
         export function renderExpenseList(container) {
             // 自動生成從 2010 到 明年 的年份陣列
             const currentYear = new Date().getFullYear();
@@ -13,6 +17,7 @@ import './i18n.js';
             const yearList = [0, ...years.reverse()];
             const isDoubleUnlimited = (state.filterYear === 0 && state.filterMonth === 0);
             const hideArrowsClass = isDoubleUnlimited ? 'hidden' : ''; //如果年月都是不限隱藏左右箭頭
+            let showStatusFilter = false;
             container.innerHTML = `
                 <div class="pt-6 px-6 sticky top-0 bg-brand/5 backdrop-blur-md z-30 border-b border-gray-100">
                     <div class="flex justify-between items-center mb-4">
@@ -73,18 +78,63 @@ import './i18n.js';
                             </div>
                         </div>
                     </div>
-                    <div class="relative mb-3">
-                        <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
-                        <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
-                        <button id="search-clear-btn" onclick="clearSearch()" 
-                                class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
-                                title="清空搜尋">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                    <div class="relative flex mb-3 gap-2">
+                        <div class="relative flex-1 flex items-center">
+                            <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                            <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
+                            <button id="search-clear-btn" onclick="clearSearch()" 
+                                    class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
+                                    title="清空搜尋">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button 
+                            id="toggleFilterBtn"
+                            class="p-3 rounded-2xl border transition-all relative flex items-center justify-center bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal-icon lucide-sliders-horizontal"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>
                         </button>
                     </div>
                     
+                    <!-- 展開之「四段式狀態篩選分頁」 -->
+                    <div id="filterPanel" class="filter-panel px-6 bg-white border-b border-slate-50">
+                        <div class="flex bg-slate-100 p-0.5 rounded-xl text-center">
+                            <button onclick="setShippingStatusTab('all')" id="tab-all" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-white text-slate-800 shadow-xs">
+                            全部(0)
+                            </button>
+                            <button onclick="setShippingStatusTab('pending')" id="tab-pending" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800">
+                            未到貨(0)
+                            </button>
+                            <button onclick="setShippingStatusTab('received')" id="tab-received" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800">
+                            已取貨(0)
+                            </button>
+                            <button onclick="setShippingStatusTab('sold')" id="tab-sold" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800">
+                            已售出(0)
+                            </button>
+                        </div>
+
+                        <!-- 未到貨之二級細項篩選 -->
+                        <div id="pendingDetailsPanel" class="hidden flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-dashed border-slate-100">
+                            <button onclick="setDetailedPendingFilter(null)" id="subtab-all" class="px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-purple-100 text-purple-700 border border-purple-200">
+                            全部未到貨
+                            </button>
+                            <button onclick="setDetailedPendingFilter('未到貨')" id="subtab-wait" class="px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100">
+                            未到貨 (0)
+                            </button>
+                            <button onclick="setDetailedPendingFilter('待二補')" id="subtab-repay" class="px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100">
+                            待二補 (0)
+                            </button>
+                            <button onclick="setDetailedPendingFilter('待出貨')" id="subtab-ship" class="px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100">
+                            待出貨 (0)
+                            </button>
+                            <button onclick="setDetailedPendingFilter('待取貨')" id="subtab-collect" class="px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100">
+                            待取貨 (0)
+                            </button>
+                        </div>
+                    </div>
+
                     <div id="cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1"></div>
                     <div id="tag-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
                 </div>
@@ -103,6 +153,18 @@ import './i18n.js';
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#date-picker-box')) {
                     document.getElementById('date-picker-panel')?.classList.add('hidden');
+                }
+            });
+
+            document.getElementById('toggleFilterBtn').addEventListener('click', () => {
+                showStatusFilter = !showStatusFilter;
+                const panel = document.getElementById('filterPanel');
+                const btn = document.getElementById('toggleFilterBtn');
+                if (showStatusFilter) {
+                    panel.classList.add('show');
+                    btn.className = "p-3 rounded-2xl border transition-all relative flex items-center justify-center bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-100";
+                } else {
+                    panel.classList.remove('show');
                 }
             });
         }
@@ -208,6 +270,18 @@ import './i18n.js';
                 return `${m}月`;        // 中、日文版顯示 1月, 2月...
             }
         }
+            // 設定主要頁籤
+        export function setShippingStatusTab(tab) {
+            shippingStatusTab = tab;
+            detailedPendingFilter = null; // 切換大頁籤時清除二級細項
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
+
+        // 設定二級細項
+        function setDetailedPendingFilter(subtab) {
+            detailedPendingFilter = subtab;
+            renderExpenseListItems(document.getElementById('expense-list-items'));
+        }
         function renderExpenseListItems(container) { //消費清單渲染
             if(!container) return;
             const kw = state.searchKeyword.toLowerCase();
@@ -228,6 +302,65 @@ import './i18n.js';
 
             return dateMatch && catMatch && keywordMatch && tagMatch;
             });
+            const countData = computeCounts(filtered);
+            
+            // 更新大頁籤文字與數量
+            document.getElementById('tab-all').innerText = `全部(${countData.all})`;
+            document.getElementById('tab-pending').innerText = `未到貨(${countData.pending})`;
+            document.getElementById('tab-received').innerText = `已取貨(${countData.received})`;
+            document.getElementById('tab-sold').innerText = `已售出(${countData.sold})`;
+
+            // 更新大頁籤高亮狀態
+            const tabs = ['all', 'pending', 'received', 'sold'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (shippingStatusTab === t) {
+                if (t === 'pending') {
+                    el.className = "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-purple-600 text-white shadow-xs";
+                } else if (t === 'sold') {
+                    el.className = "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-emerald-600 text-white shadow-xs";
+                } else {
+                    el.className = "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-white text-slate-800 shadow-xs";
+                }
+                } else {
+                el.className = "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800";
+                }
+            });
+
+            // 處理二級細項面板顯示
+            const pendingPanel = document.getElementById('pendingDetailsPanel');
+            if (shippingStatusTab === 'pending') {
+                pendingPanel.classList.remove('hidden');
+                pendingPanel.classList.add('flex');
+                
+                // 更新細部數量標籤
+                document.getElementById('subtab-wait').innerText = `未到貨 (${countData.pendingDetails['未到貨']})`;
+                document.getElementById('subtab-repay').innerText = `待二補 (${countData.pendingDetails['待二補']})`;
+                document.getElementById('subtab-ship').innerText = `待出貨 (${countData.pendingDetails['待出貨']})`;
+                document.getElementById('subtab-collect').innerText = `待取貨 (${countData.pendingDetails['待取貨']})`;
+
+                // 高亮對應子頁籤
+                const subtabs = [
+                { id: null, elId: 'subtab-all' },
+                { id: '未到貨', elId: 'subtab-wait' },
+                { id: '待二補', elId: 'subtab-repay' },
+                { id: '待出貨', elId: 'subtab-ship' },
+                { id: '待取貨', elId: 'subtab-collect' }
+                ];
+
+                subtabs.forEach(st => {
+                const btn = document.getElementById(st.elId);
+                if (detailedPendingFilter === st.id) {
+                    btn.className = "px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-purple-100 text-purple-700 border border-purple-200";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100";
+                }
+                });
+            } else {
+                pendingPanel.classList.remove('flex');
+                pendingPanel.classList.add('hidden');
+            }
+
             const sorted = filtered.sort((a, b) => 
                 Number(b.year) - Number(a.year) ||
                 Number(b.month) - Number(a.month) ||
@@ -431,6 +564,25 @@ import './i18n.js';
             if (s === '已售出') return 'status-soldout';
             return 'status-received';
         }
+        function computeCounts(items) {
+            const total = items.length;
+            const pendingItems = items.filter(item => item.status !== '已取貨' && item.status !== '已售出');//所有未到貨商品包含未到待二補等等
+            const receivedItems = items.filter(item => item.status === '已取貨');
+            const soldItems = items.filter(item => item.status === '已售出');
+
+            return {
+                all: total,
+                pending: pendingItems.length,
+                received: receivedItems.length,
+                sold: soldItems.length,
+                pendingDetails: {
+                '未到貨': pendingItems.filter(i => i.status === '未到貨').length,
+                '待二補': pendingItems.filter(i => i.status === '待二補').length,
+                '待出貨': pendingItems.filter(i => i.status === '待出貨').length,
+                '待取貨': pendingItems.filter(i => i.status === '待取貨').length,
+                }
+            };
+         }
 
         // 換頁函式
         export function changePage(delta) {
@@ -597,6 +749,8 @@ window.toggleAmountVisibility = toggleAmountVisibility;
 window.openLightbox=openLightbox;
 window.changeLightboxImg=changeLightboxImg;
 window.closeLightbox=closeLightbox;
+window.setShippingStatusTab=setShippingStatusTab;
+
 
 window.quickFilter = quickFilter;
 window.updateFilter = updateFilter;
