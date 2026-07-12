@@ -387,7 +387,7 @@ import './i18n.js';
                 return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-semibold transition card-bg text-sub border border-gray-200";
             };
 
-            let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
+            let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-center">
                     <div>
                         <div class="flex items-center mb-1"><p class="text-white/70 text-[10px] font-bold uppercase tracking-wider ">${summaryLabel}</p>                     
                             <button onclick="toggleAmountVisibility()" class="text-white/60 hover:text-white transition-colors p-1">
@@ -399,10 +399,10 @@ import './i18n.js';
                         </div>
                         <h3 class="text-3xl font-black">${totalDisplay}</h3>
                     </div>
-                    <div class="text-right flex-row">
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg mb-1"><span data-i18n="type_expense">支出</span>: ${totalExpDisplay}</p>` : ''}
-                        ${totalInc > 0 ? `<p class="text-[10px] font-bold bg-emerald-400/40 px-2 py-1 rounded-lg"><span data-i18n="type_income">售出</span>: +$${totalInc.toLocaleString()}</p>` : ''}
-                        <p class="text-xs text-white/80 font-medium">${t('expense_count', { n: filtered.length })}</p> 
+                    <div class="text-right flex-row bg-white/15 backdrop-blur-md rounded-2xl p-3 border border-white/15 space-y-1">
+                        ${totalInc > 0 ? `<p class="text-[10px] font-bold  px-2 py-1 "><span data-i18n="type_expense">支出</span>: ${totalExpDisplay}</p>` : ''}
+                        ${totalInc > 0 ? `<p class="text-[10px] text-emerald-200 font-bold px-2 pb-1"><span data-i18n="type_income">售出</span>: +$${totalInc.toLocaleString()}</p>` : ''}
+                        <p class="pt-1 text-xs text-white/80 font-medium border-t border-white/10">${t('expense_count', { n: filtered.length })}</p> 
                     </div>
                 </div>
                 
@@ -417,17 +417,17 @@ import './i18n.js';
                             </div>
                         </div>
                         <div class="flex bg-white border border-gray-100 shadow-xs p-0.5 rounded-xl text-center">
-                            <button data-i18n="status_all" onclick="setShippingStatusTab('all')" id="tab-all" class="${getTabClass('all')}">
-                                全部(${countData.all})
+                            <button onclick="setShippingStatusTab('all')" id="tab-all" class="${getTabClass('all')}">
+                                ${t('status_all', { n: countData.all })}
                             </button>
-                            <button data-i18n="status_unreceived" onclick="setShippingStatusTab('not-received')" id="tab-pending" class="${countData.not_received === 0 ? getTabClass('none'):getTabClass('not-received')}">
-                                未收到(${countData.not_received})
+                            <button  onclick="setShippingStatusTab('not-received')" id="tab-pending" class="${countData.not_received === 0 ? getTabClass('none'):getTabClass('not-received')}">
+                                ${t('status_unreceived', { n: countData.not_received})}
                             </button>
-                            <button data-i18n="arrival_已取貨" onclick="setShippingStatusTab('received')" data-i18n="arrival_已取貨" id="tab-received" class="${countData.received === 0 ? getTabClass('none'):getTabClass('received')}">
-                                已取貨(${countData.received})
+                            <button onclick="setShippingStatusTab('received')" id="tab-received" class="${countData.received === 0 ? getTabClass('none'):getTabClass('received')}">
+                                ${t('status_received', { n: countData.received})}
                             </button>
-                            <button data-i18n="arrival_已售出" onclick="setShippingStatusTab('sold')" data-i18n="arrival_已售出" id="tab-sold" class="${countData.sold === 0 ? getTabClass('none'):getTabClass('sold')}">
-                                已售出(${countData.sold})
+                            <button onclick="setShippingStatusTab('sold')" id="tab-sold" class="${countData.sold === 0 ? getTabClass('none'):getTabClass('sold')}">
+                                 ${t('status_sold', { n: countData.sold})}
                             </button>
                         </div>
 
@@ -436,17 +436,17 @@ import './i18n.js';
                             <button onclick="setDetailedPendingFilter(null)" id="subtab-all"  data-i18n="status_unreceived_all" class="${getSubtabClass(null)}">
                                 全部未收到
                             </button>
-                            <button onclick="setDetailedPendingFilter('未到貨')" data-i18n="arrival_未到貨" id="subtab-wait" class="${countData.pendingDetails['未到貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('未到貨')}">
-                                未到貨 (${countData.pendingDetails['未到貨']})
+                            <button onclick="setDetailedPendingFilter('未到貨')" id="subtab-wait" class="${countData.pendingDetails['未到貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('未到貨')}">
+                                ${t('unreceived_未到貨', { n: countData.pendingDetails['未到貨']})}
                             </button>
-                            <button onclick="setDetailedPendingFilter('待二補')" data-i18n="arrival_待二補" id="subtab-repay" class="${countData.pendingDetails['待二補'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待二補')}">
-                                待二補 (${countData.pendingDetails['待二補']})
+                            <button onclick="setDetailedPendingFilter('待二補')" id="subtab-repay" class="${countData.pendingDetails['待二補'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待二補')}">
+                                ${t('unreceived_待二補', { n: countData.pendingDetails['待二補']})}
                             </button>
-                            <button onclick="setDetailedPendingFilter('待出貨')" data-i18n="arrival_待出貨" id="subtab-ship" class="${countData.pendingDetails['待出貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待出貨')}">
-                                待出貨 (${countData.pendingDetails['待出貨']})
+                            <button onclick="setDetailedPendingFilter('待出貨')" id="subtab-ship" class="${countData.pendingDetails['待出貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待出貨')}">
+                                ${t('unreceived_待出貨', { n: countData.pendingDetails['待出貨']})}
                             </button>
-                            <button onclick="setDetailedPendingFilter('待取貨')" data-i18n="arrival_待取貨" id="subtab-collect" class="${countData.pendingDetails['待取貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待取貨')}">
-                                待取貨 (${countData.pendingDetails['待取貨']})
+                            <button onclick="setDetailedPendingFilter('待取貨')" id="subtab-collect" class="${countData.pendingDetails['待取貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待取貨')}">
+                                ${t('unreceived_待取貨', { n: countData.pendingDetails['待取貨']})}
                             </button>
                         </div>
                     </div>

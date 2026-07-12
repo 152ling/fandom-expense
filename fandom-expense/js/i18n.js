@@ -56,9 +56,15 @@ const translations = {
     purchased_from: '購自 {n}',
     status_label: '到貨狀態',
     filter_clear: '清除所有篩選',
-    status_all: '全部',
-    status_unreceived: '未收到',
+    status_all: '全部({n})',
+    status_unreceived: '未收到({n})',
+    status_received: '已取貨({n})',
+    status_sold: '已售出({n})',
     status_unreceived_all: '全部未收到',
+    unreceived_未到貨: '未到貨({n})',
+    unreceived_待二補: '待二補({n})',
+    unreceived_待出貨: '待出貨({n})',
+    unreceived_待取貨: '待取貨({n})',
 
 
     // === 新增/編輯彈窗 ===
@@ -338,9 +344,15 @@ const translations = {
     purchased_from:       'From {n}',
     status_label:         'Arrival Status',
     filter_clear:         'Clear All Filters',
-    status_all:           'All',
-    status_unreceived:    'Not Received',
-    status_unreceived_all: 'All Unreceived',
+    status_all:           'All({n})',
+    status_unreceived:    'Not Received({n})',
+    status_unreceived_all: 'All Unreceived({n})',
+    status_received: 'Received({n})',
+    status_sold: 'Sold({n})',
+    unreceived_未到貨: 'Not Arrived({n})',
+    unreceived_待二補: 'Awaiting Restock({n})',
+    unreceived_待出貨: 'Processing({n})',
+    unreceived_待取貨: 'Ready for Pickup({n})',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  'Add Expense',
@@ -612,9 +624,15 @@ const translations = {
     purchased_from:       '{n}で購入',
     status_label:         '到着状態',
     filter_clear:         '條件をクリア',
-    status_all:           'すべて',
-    status_unreceived:    '未受け取り',
-    status_unreceived_all: 'すべて未受け取り',
+    status_all:           'すべて({n})',
+    status_unreceived:    '未受け取り({n})',
+    status_unreceived_all: 'すべて未受け取り({n})',
+    status_received:      '受取済み({n})',
+    status_sold:          '売却済み({n})',
+    unreceived_未到貨:    '未到着({n})',
+    unreceived_待二補:    '二次決済待ち({n})',
+    unreceived_待出貨:    '発送待ち({n})',
+    unreceived_待取貨:    '受取待ち({n})',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '支出の追加',
@@ -892,6 +910,12 @@ const translations = {
     status_all:           '전체',
     status_unreceived:    '미수령',
     status_unreceived_all: '전체 미수령',
+    status_received: '수령 완료({n})',
+    status_sold: '판매 완료({n})',
+    unreceived_未到貨: '미도착({n})',
+    unreceived_待二補: '추가 입금 대기({n})',
+    unreceived_待出貨: '출고 대기({n})',
+    unreceived_待取貨: '수령 대기({n})',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '지출 추가',
