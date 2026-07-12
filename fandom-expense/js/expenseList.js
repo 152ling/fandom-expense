@@ -359,7 +359,10 @@ import './i18n.js';
                         </div>
                     `;
                 } else {// 已登入但真的沒資料
-                    container.innerHTML = `<div data-i18n="expense_empty" class="text-center py-24 text-slate-300 font-bold">${emptyMessage}</div>`;
+                    container.innerHTML = `<div data-i18n="expense_empty" class="text-center pt-24 text-slate-300 font-bold">${emptyMessage}</div>
+                                <button data-i18n="filter_clear" id="clearFiltersBtn" onclick="clearAllSearch()" class="block mx-auto bg-brand  text-white font-bold py-4 px-2 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                                    清除所有篩選條件
+                                </button>`;
                 }
                 return;
             }
@@ -401,8 +404,8 @@ import './i18n.js';
                     </div>
                     <div class="text-right flex-row bg-white/15 backdrop-blur-md rounded-2xl p-3 border border-white/15 space-y-1">
                         ${totalInc > 0 ? `<p class="text-[10px] font-bold  px-2 py-1 "><span data-i18n="type_expense">支出</span>: ${totalExpDisplay}</p>` : ''}
-                        ${totalInc > 0 ? `<p class="text-[10px] text-emerald-200 font-bold px-2 pb-1"><span data-i18n="type_income">售出</span>: +$${totalInc.toLocaleString()}</p>` : ''}
-                        <p class="pt-1 text-xs text-white/80 font-medium border-t border-white/10">${t('expense_count', { n: filtered.length })}</p> 
+                        ${totalInc > 0 ? `<p class="text-[10px] pb-1 border-b border-white/10 text-emerald-200 font-bold px-2 pb-1"><span data-i18n="type_income">售出</span>: +$${totalInc.toLocaleString()}</p>` : ''}
+                        <p class="text-xs text-white/80 font-medium ">${t('expense_count', { n: filtered.length })}</p> 
                     </div>
                 </div>
                 

@@ -961,19 +961,20 @@ import  './i18n.js';
                         <div class="flex items-center gap-2">
                             <span>▶</span>
                         </div>
-                    </div>              
-                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
-                        <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
-                    </div>
-                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer">
+                    </div>    
+                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                             </svg><span data-i18n="settings_faq" class="font-bold text-slate-700">常見問題與幫助</span></div>
                         <div class="flex items-center gap-2"><span>▶</span></div>
+                    </div>          
+                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
+                        <div class="flex items-center gap-4 text-brand">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
                     </div>
+
 
                 </div>
                         
@@ -1902,7 +1903,7 @@ import  './i18n.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
-                { version: 'v13.0', date: '2026.07.10', updates: ['支援多語系:繁體中文、英文、韓文、日文，可前往外觀設定中切換語系','非專業翻譯若有遇到翻譯錯誤或不通順的地方，歡迎回報','成功馴服AI了所以抱著大胖貓慶祝🐈‍⬛']},
+                { version: 'v13.0', date: '2026.07.15', updates: ['新增物流管理篩選：顯示各狀態商品數量，快速切換並支援一鍵清除篩選','支援多語系:繁體中文、英文、韓文、日文，可前往外觀設定切換語系 <br> 非專業翻譯若有遇到翻譯錯誤或不通順的地方，歡迎回報','成功馴服AI所以抱著我家大胖貓慶祝🐈']},
                 { version: 'v12.0', date: '2026.06.22', updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
                 { version: 'v11.0', date: '2026.06.13', updates: ['設定自動記憶：修正帳本模式（KPOP/ACGN）與匯率工具，重開 App 不再跳回預設值','優化登入合流機制，重新登入時會自動將登出期間新增的資料合併上雲端','未登入限制與提示：未登入時會鎖定新增功能並跳出提示，避免資料沒同步到雲端而遺失']},
                 { version: 'v10.0', date: '2026.05.31', updates: ['篩選功能升級：標籤支援複選，快速查看符合多個條件的紀錄','優化年月份篩選：記住「不限」篩選設定，避免每次開啟都切回當月']},
