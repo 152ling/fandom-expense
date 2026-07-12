@@ -1153,9 +1153,9 @@ import  './i18n.js';
                                 <div class="flex gap-2">
                                     <input type="text" id="custom-hex-input" placeholder="#RRGGBB" 
                                         value="${currentHex}"
-                                        class="flex-grow bg-slate-50 border-2 border-transparent focus:border-brand rounded-2xl px-4 py-3 text-sm outline-none font-mono text-slate-700">
+                                        class="flex-grow min-w-0 w-full bg-slate-50 border-2 border-transparent focus:border-brand rounded-2xl px-4 py-3 text-sm outline-none font-mono text-slate-700">
                                     <button data-i18n="btn_apply" onclick="applyHexColor()" 
-                                            class="bg-brand text-white font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">
+                                            class="flex-shrink-0 bg-brand text-white font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">
                                         套用
                                     </button>
                                 </div>
@@ -1244,7 +1244,7 @@ import  './i18n.js';
         function updateGradPreview() {
             const c1 = document.getElementById('g1-picker').value;
             const c2 = document.getElementById('g2-picker').value;
-            document.getElementById('grad-preview-box').style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+            document.getElementById('grad-preview-box').style.background = `linear-gradient(135deg, ${c1} 0%,${c1} 20%, ${c2})`;
         }
 
         // 開啟並初始化彈窗
@@ -1262,7 +1262,7 @@ import  './i18n.js';
                 const matchedColors = state.themeColor.match(/#[A-Fa-f0-9]{3,6}/g);
                 if (matchedColors && matchedColors.length >= 2) {
                     color1 = matchedColors[0];
-                    color2 = matchedColors[1];
+                    color2 = matchedColors[2];
                 }
             } else if (state.themeColor === 'svt') {
                 color1 = "#F7CAC9";
@@ -1285,7 +1285,7 @@ import  './i18n.js';
     export function saveGrad() {
             const c1 = document.getElementById('g1-picker').value;
             const c2 = document.getElementById('g2-picker').value;
-            const grad = `linear-gradient(135deg, ${c1}, ${c2})`;
+            const grad = `linear-gradient(135deg, ${c1} 0%,${c1} 20%, ${c2})`;
             const isDark = document.getElementById('grad-dark-toggle').checked;
             // 套用主題，多傳一個 isDark 參數
             applyTheme(grad, isDark);
@@ -1321,7 +1321,7 @@ import  './i18n.js';
             if (color === 'svt') {
                 root.style.setProperty('--brand-color', '#92A8D1');
                 root.style.setProperty('--brand-color-one', '#F7CAC9');
-                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%, #92A8D1 100%)');
+                root.style.setProperty('--brand-gradient', 'linear-gradient(135deg, #F7CAC9 0%,#F7CAC9 20%, #92A8D1 100%)');
             } else if (color.includes('gradient')) {
                 root.style.setProperty('--brand-gradient', color);
                 const match = color.match(/#[A-Fa-f0-9]{6}/);
@@ -1330,7 +1330,7 @@ import  './i18n.js';
             } else {
                 root.style.setProperty('--brand-color', color);
                 root.style.setProperty('--brand-gradient', color);
-                root.style.setProperty('--brand-color-one', match ? match[0] : '#92A8D1');
+                root.style.setProperty('--brand-color-one', color);
             }
             localStorage.setItem('fe_v11_theme', color);
         }

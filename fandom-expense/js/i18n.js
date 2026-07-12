@@ -47,12 +47,19 @@ const translations = {
     expense_search_ph:    '搜尋項目、到貨狀態、備註...',
     expense_no_tag:       '此分類暫無標籤',
     expense_total:        '總計',
-    report_year_net:    '本年淨支出',
-    report_month_net:    '本月淨支出',
+    report_year_net:      '本年淨支出',
+    report_month_net:     '本月淨支出',
     expense_count:        '共 {n} 項紀錄',
     expense_total_label:  'Total Cost',
     shipping:             '運費:',
-    payment:              '付款:',
+    payment:              '付款: ',
+    purchased_from: '購自 {n}',
+    status_label: '到貨狀態',
+    filter_clear: '清除所有篩選',
+    status_all: '全部',
+    status_unreceived: '未收到',
+    status_unreceived_all: '全部未收到',
+
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '新增消費',
@@ -328,7 +335,12 @@ const translations = {
     expense_count:        '{n} items',
     expense_total_label:  'Total Cost',
     shipping:             'Shipping:',
-    payment:              'Payment:',
+    purchased_from:       'From {n}',
+    status_label:         'Arrival Status',
+    filter_clear:         'Clear All Filters',
+    status_all:           'All',
+    status_unreceived:    'Not Received',
+    status_unreceived_all: 'All Unreceived',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  'Add Expense',
@@ -597,6 +609,12 @@ const translations = {
     expense_total_label:  'Total Cost',
     shipping:             '送料:',
     payment:              '支払い:',
+    purchased_from:       '{n}で購入',
+    status_label:         '到着状態',
+    filter_clear:         '條件をクリア',
+    status_all:           'すべて',
+    status_unreceived:    '未受け取り',
+    status_unreceived_all: 'すべて未受け取り',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '支出の追加',
@@ -648,7 +666,7 @@ const translations = {
     pay_待付款:   '未払い',
     pay_貨到付款: '代金引換',
     pay_匯款全額: '全額振込',
-    pay_已付訂金: '手付金/予約金支払い済み',
+    pay_已付訂金: '内金支払済',
     pay_deposit_hint: '支払い済み:${amount}',
     pay_信用卡:   'クレジットカード',
     pay_現金:     '現金',
@@ -868,6 +886,12 @@ const translations = {
     expense_total_label:  'Total Cost',
     shipping:             '배송비:',
     payment:              '결제:',
+    purchased_from:       '{n} 구매',
+    status_label:         '배송 상태',
+    filter_clear:         '모든 필터 초기화',
+    status_all:           '전체',
+    status_unreceived:    '미수령',
+    status_unreceived_all: '전체 미수령',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '지출 추가',

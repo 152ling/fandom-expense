@@ -91,7 +91,7 @@ import './i18n.js';
                         </div>
                         <button 
                             id="toggleFilterBtn"  onclick="togglefilterPanelVisibility()"
-                            class="p-3 rounded-2xl border transition-all relative flex items-center justify-center shadow-sm border ${showStatusFilter ? 'bg-brand-one border-brand text-white' : 'bg-white border-gray-100 text-slate-400'}"
+                            class="cursor-pointer p-3 rounded-2xl transition-all relative flex items-center justify-center shadow-sm border ${showStatusFilter ? 'bg-brand-one border-brand-one text-white' : 'bg-white border-gray-100 text-slate-400'}"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal-icon lucide-sliders-horizontal"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>
                         </button>
@@ -367,10 +367,10 @@ import './i18n.js';
             const getTabClass = (tab) => {
                 if( tab === 'none') return "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-slate-100 text-slate-300 pointer-events-none";
                 if (shippingStatusTab === tab) {
-                    if (tab === 'sold') return "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-emerald-400 text-white shadow-xs";
-                    return "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-brand-one text-white shadow-xs";
+                    if (tab === 'sold') return "cursor-pointer flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-emerald-400 text-white shadow-xs";
+                    return "cursor-pointer flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all bg-brand-one text-white shadow-xs";
                 }
-                return "flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800";
+                return "cursor-pointer flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800";
             };
 
             const getSubtabClass = (subtabId) => {
@@ -378,13 +378,13 @@ import './i18n.js';
                     return "px-2.5 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-300 pointer-events-none";
                 }
                 if (detailedPendingFilter === subtabId) {
-                    if(subtabId === '未到貨') return "px-2.5 py-1 rounded-full text-[10px] font-bold transition status-unArrived";
-                    if(subtabId === '待二補') return "px-2.5 py-1 rounded-full text-[10px] font-bold transition status-freight";
-                    if(subtabId === '待出貨') return "px-2.5 py-1 rounded-full text-[10px] font-bold transition status-toShip";
-                    if(subtabId === '待取貨') return "px-2.5 py-1 rounded-full text-[10px] font-bold transition status-received";
-                    return "px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-400 text-white";
+                    if(subtabId === '未到貨') return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-bold transition status-unArrived";
+                    if(subtabId === '待二補') return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-bold transition status-freight";
+                    if(subtabId === '待出貨') return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-bold transition status-toShip";
+                    if(subtabId === '待取貨') return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-bold transition status-received";
+                    return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-400 text-white";
                 }
-                return "px-2.5 py-1 rounded-full text-[10px] font-semibold transition bg-slate-50 text-slate-600 border border-transparent hover:bg-slate-100";
+                return "cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-semibold transition card-bg text-sub border border-gray-200";
             };
 
             let html = `<div class="bg-brand rounded-3xl p-6 text-white card-shadow flex justify-between items-end mb-6">
@@ -410,42 +410,42 @@ import './i18n.js';
                     <div id="filterPanel" class="filter-panel pb-2 mb-4 ${showStatusFilter ? 'show' : ''}">
                         <div>
                             <div class="text-[10px] font-bold text-slate-400 mb-2 px-1 flex justify-between items-center">
-                                <span>到貨狀態</span>
-                                <button id="clearFiltersBtn" onclick="clearAllSearch()" class="${hasActiveFilters ? '':'hidden'} text-xs text-purple-600 hover:underline font-semibold">
+                                <span data-i18n="status_label" >到貨狀態</span>
+                                <button data-i18n="filter_clear" id="clearFiltersBtn" onclick="clearAllSearch()" class="${hasActiveFilters ? '':'hidden'} text-xs text-brand hover:underline font-semibold">
                                     清除所有篩選
                                 </button>
                             </div>
                         </div>
                         <div class="flex bg-white border border-gray-100 shadow-xs p-0.5 rounded-xl text-center">
-                            <button onclick="setShippingStatusTab('all')" id="tab-all" class="${getTabClass('all')}">
+                            <button data-i18n="status_all" onclick="setShippingStatusTab('all')" id="tab-all" class="${getTabClass('all')}">
                                 全部(${countData.all})
                             </button>
-                            <button onclick="setShippingStatusTab('not-received')" id="tab-pending" class="${countData.not_received === 0 ? getTabClass('none'):getTabClass('not-received')}">
+                            <button data-i18n="status_unreceived" onclick="setShippingStatusTab('not-received')" id="tab-pending" class="${countData.not_received === 0 ? getTabClass('none'):getTabClass('not-received')}">
                                 未收到(${countData.not_received})
                             </button>
-                            <button onclick="setShippingStatusTab('received')" id="tab-received" class="${countData.received === 0 ? getTabClass('none'):getTabClass('received')}">
+                            <button data-i18n="arrival_已取貨" onclick="setShippingStatusTab('received')" data-i18n="arrival_已取貨" id="tab-received" class="${countData.received === 0 ? getTabClass('none'):getTabClass('received')}">
                                 已取貨(${countData.received})
                             </button>
-                            <button onclick="setShippingStatusTab('sold')" id="tab-sold" class="${countData.sold === 0 ? getTabClass('none'):getTabClass('sold')}">
+                            <button data-i18n="arrival_已售出" onclick="setShippingStatusTab('sold')" data-i18n="arrival_已售出" id="tab-sold" class="${countData.sold === 0 ? getTabClass('none'):getTabClass('sold')}">
                                 已售出(${countData.sold})
                             </button>
                         </div>
 
                         <!-- 未收到之二級細項篩選 (依照 shippingStatusTab 自動顯示/隱藏) -->
-                        <div id="pendingDetailsPanel" class="${shippingStatusTab === 'not-received' ? 'flex' : 'hidden'} flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-dashed border-slate-100">
-                            <button onclick="setDetailedPendingFilter(null)" id="subtab-all" class="${getSubtabClass(null)}">
+                        <div id="pendingDetailsPanel" class="${shippingStatusTab === 'not-received' ? 'flex' : 'hidden'} flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-dashed border-gray-100">
+                            <button onclick="setDetailedPendingFilter(null)" id="subtab-all"  data-i18n="status_unreceived_all" class="${getSubtabClass(null)}">
                                 全部未收到
                             </button>
-                            <button onclick="setDetailedPendingFilter('未到貨')" id="subtab-wait" class="${countData.pendingDetails['未到貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('未到貨')}">
+                            <button onclick="setDetailedPendingFilter('未到貨')" data-i18n="arrival_未到貨" id="subtab-wait" class="${countData.pendingDetails['未到貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('未到貨')}">
                                 未到貨 (${countData.pendingDetails['未到貨']})
                             </button>
-                            <button onclick="setDetailedPendingFilter('待二補')" id="subtab-repay" class="${countData.pendingDetails['待二補'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待二補')}">
+                            <button onclick="setDetailedPendingFilter('待二補')" data-i18n="arrival_待二補" id="subtab-repay" class="${countData.pendingDetails['待二補'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待二補')}">
                                 待二補 (${countData.pendingDetails['待二補']})
                             </button>
-                            <button onclick="setDetailedPendingFilter('待出貨')" id="subtab-ship" class="${countData.pendingDetails['待出貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待出貨')}">
+                            <button onclick="setDetailedPendingFilter('待出貨')" data-i18n="arrival_待出貨" id="subtab-ship" class="${countData.pendingDetails['待出貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待出貨')}">
                                 待出貨 (${countData.pendingDetails['待出貨']})
                             </button>
-                            <button onclick="setDetailedPendingFilter('待取貨')" id="subtab-collect" class="${countData.pendingDetails['待取貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待取貨')}">
+                            <button onclick="setDetailedPendingFilter('待取貨')" data-i18n="arrival_待取貨" id="subtab-collect" class="${countData.pendingDetails['待取貨'] === 0 ? getSubtabClass('不可點') : getSubtabClass('待取貨')}">
                                 待取貨 (${countData.pendingDetails['待取貨']})
                             </button>
                         </div>
@@ -496,10 +496,8 @@ import './i18n.js';
                                  ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400">${displayText}</span>` : ''}
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
-                            ${item.remark ? `<div class="text-[10px] text-slate-400 mt-1"><span data-i18n="field_remark" class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}</div>` : ''}
-
                             <div class="flex justify-between items-end mt-2">
-                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="bg-slate-50 text-slate-400 text-[9px] px-2 py-0.5 rounded-md">#${t}</span>`).join('')}</div>
+                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="text-slate-400 text-[9px] mr-1.5">#${t}</span>`).join('')}</div>
                                 <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p><p class="font-black text-lg leading-none">${state.hideAmount ? '•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
                             </div>
                         </div>
@@ -507,13 +505,26 @@ import './i18n.js';
                     ${!isIncome ? ` 
                     <div class="mt-4 pt-3 border-t border-slate-100">
                             <div class="flex justify-between items-center">
-                                <div class="text-[10px] text-slate-400">
-                                    <span data-i18n="payment" class="font-bold text-brand">付款:</span>${translatedPayMethod}${depositText}</div>
+                                <div class="flex text-[10px] text-slate-400 pl-1.5">
+                                    <div class="flex items-center">
+                                        <span class="w-1 h-1 rounded-full mr-1 flex-shrink-0 ${isIncome ? 'bg-emerald-500' : 'bg-brand-one'}"></span>
+                                        <span data-i18n="payment" class="font-bold mr-1">付款:</span> ${translatedPayMethod}${depositText}</div>
+                                        ${item.platform ? `<span class="text-[10px] text-slate-400 flex items-center">
+                                        <span class="text-slate-300 font-bold">•</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                                            ${t('purchased_from', { n: item.platform})}
+                                        </span>` : ''}
+                                    </div>
                                     ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span data-i18n="shipping" class="opacity-70">運費:</span> $${item.shipping}</div>
                                 ` : ''}
-                                </div>
-                            ${item.platform ? `<div class="bg-slate-50 p-2 rounded-xl mt-2 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">📍 ${item.platform}</div>` : ''}
+                            </div>
                     </div>` : ''}
+                    ${item.remark ? `
+                    <div class="mt-3  text-[10px] text-slate-500 flex items-start gap-0.5">
+                        <span data-i18n="field_remark" class="text-brand-one font-bold shrink-0 px-1.5 py-0.5 bg-brand-opacity rounded-md">備註:</span>
+                        <span class="text-slate-400 font-medium py-0.5">${escapeHTML(item.remark)}</span>
+                    </div>
+                    ` : ''}
                 </div>`;
             }).join('');
 
@@ -574,10 +585,10 @@ import './i18n.js';
             const btn= document.getElementById('toggleFilterBtn');
             if (showStatusFilter) {
                 panel.classList.add('show');
-                btn.className = "p-3 rounded-2xl border transition-all relative flex items-center justify-center  shadow-sm border bg-brand-one border-brand text-white";
+                btn.className = "p-3 rounded-2xl transition-all relative flex items-center justify-center  shadow-sm border bg-brand-one border-brand-one text-white";
             } else {
                 panel.classList.remove('show');
-                btn.className = "p-3 rounded-2xl border transition-all relative flex items-center justify-center  shadow-sm border bg-white border-gray-100 text-slate-400";
+                btn.className = "p-3 rounded-2xl transition-all relative flex items-center justify-center  shadow-sm border bg-white border-gray-100 text-slate-400";
             }
         }
         function getStatusClass(s) {
