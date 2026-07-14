@@ -128,6 +128,8 @@ import  './i18n.js';
             const isWishMode = (state.activeTab === 'wish' && !itemData?.qty);
             const form = document.getElementById('data-form');
             const modalTitle = document.getElementById('modal-title');
+            state.isMultiItemMode = itemData ? (itemData.isMulti || false) : false;
+
             if (itemData) {
                 // 抓取圖片網址（兼容單圖與多圖）
                 const itemImgs = Array.isArray(itemData.images) ? [...itemData.images] : (itemData.image ? [itemData.image] : []);
@@ -158,7 +160,7 @@ import  './i18n.js';
                     modalTitle.textContent = t('modal_edit_expense'); // "編輯紀錄";
                 } else {
                     // 3. 一般新增消費
-                    modalTitle.textContent = t('modal_add_expense'); // "新增紀錄";
+                    modalTitle.textContent = t('modal_add_expense'); // "新增消費";
                 }
             }
             if (!isWishMode) { //新增消費
@@ -192,8 +194,20 @@ import  './i18n.js';
                             <button data-i18n="type_expense" type="button" onclick="setTempType('expense')" id="btn-type-exp" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all active shadow-sm">支出</button>
                             <button data-i18n="type_income" type="button" onclick="setTempType('income')" id="btn-type-inc" ${isConvertingWish ? 'disabled' : ''} class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-400">售出</button>
                         </div>
-                        <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase"><span data-i18n="field_name">商&#8203;品&#8203;名&#8203;稱</span><span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800"></div>
-                        <div class="flex gap-4">
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center">
+                             <label class="text-[10px] font-bold text-slate-400 uppercase"><span data-i18n="field_name">商&#8203;品&#8203;名&#8203;稱</span><span style="color:red;">*</span></label>
+                                <!-- 記帳模式選單：改在商品名稱標籤的右側同行 -->
+                                <button type="button" id="multiItemToggle" onclick="toggleMultiItemMode()" class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1">
+                                    <span id="multiToggleText">一般模式</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                                </button>
+                            </div>
+                            <input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off"  value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800">
+                        </div>
+
+                        <div id="singleItemForm" class="flex gap-4">
                             <div class="flex-1 space-y-1">
                                 <label data-i18n="field_price" class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
                                 <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
@@ -209,6 +223,37 @@ import  './i18n.js';
                             <div class="flex-1 space-y-1" id="shipping-fee">
                                 <label data-i18n="field_shipping" class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
                                 <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                            </div>
+                        </div>
+
+                        <!-- 模式 2：新增多筆金額明細 -->
+                        <div id="multiItemForm" class="space-y-3 hidden">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-slate-400">品項金額明細</label>
+                                <button onclick="addMultiItemRow()" class="text-purple-600 hover:text-purple-700 text-xs font-bold flex items-center space-x-0.5">
+                                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                    <span>新增細項</span>
+                                </button>
+                            </div>
+                            
+                            <!-- 細項容器 -->
+                            <div id="multiItemsContainer" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+                                <!-- 動態行 -->
+                            </div>
+
+                            <!-- 多品項模式下的運費單獨欄位 -->
+                            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-slate-100">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-400">共同運費/二補</label>
+                                    <input id="formMultiShipping" type="number" placeholder="0" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 border border-transparent rounded-2xl py-3 px-4 text-xs outline-none focus:ring-2 focus:ring-purple-200 focus:bg-white transition" oninput="calculateTotal()" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-400">細項合計總額</label>
+                                    <div class="w-full bg-purple-50/50 border border-purple-100 text-purple-700 rounded-2xl py-3 px-4 text-xs font-black flex items-center justify-between">
+                                        <span>$</span>
+                                        <span id="multiTotalDisplay">0</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     
@@ -290,6 +335,11 @@ import  './i18n.js';
                     setTempType(currentType);
                     updateImagePreviewUI();
                     updateStaticTranslations(form); // 更新動態內容的翻譯
+                    updateMultiItemToggleUI();
+                    if (state.isMultiItemMode) {
+                        initMultiItemRows(itemData); 
+                    }
+                    calculateTotal();
                     window.getSmartTags = initSmartTags(itemData?.tags || []);
                         
             } else {
@@ -477,6 +527,108 @@ import  './i18n.js';
             if (type === 'url') state.tempImages.splice(idx, 1);
             else state.tempImageBase64.splice(idx, 1);
             updateImagePreviewUI();
+        }
+        //多商品模式
+        export function toggleMultiItemMode() {
+            state.isMultiItemMode = !state.isMultiItemMode;
+            updateMultiItemToggleUI();
+            calculateTotal();
+        }
+
+        // 優化切換 UI，配合與商品名稱同行
+        function updateMultiItemToggleUI() {
+            const btn = document.getElementById('multiItemToggle');
+            const text = document.getElementById('multiToggleText');
+            const singleForm = document.getElementById('singleItemForm');
+            const multiForm = document.getElementById('multiItemForm');
+
+            if (state.isMultiItemMode) {
+                btn.className = "bg-purple-600 text-white px-2.5 py-1 rounded-xl text-[10px] font-black transition-all flex items-center space-x-1 shadow-sm";
+                text.innerText = "多品項明細模式 📦";
+                singleForm.classList.add('hidden');
+                multiForm.classList.remove('hidden');
+            } else {
+                btn.className = "bg-slate-100 text-slate-500 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1";
+                text.innerText = "一般單一模式";
+                singleForm.classList.remove('hidden');
+                multiForm.classList.add('hidden');
+            }
+        }
+
+        function initMultiItemRows(itemData = null) {
+            const container = document.getElementById('multiItemsContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+
+            // 判斷：如果是編輯模式，且原本就有儲存細項資料
+            if (itemData && Array.isArray(itemData.subItems) && itemData.subItems.length > 0) {
+                itemData.subItems.forEach(sub => {
+                    // 抓取原本儲存的細項名稱、單價、數量
+                    addMultiItemRow(sub.name, sub.price, sub.qty);
+                });
+            } else {
+                // 如果是全新新增，才顯示預設的範例欄位
+                addMultiItemRow('合單拆分品項一', 100, 1);
+                addMultiItemRow('合單拆分品項二', 200, 1);
+            }
+            
+            // 記得渲染完後，要重新計算一次總額顯示
+            if (typeof calculateTotal === 'function') {
+                calculateTotal();
+            }
+        }
+
+        export function addMultiItemRow(name = '', price = '', qty = 1) {
+            const container = document.getElementById('multiItemsContainer');
+            const rowId = 'row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+            
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.className = "flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-100/50";
+            div.innerHTML = `
+                <input type="text" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="number" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <div class="flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
+                    <span class="text-[9px] text-slate-400 font-bold mr-0.5">x</span>
+                    <select class="bg-transparent text-xs py-1 outline-none text-slate-700 cursor-pointer" onchange="calculateTotal()">
+                        <option value="1" ${qty === 1 ? 'selected' : ''}>1</option>
+                        <option value="2" ${qty === 2 ? 'selected' : ''}>2</option>
+                        <option value="3" ${qty === 3 ? 'selected' : ''}>3</option>
+                    </select>
+                </div>
+                <button onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+            calculateTotal();
+        }
+
+        function removeMultiItemRow(id) {
+            const row = document.getElementById(id);
+            if (row) {
+                row.remove();
+                calculateTotal();
+            }
+        }
+
+        export function calculateTotal() {
+            if (state.isMultiItemMode) {
+                const container = document.getElementById('multiItemsContainer');
+                const rows = container.children;
+                let subtotal = 0;
+                for (let row of rows) {
+                    const priceInput = row.querySelectorAll('input')[1];
+                    const qtySelect = row.querySelector('select');
+                    const price = parseFloat(priceInput.value) || 0;
+                    const qty = parseInt(qtySelect.value) || 1;
+                    subtotal += (price * qty);
+                }
+                const shipping = parseFloat(document.getElementById('formMultiShipping').value) || 0;
+                document.getElementById('multiTotalDisplay').innerText = (subtotal + shipping).toLocaleString();
+            }
         }
 
     export function openActionModal(e, type, id) { //共用編輯彈窗
@@ -2246,5 +2398,9 @@ window.changeLang = (lang) => {
     updateStaticTranslations(); // 先更新靜態部分（導覽列等）
     renderContent();             // 再重繪動態內容
 };
+
+window.toggleMultiItemMode=toggleMultiItemMode;
+window.addMultiItemRow=addMultiItemRow;
+window.calculateTotal=calculateTotal;
 
 

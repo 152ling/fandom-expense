@@ -2,7 +2,7 @@
  * actions.js - 處理所有按鈕觸發的動作（儲存、刪除、複製、轉換）
  */
 import { state } from './state.js';
-import { showToast,askUser, renderContent, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
+import { showToast,askUser, renderContent,openAddModal, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
 import { compressImage } from './utils.js';
 import './i18n.js'
 import { t } from './i18n.js';
@@ -74,6 +74,7 @@ export async function saveData() {
                 c='KRW';
                 pf= 0;
             }
+            const isMulti = state.isMultiItemMode || false;
             if (isExp) { //消費模式
                 const dateVal = document.getElementById('m-date').value;
                 const dateParts = dateVal ? dateVal.split('-') : [state.filterYear, state.filterMonth];
@@ -103,8 +104,44 @@ export async function saveData() {
                     paidAmount: payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : totalPrice,
                     tags:tags,
                     remark: document.getElementById('m-remark').value || '' ,
+                    isMulti: state.isMultiItemMode,
+                    subItems: []
                 };
-                item.total = (item.price * item.qty) + item.shipping;
+                if (state.isMultiItemMode) {
+                    const container = document.getElementById('multiItemsContainer');
+                    const rows = container.children;
+                    let shipping = parseFloat(document.getElementById('formMultiShipping').value) || 0;
+                    
+                    item.shipping = shipping;
+                    item.price = 0;
+                    item.qty = 1;
+                    item.total = 0;
+
+                    for (let row of rows) {
+                        const itemNameInput = row.querySelectorAll('input')[0];
+                        const priceInput = row.querySelectorAll('input')[1];
+                        const qtySelect = row.querySelector('select');
+                        
+                        const subName = itemNameInput.value.trim() || '未命名細項';
+                        const subPrice = parseFloat(priceInput.value) || 0;
+                        const subQty = parseInt(qtySelect.value) || 1;
+
+                        item.subItems.push({
+                            name: subName,
+                            price: subPrice,
+                            qty: subQty
+                        });
+                        item.total += subPrice * subQty;
+                    }
+                    item.price =item.total;
+                    item.total += item.shipping;
+                } else {
+                    item.price = parseFloat(document.getElementById('formUnitPrice').value) || 0;
+                    item.qty = parseInt(document.getElementById('formQty').value) || 1;
+                    item.shipping = parseFloat(document.getElementById('formShipping').value) || 0;
+                    item.total = (item.price * item.qty) + item.shipping;
+                }
+
             } else { //心願模式
                 const recordDate = document.getElementById('m-wish-date-toggle').checked; //是否有勾選紀錄日期
                 item = { 

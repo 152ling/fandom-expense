@@ -462,6 +462,9 @@ import './i18n.js';
 
                 const imgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
                 const isIncome = item.type === 'income';
+                
+                const isMulti = item.isMulti===true;
+                console.log("isMulti=" +isMulti);
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 // const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 const payKey = `pay_${item.paymentMethod}`;
@@ -505,6 +508,20 @@ import './i18n.js';
                             </div>
                         </div>
                     </div>
+                    ${isMulti? `
+                        <div class="my-3 py-2 px-3 bg-purple-50/50 border border-purple-100/50 rounded-2xl text-[11px] text-slate-500 space-y-1">
+                        <div class="text-[9px] font-bold text-purple-500 mb-1 flex items-center">
+                            <span class="w-1.5 h-1.5 bg-purple-400 rounded-full mr-1.5"></span>
+                            內含 ${item.subItems.length} 項拆分明細：
+                        </div>
+                        ${item.subItems.map(sub => `
+                            <div class="flex justify-between items-center pl-3">
+                            <span class="truncate pr-2">• ${sub.name}</span>
+                            <span class="font-semibold text-slate-600 flex-shrink-0">$${sub.price} <span class="text-slate-300 font-normal">x ${sub.qty}</span></span>
+                            </div>
+                        `).join('')}
+                        </div>
+                        `:``}
                     ${!isIncome ? ` 
                     <div class="mt-4 pt-3 border-t border-gray-100">
                             <div class="flex justify-between items-center">
