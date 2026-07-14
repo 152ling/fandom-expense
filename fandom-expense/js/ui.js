@@ -110,6 +110,7 @@ import  './i18n.js';
                 else if (state.subPage === 'accountConfig') renderAccountConfig(container);
                 else if (state.subPage === 'catOrder') renderCategoryOrderView(container);
                 else if (state.subPage === 'faq') renderFAQView(container);
+                else if (state.subPage === 'privacy') renderPrivacyView(container);
                 else renderSettings(container);
             }
               // 渲染完動態內容後，統一更新靜態翻譯
@@ -203,7 +204,7 @@ import  './i18n.js';
                                     <input type="number" id="m-qty" inputmode="numeric" value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
                                     <div id="qty-toggle" class="absolute right-3 cursor-pointer text-slate-400"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
                                 </div>
-                                <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
+                                <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1" id="shipping-fee">
                                 <label data-i18n="field_shipping" class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
@@ -218,7 +219,7 @@ import  './i18n.js';
                                     <span  id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
+                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-gray-100 transition-all overflow-hidden">
                                         <select id="currency-select" class="bg-transparent border-none py-4 pl-4 pr-1 text-xs font-bold text-slate-300 focus:ring-0 appearance-none">
                                             <option value="KRW" ${itemData?.currency === 'KRW' ? 'selected' : ''}>KRW</option>
                                             <option value="JPY" ${itemData?.currency === 'JPY' ? 'selected' : ''}>JPY</option>
@@ -252,7 +253,7 @@ import  './i18n.js';
                                 <input type="text" id="m-platform" autocomplete="off" autocorrect="off" 
                                     data-i18n-placeholder="field_platform_ph" value="${itemData?.platform || ''}" 
                                     class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
-                                <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
+                                <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1"><label data-i18n="field_status" class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                             ${filteredOptions.map(o => `<option data-i18n="arrival_${o}" value="${o}" ${itemData?.arrivalStatus == o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
@@ -268,7 +269,7 @@ import  './i18n.js';
                                 <div id="m-tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border-2 border-transparent focus-within:border-brand min-h-[46px] items-center transition-all">
                                     <input type="text" data-i18n-placeholder="field_tags_ph" id="m-tag-input" autocomplete="off" class="flex-1 bg-transparent outline-none text-sm text-gray-800 min-w-[120px]">
                                 </div>
-                                <ul id="m-tag-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
+                                <ul id="m-tag-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
                         </div>
                         <div class="space-y-1"><label data-i18n="field_remark" class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" data-i18n-placeholder="field_remark_ph" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
@@ -320,7 +321,7 @@ import  './i18n.js';
                                     <span id="rate-tag" class="text-[9px] text-slate-300 italic">正在載入匯率...</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-slate-100 transition-all overflow-hidden">
+                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-gray-100 transition-all overflow-hidden">
                                         <select id="currency-select" class="bg-transparent border-none py-4 pl-4 pr-1 text-xs font-bold text-slate-300 focus:ring-0 appearance-none">
                                             <option value="KRW" ${itemData?.currency === 'KRW' ? 'selected' : ''}>KRW</option>
                                             <option value="JPY" ${itemData?.currency === 'JPY' ? 'selected' : ''}>JPY</option>
@@ -372,7 +373,7 @@ import  './i18n.js';
                             </div>
                         </div>
                     </div>
-                    <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">
+                    <div onclick="const el=document.getElementById('m-img'); if(el){ el.value=''; el.click(); }" id="img-placeholder" class="bg-slate-50 border-2 border-dashed border-gray-100 rounded-3xl h-24 flex items-center justify-center overflow-hidden cursor-pointer shadow-inner">
                         ${previewImg ? `<img src="${previewImg}" class="w-full h-full object-cover">` : `<span data-i18n="field_upload_img" class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`}
                     </div>
                     
@@ -396,7 +397,7 @@ import  './i18n.js';
             const list = document.getElementById('qty-options');
             const toggle = document.getElementById('qty-toggle');
             const arrow = toggle.querySelector('svg');
-            list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-slate-50 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
+            list.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(num => `<li class="px-4 py-3 text-sm hover:bg-slate-50 cursor-pointer text-gray-700 border-b border-gray-100 last:border-none font-bold" data-val="${num}">${num}</li>`).join('');
             const toggleShow = (show) => { list.classList.toggle('hidden', !show); arrow.style.transform = show ? 'rotate(180deg)' : 'rotate(0deg)'; };
             input.addEventListener('focus', () => toggleShow(true));
             toggle.onclick = (e) => { e.stopPropagation(); toggleShow(list.classList.contains('hidden')); };
@@ -422,7 +423,7 @@ import  './i18n.js';
                     return;
                 }
                 list.innerHTML = matches.map(p => `
-                    <li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-slate-50 last:border-0 font-medium" 
+                    <li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium" 
                         onclick="document.getElementById('m-platform').value='${p.replace(/'/g, "\\'")}'; document.getElementById('platform-suggestions').classList.add('hidden');">
                         ${p}
                     </li>
@@ -622,8 +623,8 @@ import  './i18n.js';
                                 </div>
                             </div>
                             ${item.remark ? `
-                                <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1">
-                                    <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
+                                <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1">
+                                    <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-gray-100 text-[10px] text-slate-500 leading-relaxed">
                                         <span data-i18n="field_remark" class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
                                     </div>
                                 </div>` : ''}
@@ -950,33 +951,43 @@ import  './i18n.js';
                     </div>
                     </div>
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">
-                    <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg><span data-i18n="settings_photowall" class="font-bold text-slate-700">我的照片牆</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-width="2"/></svg><span data-i18n="settings_appearance" class="font-bold text-slate-700">外觀設定</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span data-i18n="settings_backup" class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
-                    <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
-                        <div class="flex items-center gap-4 text-brand">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span data-i18n="settings_account" class="font-bold text-slate-700">帳本與功能</span>
+                        <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                            <div class="flex items-center gap-4 text-brand">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
+                                <span data-i18n="settings_photowall" class="font-bold text-slate-700">我的照片牆</span>
+                            </div>
+                            <div class="flex items-center gap-2"><span>▶</span></div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span>▶</span>
+                        <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                            <div class="flex items-center gap-4 text-brand">
+                                <svg class="w-6 h-6 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paintbrush-vertical-icon lucide-paintbrush-vertical"><path d="M10 2v2"/><path d="M14 2v4"/><path d="M17 2a1 1 0 0 1 1 1v9H6V3a1 1 0 0 1 1-1z"/><path d="M6 12a1 1 0 0 0-1 1v1a2 2 0 0 0 2 2h2a1 1 0 0 1 1 1v2.9a2 2 0 1 0 4 0V17a1 1 0 0 1 1-1h2a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1"/></svg>
+                                <span data-i18n="settings_appearance" class="font-bold text-slate-700">外觀設定</span>
+                            </div>
+                            <div class="flex items-center gap-2"><span>▶</span></div>
                         </div>
-                    </div>    
-                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-slate-50">
+                        <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                            <div class="flex items-center gap-4 text-brand">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <span data-i18n="settings_account" class="font-bold text-slate-700">帳本與功能</span>
+                            </div>
+                            <div class="flex items-center gap-2"><span>▶</span></div>
+                        </div> 
+                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span data-i18n="settings_backup" class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+
+                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                             </svg><span data-i18n="settings_faq" class="font-bold text-slate-700">常見問題與幫助</span></div>
                         <div class="flex items-center gap-2"><span>▶</span></div>
-                    </div>          
+                    </div>      
                     <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
                         <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
                     </div>
-
-
                 </div>
+                <div data-i18n="settings_privacy" onclick="state.subPage = 'privacy'; renderContent();" class="mt-6 flex justify-center font-bold text-xs text-slate-400 item-center text-center underline cursor-pointer">隱私權政策</div>
                         
 
             </div>
@@ -1113,7 +1124,7 @@ import  './i18n.js';
                         <div class="bg-white rounded-3xl p-6 card-shadow text-slate-800">
                             <div class="flex mb-6 justify-between">
                                 <h3 data-i18n="appear_preset" class="text-sm font-bold text-slate-500 tracking-wide">選擇預設主題</h3>
-                                <div class="flex justify-center border-slate-50">
+                                <div class="flex justify-center border-gray-100">
                                     <label class="inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="grad-dark-toggle" class="sr-only peer" onchange="toggleDarkMode(this.checked)" ${document.body.classList.contains('dark-mode') ? 'checked' : ''}>
                                         <div class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer 
@@ -1149,7 +1160,7 @@ import  './i18n.js';
                                 </div>
                             </div>
 
-                            <div class="mt-8 pt-6 border-t border-slate-50">
+                            <div class="mt-8 pt-6 border-t border-gray-100">
                                 <h3 data-i18n="appear_custom_hex" class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">輸入自訂色碼</h3>
                                 <div class="flex gap-2">
                                     <input type="text" id="custom-hex-input" placeholder="#RRGGBB" 
@@ -1164,8 +1175,8 @@ import  './i18n.js';
                             </div>
                         </div>
                         
-                        <div class="mt-6 pt-2 border-t border-slate-100">
-                            <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-slate-100/50">
+                        <div class="mt-6 pt-2 border-t border-gray-100">
+                            <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-gray-100/50">
                                 <div class="flex items-center gap-1">
                                     <div class="w-10 h-10 flex items-center justify-center ">
                                         <svg class="text-brand" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m476-80 182-480h84L924-80h-84l-43-122H603L560-80h-84ZM160-200l-56-56 202-202q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H40v-80h280v-80h80v80h280v80H564q-21 72-63 148t-83 116l96 98-30 82-122-125-202 201Zm468-72h144l-72-204-72 204Z"/></svg>
@@ -1555,7 +1566,7 @@ import  './i18n.js';
                         </div>
                     </div>
                     <div class="bg-white rounded-3xl p-6 card-shadow">
-                        <div class="flex items-center justify-between ${state.enableExchange ? 'mb-6 border-b border-slate-50' : ''}">
+                        <div class="flex items-center justify-between ${state.enableExchange ? 'mb-6 border-b border-gray-100' : ''}">
                             <div>
                                 <h3 data-i18n="account_exchange" class="text-sm font-bold text-slate-500 tracking-widest">開啟匯率換算工具</h3>
                                 <p data-i18n="account_exchange_sub" class="text-[10px] text-slate-400">在新增紀錄時顯示外幣換算區</p>
@@ -1935,7 +1946,7 @@ import  './i18n.js';
 
                     <div class="space-y-6">
                         ${logs.map(log => `
-                            <div class="relative pl-6 border-l-2 border-slate-100">
+                            <div class="relative pl-6 border-l-2 border-gray-100">
                                 <div class="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-brand rounded-full"></div>
                                 <div class="flex justify-between items-end mb-2">
                                     <h4 class="font-black text-brand">${log.version}</h4>
@@ -1950,7 +1961,7 @@ import  './i18n.js';
                         `).join('')}
                     </div>
 
-                    <div class="mt-8 border-t border-slate-50 text-center">
+                    <div class="mt-8 border-t border-gray-100 text-center">
                         <p class="text-[9px] text-slate-300 font-medium">Made for Fans , by fan. </p>
                         <p class="text-[8px] text-slate-300 mt-1 uppercase tracking-widest">©2026 bobi_9yu </p>
                     </div>
@@ -1983,7 +1994,7 @@ import  './i18n.js';
                                     <h4 data-i18n="${faq.key_q}" class="text-xs font-bold text-slate-500 pr-4">${faq.q}</h4>
                                     <svg class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
                                 </div>
-                                <div class="faq-answer mt-2"><p data-i18n-html="${faq.key_a}" class="text-[11px] text-slate-400 border-t border-slate-50 pt-2">${faq.a}</p></div>
+                                <div class="faq-answer mt-2"><p data-i18n-html="${faq.key_a}" class="text-[11px] text-slate-400 border-t border-gray-100 pt-2">${faq.a}</p></div>
                             </div>
                         `).join('')}
                     </div>
@@ -1995,6 +2006,178 @@ import  './i18n.js';
                     </div>
                 </div>`;
         }
+        // 常見問題 FAQ 
+        function renderPrivacyView(container) { 
+            container.innerHTML=`
+            <div class="max-w-4xl mx-auto px-6 py-6">
+                <div class="flex justify-between items-center gap-3 mb-2">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="state.subPage=null;renderContent()" class="p-2 -ml-2 text-slate-400 active:scale-90 font-bold">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                        </button>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800">隱私權政策</h2>
+                    </div>
+                </div>
+            <div class="bg-white rounded-3xl shadow-xl p-8 md:p-12">
+                <h1 class="text-2xl font-black text-brand mb-3">追星錢包 隱私權政策</h1>
+                <p class="text-slate-500 mb-10">最後更新日期：2026 年 7 月</p>
+
+                <p class="text-slate-700 leading-8 mb-10">
+                    歡迎使用「追星錢包」（以下簡稱「本應用」）。
+                    我們重視您的個人資料與隱私權，並致力於以安全、透明的方式處理您的資料。
+                    本隱私權政策說明本應用蒐集、使用、儲存及保護您的資訊方式。
+                </p>
+
+                <!-- 一 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">一、蒐集的資料</h2>
+                    <p class="mb-4">本應用僅會蒐集提供服務所需的資料。 </p>
+                    <h3 class="font-bold text-lg mt-6 mb-2">（一）您主動提供的資料</h3>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>消費紀錄（例如品名、金額、分類、日期、備註、付款方式等）</li>
+                        <li>願望清單內容</li>
+                        <li>收藏、標記或其他您自行建立的資料</li>
+                        <li>您上傳的商品、周邊、活動或其他與追星相關的圖片</li>
+                        <li>您自行輸入的其他文字內容</li>
+                    </ul>
+                    <p class="mt-4 text-slate-700">上述資料皆由您自行決定是否建立、修改或刪除。</p>
+                    <h3 class="font-bold text-lg mt-8 mb-2">（二）Google 帳號資訊</h3>
+                    <p class="mb-2">若您使用 Google 帳號登入，本應用將取得 Google 提供的必要資訊，包括： </p>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>使用者唯一識別碼（UID）</li>
+                        <li>顯示名稱</li>
+                        <li>大頭貼圖片網址</li>
+                        <li>電子郵件地址（若 Google 授權提供）</li>
+                    </ul>
+                    <p class="mt-4 text-slate-700">上述資訊僅用於登入驗證、建立帳戶、雲端同步及顯示帳號資訊，本應用不會取得您的 Google 密碼。</p>
+                    <h3 class="font-bold text-lg mt-8 mb-2">（三）系統自動收集的技術資訊</h3>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>Firebase Analytics 使用事件</li>
+                        <li>錯誤紀錄</li>
+                        <li>JavaScript 執行錯誤資訊</li>
+                        <li>裝置資訊（例如 User Agent）</li>
+                        <li>應用程式版本資訊</li>
+                    </ul>
+
+                    <p class="mt-4 text-slate-700">上述資訊僅供分析及改善應用程式，不會用於識別您的身分或投放廣告。</p>
+
+                    <h3 class="font-bold text-lg mt-8 mb-2">（四）本機儲存資料</h3>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>主題設定</li>
+                        <li>語言設定</li>
+                        <li>篩選與排序條件</li>
+                        <li>是否隱藏金額</li>
+                        <li>匯率快取資料</li>
+                        <li>其他使用偏好設定</li>
+                    </ul>
+                    <p class="mt-4 text-slate-700">上述資料主要儲存在您的裝置中，不會因本機設定而分享給其他使用者。</p>
+                </section>
+
+                <!-- 二 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4"> 二、資料用途</h2>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>提供記帳、圖片紀錄及願望清單功能。</li>
+                        <li>提供雲端備份及跨裝置同步。</li>
+                        <li>顯示統計分析、報表及圖片牆等功能。</li>
+                        <li>提供登入驗證及帳戶管理。</li>
+                        <li>改善應用程式功能、效能及使用體驗。</li>
+                        <li>分析錯誤並提升系統穩定性。</li>
+                        <li>維護服務安全及防止異常使用。</li>
+                    </ul>
+                    <p class="mt-4 text-slate-700">本應用不會販售您的個人資料，也不會將您的資料提供第三方作為廣告行銷用途。</p>
+                </section>
+
+                <!-- 三 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4"> 三、資料儲存與第三方服務</h2>
+                    <p class="text-slate-700 leading-8">
+                        本應用使用 Google Firebase 提供登入驗證、雲端資料庫、圖片儲存及匿名使用分析等服務。
+                        您建立的消費紀錄、願望清單、圖片及帳戶資料將儲存在 Google Firebase 伺服器，由 Google 依其安全機制進行保護。
+                    </p>
+                    <p class="mt-4 text-slate-700 leading-8">此外，本應用可能使用第三方匯率服務取得最新匯率資料，以提供多幣別換算功能。</p>
+                    <p class="mt-4">
+                        Firebase 隱私權政策：
+                        <a
+                            class="text-brand underline break-all"
+                            href="https://firebase.google.com/support/privacy"
+                            target="_blank">
+                            https://firebase.google.com/support/privacy
+                        </a>
+                    </p>
+                </section>
+
+                <!-- 四 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">四、裝置權限</h2>
+                    <h3 class="font-bold text-lg mb-2">（一）相片</h3>
+                    <p class="mb-6">用於讓您自行選擇圖片並上傳至消費紀錄或願望清單。</p>
+                    <h3 class="font-bold text-lg mb-2">（二）相機（依裝置支援）</h3>
+                    <p class="mb-6">若您選擇使用裝置提供的拍照功能新增圖片，系統可能要求相機權限。相機僅會於您主動操作時使用，本應用不會在背景或未經您同意的情況下存取相機。</p>
+                    <h3 class="font-bold text-lg mb-2">（三）網路連線</h3>
+                    <p>用於 Google 帳號登入、雲端同步、圖片上傳、匯率更新及 Firebase 雲端服務。</p>
+                    <p class="mt-4">除上述功能外，本應用不會主動要求存取您的聯絡人、位置資訊、通話紀錄、簡訊或麥克風等權限。</p>
+                </section>
+
+                <!-- 五 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">五、本機儲存與快取</h2>
+                    <p class="leading-8">若您透過瀏覽器或 PWA 版本使用本應用，系統可能使用 LocalStorage、瀏覽器快取或 Service Worker，以儲存必要設定並提升載入速度及離線使用體驗。</p>
+                    <p class="mt-4">上述資料主要儲存在您的裝置中，不會用於跨網站追蹤或廣告用途。</p>
+                </section>
+
+                <!-- 六 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">六、資料安全</h2>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>使用 HTTPS 加密傳輸。</li>
+                        <li>使用 Firebase 提供的安全機制保護雲端資料。</li>
+                        <li>設定適當的資料存取權限。</li>
+                        <li>持續改善系統安全性與穩定性。</li>
+                    </ul>
+                    <p class="mt-4"> 惟任何網路傳輸或電子儲存方式均無法保證百分之百安全，我們將持續採取合理措施保護您的資料。</p>
+                </section>
+
+                <!-- 七 -->
+
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">七、您的權利</h2>
+                    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                        <li>查詢或閱覽您提供的個人資料。</li>
+                        <li>請求更正或更新您的個人資料。</li>
+                        <li>請求刪除您的帳戶及相關資料（依法須保存者除外）。</li>
+                        <li>撤回您對個人資料處理的同意；惟撤回前已依法進行之資料處理，不受影響。</li>
+                    </ul>
+                </section>
+
+                <!-- 八 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">八、資料刪除 </h2>
+                    <p class="leading-8">您可以隨時於本應用內刪除個別消費紀錄、願望清單內容或圖片，刪除後將同步更新至雲端資料。 </p>
+                    <p class="mt-4 leading-8">如需刪除帳戶及所有相關雲端資料，可透過本應用提供的功能（若有）或聯絡開發者提出申請，我們將於確認身分後協助處理。</p>
+                </section>
+
+                <!-- 九 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold text-brand mb-4">九、隱私權政策更新 </h2>
+                    <p class="leading-8">本隱私權政策可能因法令變更、服務內容調整或功能更新而修訂。</p>
+
+                    <p class="mt-4">如有重大變更，我們將於本應用或相關頁面公告更新內容，更新後的隱私權政策自公布日起生效。</p>
+                </section>
+                <!-- 十 -->
+                <section>
+                    <h2 class="text-2xl font-bold text-brand mb-4">十、聯絡我們</h2>
+                    <p class="leading-8">若您對本隱私權政策或個人資料處理方式有任何疑問、建議或申請，歡迎透過以下方式聯絡我們。</p>
+                    <div class="mt-6 rounded-2xl bg-violet-50 p-6 border border-violet-100">
+                        <p><strong>開發者：</strong>追星錢包</p>
+                        <p class="mt-2"><strong>電子郵件：</strong>bobi9yu@gmail.com</p>
+                    </div>
+                </section>
+            </div>
+            <footer class="text-center text-slate-400 text-sm py-10">© 2026 追星錢包 Fandom Wallet. All Rights Reserved.</footer>
+        </div>`
+        }
+
 
         window.toggleFaq = (index) => {
             const items = document.querySelectorAll('.faq-item');

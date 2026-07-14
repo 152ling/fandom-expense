@@ -61,7 +61,7 @@ import { state } from './state.js';
                 if (matches.length > 0) {  
                     suggestionsList.innerHTML = matches.map(m => {
                         const isDynamic = !PREDEFINED_TAGS.includes(m);
-                        return `<li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-slate-50 last:border-0 font-medium flex justify-between items-center" onclick="window.addSmartTagByClick('${m}')">
+                        return `<li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium flex justify-between items-center" onclick="window.addSmartTagByClick('${m}')">
                             <span>${m.replace(new RegExp(`(${query})`, 'gi'), `<span class="text-brand font-bold">$1</span>`)}</span>
                             ${isDynamic ? '<span class="text-[9px] text-slate-300 italic">已使用過</span>' : ''}
                         </li>`;

@@ -184,6 +184,7 @@ const translations = {
     settings_backup:      '數據匯入與匯出',
     settings_account:     '帳本與功能',
     settings_version:     '版本說明',
+    settings_privacy:     '隱私權政策',
     settings_faq:         '常見問題與幫助',
     settings_cleanup:     '清理冗餘圖檔',
     settings_cleanup_sub: '釋放空間',
@@ -472,6 +473,7 @@ const translations = {
     settings_account:     'Account & Features',
     settings_version:     'Version Notes',
     settings_faq:         'FAQ & Help',
+    settings_privacy:     'Privacy Policy',
     settings_cleanup:     'Clean Up Files',
     settings_cleanup_sub: 'Free up space',
 
@@ -752,6 +754,7 @@ const translations = {
     settings_account:     '家計簿と機能',
     settings_version:     'バージョン情報',
     settings_faq:         'よくある質問とヘルプ',
+    settings_privacy:     'Privacy Policy',
     settings_cleanup:     '不要な画像のクリーンアップ',
     settings_cleanup_sub: '容量を解放',
 
@@ -967,7 +970,7 @@ const translations = {
     pay_待付款:   '결제 대기',
     pay_貨到付款: '대금 상환 (착불)',
     pay_匯款全額: '전액 무통장 입금',
-    pay_已付訂金: '예약금/인도금 납부 완료',
+    pay_已付訂金: '예약금 납부 완료',
     pay_deposit_hint: '기결제:${amount}',
     pay_信用卡:   '신용카드',
     pay_現金:     '현금',
@@ -975,15 +978,15 @@ const translations = {
 
     // === KPOP分類 (categories) ===
     cat_專輯: '앨범',
-    cat_小卡: '포토카드',
+    cat_小卡: '포카',
     'cat_演唱會/見面會門票': '콘서트 / 팬미팅 티켓',
     cat_周邊商品: '굿즈',
     cat_娃娃: '인형',
-    cat_會員費: '팬클럽 가입비',
-    'cat_應援物/飯製商品': '응원도구 / 비공식 굿즈',
+    cat_會員費: '회비',
+    'cat_應援物/飯製商品': '응원 굿즈',
     'cat_交通/住宿': '교통비 / 숙박비',
     cat_聯名商品: '콜라보 상품',
-    cat_其他追星支出: '기타 덕질 지출',
+    cat_其他追星支出: '기타 지출',
 
     // === ACGN分類 (categoriesACGN) ===
     'cat_漫畫/輕小說': '만화 / 라이트노벨',
@@ -994,7 +997,7 @@ const translations = {
     'cat_公仔/娃娃': '피규어 / 인형',
     cat_一番賞: '이치방쿠지',
     cat_聯名服飾: '콜라보 의류',
-    'cat_活動門票/展覽/電影票': '이벤트 티켓 / 전시회 / 영화 예매권',
+    'cat_活動門票/展覽/電影票': '이벤트 티켓',
     cat_其他支出: '기타 지출',
     cat_未貼標籤: '태그 없음',
 
@@ -1035,6 +1038,7 @@ const translations = {
     settings_account:     '장부 및 기능',
     settings_version:     '버전 정보',
     settings_faq:         '자주 묻는 질문 및 도움말',
+    settings_privacy:     'Privacy Policy',
     settings_cleanup:     '불필요한 이미지 정리',
     settings_cleanup_sub: '저장 공간 확보',
 

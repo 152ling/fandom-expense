@@ -47,7 +47,7 @@ import './i18n.js';
                                     </button>
                                 </div>
 
-                                <div id="date-picker-panel" class="hidden absolute z-50  right-0 bg-white border border-slate-100 rounded-xl shadow-xl p-3 flex gap-2 min-w-[210px]">
+                                <div id="date-picker-panel" class="hidden absolute z-50  right-0 bg-white border border-gray-100 rounded-xl shadow-xl p-3 flex gap-2 min-w-[210px]">
                                     <!-- 年份下拉選單 -->
                                     <select onchange="updateFilter('year', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none shadow-sm text-slate-700 cursor-pointer flex-1">
                                         ${yearList.map(y => `
@@ -506,7 +506,7 @@ import './i18n.js';
                         </div>
                     </div>
                     ${!isIncome ? ` 
-                    <div class="mt-4 pt-3 border-t border-slate-100">
+                    <div class="mt-4 pt-3 border-t border-gray-100">
                             <div class="flex justify-between items-center">
                                 <div class="flex text-[10px] text-slate-400 pl-1.5">
                                     <div class="flex items-center">
@@ -534,7 +534,7 @@ import './i18n.js';
             if (totalPages > 1) {
                 html += `
                 <div class="flex justify-center items-center gap-2 mt-8 mb-4">
-                    <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+                    <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-gray-100 disabled:opacity-20 transition-all active:scale-90">
                         <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
 
@@ -553,7 +553,7 @@ import './i18n.js';
                         }).join('')}
                     </div>
 
-                    <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-slate-100 disabled:opacity-20 transition-all active:scale-90">
+                    <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-full bg-white shadow-sm border border-gray-100 disabled:opacity-20 transition-all active:scale-90">
                         <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>`;
