@@ -508,15 +508,15 @@ import './i18n.js';
                         </div>
                     </div>
                     ${isMulti? `
-                        <div class="my-3 py-2 px-3 bg-purple-50/50 border border-purple-100/50 rounded-2xl text-[11px] text-slate-500 space-y-1">
+                        <div class="my-3 py-2 px-3 bg-brand-opacity border border-brand-opacity rounded-2xl text-[11px] text-slate-500 space-y-1">
                         <div class="text-[9px] font-bold text-brand mb-1 flex items-center">
                             <span class="w-1.5 h-1.5 bg-brand-one rounded-full mr-1.5"></span>
-                            內含 ${item.subItems.length} 項拆分明細：
+                            內含 ${item.subItems.length} 項明細：
                         </div>
                         ${item.subItems.map(sub => `
                             <div class="flex justify-between items-center pl-3">
                             <span class="truncate pr-2">• ${sub.name}</span>
-                            <span class="font-semibold text-slate-600 flex-shrink-0">$${sub.price} <span class="text-slate-300 font-normal">x ${sub.qty}</span></span>
+                            <span class="font-semibold text-sub flex-shrink-0">$${sub.price} <span class="text-sub font-normal">x ${sub.qty}</span></span>
                             </div>
                         `).join('')}
                         </div>

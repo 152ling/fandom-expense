@@ -204,13 +204,13 @@ import  './i18n.js';
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
                             </div>
-                            <input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off"  value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent focus:border-brand text-gray-800">
+                            <input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off"  value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                         </div>
 
                         <div id="singleItemForm" class="flex gap-4">
                             <div class="flex-1 space-y-1">
                                 <label data-i18n="field_price" class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
-                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                             </div>
                             <div class="flex-1 space-y-1 relative" id="qty-combobox">
                                 <label data-i18n="field_qty" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
@@ -222,7 +222,7 @@ import  './i18n.js';
                             </div>
                             <div class="flex-1 space-y-1" id="shipping-fee">
                                 <label data-i18n="field_shipping" class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
-                                <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                             </div>
                         </div>
 
@@ -230,7 +230,7 @@ import  './i18n.js';
                         <div id="multiItemForm" class="space-y-3 hidden">
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-bold text-slate-400">品項金額明細</label>
-                                <button type="button" onclick="addMultiItemRow()" class="text-purple-600 hover:text-purple-700 text-xs font-bold flex items-center space-x-0.5">
+                                <button type="button" onclick="addMultiItemRow()" class="text-brand text-xs font-bold flex items-center space-x-0.5">
                                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                                     <span>新增細項</span>
                                 </button>
@@ -245,11 +245,11 @@ import  './i18n.js';
                             <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-slate-100">
                                 <div class="space-y-1">
                                     <label class="text-xs font-bold text-slate-400">共同運費/二補</label>
-                                    <input id="formMultiShipping" type="number" placeholder="0" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 border border-transparent rounded-2xl py-3 px-4 text-xs outline-none focus:ring-2 focus:ring-purple-200 focus:bg-white transition" oninput="calculateTotal()" />
+                                    <input id="formMultiShipping" type="number" placeholder="0" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 border border-transparent rounded-2xl py-3 px-4 text-xs outline-none focus:ring-2 focus:ring-brand focus:bg-white transition" oninput="calculateTotal()" />
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-xs font-bold text-slate-400">細項合計總額</label>
-                                    <div class="w-full bg-purple-50/50 border border-purple-100 text-purple-700 rounded-2xl py-3 px-4 text-xs font-black flex items-center justify-between">
+                                    <div class="w-full bg-brand-opacity border border-brand text-brand rounded-2xl py-3 px-4 text-xs font-black flex items-center justify-between">
                                         <span>$</span>
                                         <span id="multiTotalDisplay">0</span>
                                     </div>
@@ -263,8 +263,8 @@ import  './i18n.js';
                                     <label data-i18n="currency_label" class="text-[10px] font-bold text-slate-400 uppercase">原始幣值</label>
                                     <span  id="rate-tag" class="text-[9px] text-slate-300 italic mr-1">正在載入匯率...</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl border border-transparent focus-within:border-gray-100 transition-all overflow-hidden">
+                                <div class="flex items-center p-1">
+                                    <div class="relative flex-1 flex items-center bg-slate-50 rounded-2xl  transition-all focus-within:ring-2 focus-within:ring-brand">
                                         <select id="currency-select" class="bg-transparent border-none py-4 pl-4 pr-1 text-xs font-bold text-slate-300 focus:ring-0 appearance-none">
                                             <option value="KRW" ${itemData?.currency === 'KRW' ? 'selected' : ''}>KRW</option>
                                             <option value="JPY" ${itemData?.currency === 'JPY' ? 'selected' : ''}>JPY</option>
@@ -276,7 +276,7 @@ import  './i18n.js';
                                             <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
-                                        <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full bg-transparent border-none p-4 text-sm font-medium focus:ring-0" placeholder="0">
+                                        <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full outline-none border-none p-4 text-sm font-medium transition" placeholder="0">
                                         <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-active:scale-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -297,7 +297,7 @@ import  './i18n.js';
                                 <label data-i18n="field_platform" class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label>
                                 <input type="text" id="m-platform" autocomplete="off" autocorrect="off" 
                                     data-i18n-placeholder="field_platform_ph" value="${itemData?.platform || ''}" 
-                                    class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
+                                    class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                                 <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1"><label data-i18n="field_status" class="text-[10px] font-bold text-slate-400 uppercase">到貨狀態</label><select id="m-status" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
@@ -310,14 +310,14 @@ import  './i18n.js';
                         </div>
                         <div class="space-y-1">
                             <label data-i18n="field_tags" class="text-[10px] font-bold text-slate-400 uppercase">標籤</label>
-                            <div class="relative">
-                                <div id="m-tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border-2 border-transparent focus-within:border-brand min-h-[46px] items-center transition-all">
-                                    <input type="text" data-i18n-placeholder="field_tags_ph" id="m-tag-input" autocomplete="off" class="flex-1 bg-transparent outline-none text-sm text-gray-800 min-w-[120px]">
+                            <div class="relative rounded-xl focus-within:ring-2 focus-within:ring-brand transition-all">
+                                <div id="m-tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border-2 border-transparent min-h-[46px] items-center transition-all">
+                                    <input type="text" data-i18n-placeholder="field_tags_ph" id="m-tag-input" autocomplete="off" class="flex-1 bg-slate-50 outline-none text-sm text-gray-800 min-w-[120px]  transition">
                                 </div>
                                 <ul id="m-tag-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
                         </div>
-                        <div class="space-y-1"><label data-i18n="field_remark" class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" data-i18n-placeholder="field_remark_ph" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800">${itemData?.remark || ''}</textarea></div>
+                        <div class="space-y-1"><label data-i18n="field_remark" class="text-[10px] font-bold text-slate-400 uppercase">備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" data-i18n-placeholder="field_remark_ph" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none h-16 resize-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">${itemData?.remark || ''}</textarea></div>
                        
                         <div class="space-y-2">
                             <label data-i18n="field_img_limit" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">圖片紀錄 (上限 3 張)</label>
@@ -473,7 +473,7 @@ import  './i18n.js';
                     return;
                 }
                 list.innerHTML = matches.map(p => `
-                    <li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium" 
+                    <li class="px-4 py-3 hover:bg-slate-50  cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium" 
                         onclick="document.getElementById('m-platform').value='${p.replace(/'/g, "\\'")}'; document.getElementById('platform-suggestions').classList.add('hidden');">
                         ${p}
                     </li>
@@ -552,13 +552,13 @@ import  './i18n.js';
             const multiForm = document.getElementById('multiItemForm');
 
             if (state.isMultiItemMode) {
-                btn.className = "bg-purple-600 text-white px-2.5 py-1 rounded-xl text-[10px] font-black transition-all flex items-center space-x-1 shadow-sm";
-                text.innerText = "多品項明細模式 📦";
+                btn.className = "bg-brand text-white px-2.5 py-1 rounded-xl text-[10px] font-black transition-all flex items-center space-x-1 shadow-sm";
+                text.innerText = "多品項明細模式";
                 singleForm.classList.add('hidden');
                 multiForm.classList.remove('hidden');
             } else {
                 btn.className = "bg-slate-100 text-slate-500 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1";
-                text.innerText = "一般單一模式";
+                text.innerText = "一般模式";
                 singleForm.classList.remove('hidden');
                 multiForm.classList.add('hidden');
             }
@@ -1387,7 +1387,7 @@ import  './i18n.js';
                         </div>
                         
                         <div class="mt-6 pt-2 border-t border-gray-100">
-                            <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between border border-gray-100/50">
+                            <div class="bg-white rounded-3xl p-5 card-shadow flex items-center justify-between ">
                                 <div class="flex items-center gap-1">
                                     <div class="w-10 h-10 flex items-center justify-center ">
                                         <svg class="text-brand" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m476-80 182-480h84L924-80h-84l-43-122H603L560-80h-84ZM160-200l-56-56 202-202q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H40v-80h280v-80h80v80h280v80H564q-21 72-63 148t-83 116l96 98-30 82-122-125-202 201Zm468-72h144l-72-204-72 204Z"/></svg>
@@ -1399,7 +1399,7 @@ import  './i18n.js';
                                 <div>
                                     <select 
                                         onchange="changeLang(this.value)" 
-                                        class="bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand focus:bg-white transition-all cursor-pointer"
+                                        class="bg-slate-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand focus:bg-white transition-all cursor-pointer"
                                     >
                                         ${langOptions.map(l => 
                                             `<option value="${l.code}" ${getLang() === l.code ? 'selected' : ''}>${l.label}</option>`
