@@ -133,13 +133,9 @@ export async function saveData() {
                         });
                         item.total += subPrice * subQty;
                     }
-                    item.price =item.total;
-                    item.total += item.shipping;
-                } else {
-                    item.price = parseFloat(document.getElementById('formUnitPrice').value) || 0;
-                    item.qty = parseInt(document.getElementById('formQty').value) || 1;
-                    item.shipping = parseFloat(document.getElementById('formShipping').value) || 0;
-                    item.total = (item.price * item.qty) + item.shipping;
+                    item.price =item.total; //單價
+                    item.total += item.shipping; //總額
+                    item.paidAmount = payM === '已付訂金' ? (Number(document.getElementById('m-paid-amount').value) || 0) : item.total;
                 }
 
             } else { //心願模式

@@ -464,7 +464,6 @@ import './i18n.js';
                 const isIncome = item.type === 'income';
                 
                 const isMulti = item.isMulti===true;
-                console.log("isMulti=" +isMulti);
                 const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
                 // const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 const payKey = `pay_${item.paymentMethod}`;
@@ -510,8 +509,8 @@ import './i18n.js';
                     </div>
                     ${isMulti? `
                         <div class="my-3 py-2 px-3 bg-purple-50/50 border border-purple-100/50 rounded-2xl text-[11px] text-slate-500 space-y-1">
-                        <div class="text-[9px] font-bold text-purple-500 mb-1 flex items-center">
-                            <span class="w-1.5 h-1.5 bg-purple-400 rounded-full mr-1.5"></span>
+                        <div class="text-[9px] font-bold text-brand mb-1 flex items-center">
+                            <span class="w-1.5 h-1.5 bg-brand-one rounded-full mr-1.5"></span>
                             內含 ${item.subItems.length} 項拆分明細：
                         </div>
                         ${item.subItems.map(sub => `

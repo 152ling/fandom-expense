@@ -230,7 +230,7 @@ import  './i18n.js';
                         <div id="multiItemForm" class="space-y-3 hidden">
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-bold text-slate-400">品項金額明細</label>
-                                <button onclick="addMultiItemRow()" class="text-purple-600 hover:text-purple-700 text-xs font-bold flex items-center space-x-0.5">
+                                <button type="button" onclick="addMultiItemRow()" class="text-purple-600 hover:text-purple-700 text-xs font-bold flex items-center space-x-0.5">
                                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                                     <span>新增細項</span>
                                 </button>
@@ -530,7 +530,16 @@ import  './i18n.js';
         }
         //多商品模式
         export function toggleMultiItemMode() {
+
+            if (state.isMultiItemMode) {// 多 → 一般
+                convertMultiToSingle();
+            } else {// 一般 → 多
+                convertSingleToMulti();
+            }
             state.isMultiItemMode = !state.isMultiItemMode;
+            // if (state.isMultiItemMode) {
+            //     initMultiItemRows();  
+            // }
             updateMultiItemToggleUI();
             calculateTotal();
         }
@@ -597,7 +606,7 @@ import  './i18n.js';
                         <option value="3" ${qty === 3 ? 'selected' : ''}>3</option>
                     </select>
                 </div>
-                <button onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
+                <button type="button" onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 </button>
             `;
@@ -606,7 +615,7 @@ import  './i18n.js';
             calculateTotal();
         }
 
-        function removeMultiItemRow(id) {
+        export function removeMultiItemRow(id) {
             const row = document.getElementById(id);
             if (row) {
                 row.remove();
@@ -628,7 +637,57 @@ import  './i18n.js';
                 }
                 const shipping = parseFloat(document.getElementById('formMultiShipping').value) || 0;
                 document.getElementById('multiTotalDisplay').innerText = (subtotal + shipping).toLocaleString();
+                document.getElementById('multiTotalDisplay').value = (subtotal + shipping).toLocaleString();
             }
+        }
+        function convertSingleToMulti() {
+            const amountInput = document.getElementById('m-u-p');
+            const shippingInput = document.getElementById('m-shipping');
+            const sharedShippingInput = document.getElementById('formMultiShipping');
+            const container = document.getElementById('multiItemsContainer');
+
+            if (!container) return;
+
+            const amount = Number(amountInput?.value) || 0;
+            const shipping = Number(shippingInput?.value) || 0;
+
+            if (container && container.children.length > 0) { //原本有細項顯示原本細項
+                return; 
+            }else{
+                 // 清空原本細項
+                container.innerHTML = '';
+                // 如果是全新新增，才顯示預設的範例欄位
+                if(amount > 0){
+                    // 建立一筆細項
+                    addMultiItemRow('合單拆分品項一', amount, 1);
+                    addMultiItemRow('合單拆分品項二', 0, 1);
+                }else{
+                    addMultiItemRow('合單拆分品項一', 100, 1);
+                    addMultiItemRow('合單拆分品項二', 200, 1);
+                }
+                // 把共同運費帶過去
+                if (shippingInput) {
+                    sharedShippingInput.value = shipping;
+                }
+            }
+            calculateTotal();
+        }
+        function convertMultiToSingle() {
+            const amountInput = document.getElementById("m-u-p");
+            const shippingInput = document.getElementById("m-shipping");
+            const sharedShippingInput = document.getElementById("formMultiShipping");
+            const multiTotalInput = document.getElementById('multiTotalDisplay');
+
+            const sharedShipping = Number(sharedShippingInput?.value) || 0;
+            const multiTotal = Number(multiTotalInput?.value) || 0;
+
+            if (multiTotal) {
+                amountInput.value = multiTotal - sharedShipping;
+            }
+            if (shippingInput) {
+                shippingInput.value = sharedShipping;
+            }
+            calculateTotal();
         }
 
     export function openActionModal(e, type, id) { //共用編輯彈窗
@@ -2402,5 +2461,6 @@ window.changeLang = (lang) => {
 window.toggleMultiItemMode=toggleMultiItemMode;
 window.addMultiItemRow=addMultiItemRow;
 window.calculateTotal=calculateTotal;
+window.removeMultiItemRow=removeMultiItemRow;
 
 
