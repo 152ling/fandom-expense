@@ -463,7 +463,7 @@ import './i18n.js';
                 const isIncome = item.type === 'income';
                 
                 const isMulti = item.isMulti===true;
-                const cardBg = isIncome ? 'bg-[var(--income-bg-soft)]' : 'bg-white border-transparent';
+                const cardBg = isIncome ? 'bg-brand-opacity' : 'bg-white border-transparent card-shadow';
                 // const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 const payKey = `pay_${item.paymentMethod}`;
                 let depositText = '';
@@ -474,7 +474,7 @@ import './i18n.js';
                 }
                 const translatedPayMethod = typeof t === 'function' ? t(payKey) : item.paymentMethod;
                 let displayText = getMonthDisplayText(item.month);
-                return `<div class="${cardBg} rounded-3xl p-4 card-shadow relative overflow-hidden group">
+                return `<div class="${cardBg} rounded-3xl p-4 relative overflow-hidden group">
                     <div class="absolute top-4 right-4 z-10">
                         <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
@@ -485,13 +485,16 @@ import './i18n.js';
                         onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g, '&quot;')}, '${item.name}', '${item.year}/${item.month}')">
                             ${imgs.length > 0 
                             ? `<img src="${imgs[0]}" class="w-full h-full object-cover rounded-2xl">`
-                            : `<div class="w-full h-full ${isIncome ? 'bg-emerald-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`
+                            : `<div class="w-full h-full ${isIncome ? 'bg-slate-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`
                             }
 
                             ${imgs.length > 1 
                             ? `<div class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">＋${imgs.length-1}</div>` 
                             : ''
                             }
+                            ${isIncome ? `<div id="sold-overlay" class="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl text-white text-[9px] font-bold tracking-widest text-center uppercase select-none z-10 transition-all duration-300">
+                                SOLD
+                            </div>`:``}
                         </div>
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
@@ -507,9 +510,9 @@ import './i18n.js';
                         </div>
                     </div>
                     ${isMulti? `
-                        <div class="my-3 py-2 px-3 ${isIncome ? 'bg-white border border-emerald-300' : 'bg-brand-opacity border border-brand-opacity'} rounded-2xl text-[11px] text-slate-500 space-y-1">
-                        <div class="text-[9px] font-bold ${isIncome ? 'text-emerald-500' : 'text-brand'}  mb-1 flex items-center">
-                            <span class="w-1.5 h-1.5 ${isIncome ?`bg-emerald-300`:`bg-brand-one`}  rounded-full mr-1.5"></span>
+                        <div class="my-3 py-2 px-3 ${isIncome ? 'bg-white border border-brand-one' : 'bg-brand-opacity border border-brand-opacity'} rounded-2xl text-[11px] text-slate-500 space-y-1">
+                        <div class="text-[9px] font-bold text-brand mb-1 flex items-center">
+                            <span class="w-1.5 h-1.5 bg-brand-one rounded-full mr-1.5"></span>
                             內含 ${item.subItems.length} 項明細：
                         </div>
                         ${item.subItems.map(sub => `
