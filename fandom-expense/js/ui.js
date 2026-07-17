@@ -95,6 +95,14 @@ import  './i18n.js';
             }
             renderContent();
         }
+    export function trackPageView(pageName) {
+        if (typeof analytics !== 'undefined') {
+            logEvent(analytics, 'screen_view', {
+                firebase_screen: pageName,
+                firebase_screen_class: 'PWA'
+            });
+        }
+    }
     export function renderContent() {
             const container = document.getElementById('main-content');
             if(!container) return;
@@ -627,6 +635,13 @@ import  './i18n.js';
             if (row) {
                 row.remove();
                 calculateTotal();
+            }
+            const container = document.getElementById('multiItemsContainer');
+
+            // 判斷是否已經沒有任何細項
+            if (container && container.children.length === 0) {
+                alert('請至少保留一個細項');
+                addMultiItemRow('', '', 1); // 自動補回一列
             }
         }
 
@@ -1169,43 +1184,43 @@ import  './i18n.js';
                     </div>
                     </div>
                 <div class="bg-white rounded-3xl overflow-hidden card-shadow">
-                        <div onclick="state.subPage = 'photowall'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                        <div onclick="state.subPage = 'photowall'; renderContent();trackPageView('photowall');" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                             <div class="flex items-center gap-4 text-brand">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
                                 <span data-i18n="settings_photowall" class="font-bold text-slate-700">我的照片牆</span>
                             </div>
                             <div class="flex items-center gap-2"><span>▶</span></div>
                         </div>
-                        <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                        <div onclick="state.subPage = 'appearance'; renderContent();trackPageView('apperance');" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                             <div class="flex items-center gap-4 text-brand">
                                  <svg class="w-6 h-6 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette-icon lucide-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>
                                 <span data-i18n="settings_appearance" class="font-bold text-slate-700">外觀設定</span>
                             </div>
                             <div class="flex items-center gap-2"><span>▶</span></div>
                         </div>
-                        <div onclick="state.subPage = 'accountConfig'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                        <div onclick="state.subPage = 'accountConfig'; renderContent();trackPageView('accountConfig');" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                             <div class="flex items-center gap-4 text-brand">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 <span data-i18n="settings_account" class="font-bold text-slate-700">帳本與功能</span>
                             </div>
                             <div class="flex items-center gap-2"><span>▶</span></div>
                         </div> 
-                    <div onclick="state.subPage = 'backup'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span data-i18n="settings_backup" class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
+                    <div onclick="state.subPage = 'backup'; renderContent();trackPageView('backup');" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100"><div class="flex items-center gap-4 text-brand"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2"/></svg><span data-i18n="settings_backup" class="font-bold text-slate-700">數據匯入與匯出</span></div><span>▶</span></div>
 
-                    <div onclick="state.subPage = 'faq'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
+                    <div onclick="state.subPage = 'faq'; renderContent();trackPageView('faq');" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                             </svg><span data-i18n="settings_faq" class="font-bold text-slate-700">常見問題與幫助</span></div>
                         <div class="flex items-center gap-2"><span>▶</span></div>
                     </div>      
-                    <div onclick="state.subPage = 'version'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
+                    <div onclick="state.subPage = 'version'; renderContent();trackPageView('version');" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
                         <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
                     </div>
                 </div>
-                <div data-i18n="settings_privacy" onclick="state.subPage = 'privacy'; renderContent();" class="mt-6 flex justify-center font-bold text-xs text-slate-400 item-center text-center underline cursor-pointer">隱私權政策</div>
+                <div data-i18n="settings_privacy" onclick="state.subPage = 'privacy'; renderContent();trackPageView('privacy');" class="mt-6 flex justify-center font-bold text-xs text-slate-400 item-center text-center underline cursor-pointer">隱私權政策</div>
                         
 
             </div>
@@ -2411,6 +2426,7 @@ import  './i18n.js';
 window.showToast = showToast;
 window.initSwipeToClose = initSwipeToClose;
 window.switchTab = switchTab;
+window.trackPageView=trackPageView;
 window.renderContent = renderContent;
 
 window.openActionModal = openActionModal;
