@@ -200,7 +200,7 @@ import  './i18n.js';
                              <label class="text-[10px] font-bold text-slate-400 uppercase"><span data-i18n="field_name">商&#8203;品&#8203;名&#8203;稱</span><span style="color:red;">*</span></label>
                                 <!-- 記帳模式選單：改在商品名稱標籤的右側同行 -->
                                 <button type="button" id="multiItemToggle" onclick="toggleMultiItemMode()" class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1">
-                                    <span id="multiToggleText">一般模式</span>
+                                    <span id="multiToggleText" data-i18n="single_item_mode">一般模式</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
                             </div>
@@ -229,10 +229,10 @@ import  './i18n.js';
                         <!-- 模式 2：新增多筆金額明細 -->
                         <div id="multiItemForm" class="space-y-3 hidden">
                             <div class="flex justify-between items-center">
-                                <label class="text-xs font-bold text-slate-400">品項金額明細</label>
+                                <label data-i18n="multi_amount_details" class="text-xs font-bold text-slate-400">品項金額明細</label>
                                 <button type="button" onclick="addMultiItemRow()" class="text-brand text-xs font-bold flex items-center space-x-0.5">
                                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                                    <span>新增細項</span>
+                                    <span data-i18n="multi_add_item">新增細項</span>
                                 </button>
                             </div>
                             
@@ -244,11 +244,11 @@ import  './i18n.js';
                             <!-- 多品項模式下的運費單獨欄位 -->
                             <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-slate-100">
                                 <div class="space-y-1">
-                                    <label class="text-xs font-bold text-slate-400">共同運費/二補</label>
+                                    <label data-i18n="multi_shared_shipping" class="text-xs font-bold text-slate-400">共同運費/二補</label>
                                     <input id="formMultiShipping" type="number" placeholder="0" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 border border-transparent rounded-2xl py-3 px-4 text-xs outline-none focus:ring-2 focus:ring-brand focus:bg-white transition" oninput="calculateTotal()" />
                                 </div>
                                 <div class="space-y-1">
-                                    <label class="text-xs font-bold text-slate-400">細項合計總額</label>
+                                    <label data-i18n="multi_total_amount" class="text-xs font-bold text-slate-400">細項合計總額</label>
                                     <div class="w-full bg-brand-opacity border border-brand text-brand rounded-2xl py-3 px-4 text-xs font-black flex items-center justify-between">
                                         <span>$</span>
                                         <span id="multiTotalDisplay">0</span>
@@ -554,14 +554,18 @@ import  './i18n.js';
             if (state.isMultiItemMode) {
                 btn.className = "bg-brand text-white px-2.5 py-1 rounded-xl text-[10px] font-black transition-all flex items-center space-x-1 shadow-sm";
                 text.innerText = "多品項明細模式";
+                text.setAttribute('data-i18n', 'multi_item_mode');
                 singleForm.classList.add('hidden');
                 multiForm.classList.remove('hidden');
             } else {
                 btn.className = "bg-slate-100 text-slate-500 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1";
                 text.innerText = "一般模式";
+                text.setAttribute('data-i18n', 'single_item_mode');
                 singleForm.classList.remove('hidden');
                 multiForm.classList.add('hidden');
             }
+            updateStaticTranslations(text); 
+            
         }
 
         function initMultiItemRows(itemData = null) {
@@ -596,14 +600,16 @@ import  './i18n.js';
             div.id = rowId;
             div.className = "flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-100/50";
             div.innerHTML = `
-                <input type="text" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
-                <input type="number" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="text" data-i18n-placeholder="multi_placeholder_desc" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="number" data-i18n-placeholder="multi_placeholder_amount" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
                 <div class="flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
                     <span class="text-[9px] text-slate-400 font-bold mr-0.5">x</span>
                     <select class="bg-transparent text-xs py-1 outline-none text-slate-700 cursor-pointer" onchange="calculateTotal()">
                         <option value="1" ${qty === 1 ? 'selected' : ''}>1</option>
                         <option value="2" ${qty === 2 ? 'selected' : ''}>2</option>
                         <option value="3" ${qty === 3 ? 'selected' : ''}>3</option>
+                        <option value="4" ${qty === 4 ? 'selected' : ''}>4</option>
+                        <option value="5" ${qty === 5 ? 'selected' : ''}>5</option>
                     </select>
                 </div>
                 <button type="button" onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
@@ -613,6 +619,7 @@ import  './i18n.js';
             container.appendChild(div);
             lucide.createIcons();
             calculateTotal();
+            updateStaticTranslations(div); 
         }
 
         export function removeMultiItemRow(id) {
@@ -1171,7 +1178,7 @@ import  './i18n.js';
                         </div>
                         <div onclick="state.subPage = 'appearance'; renderContent();" class="flex items-center justify-between p-5 custom-hover cursor-pointer border-b border-gray-100">
                             <div class="flex items-center gap-4 text-brand">
-                                <svg class="w-6 h-6 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paintbrush-vertical-icon lucide-paintbrush-vertical"><path d="M10 2v2"/><path d="M14 2v4"/><path d="M17 2a1 1 0 0 1 1 1v9H6V3a1 1 0 0 1 1-1z"/><path d="M6 12a1 1 0 0 0-1 1v1a2 2 0 0 0 2 2h2a1 1 0 0 1 1 1v2.9a2 2 0 1 0 4 0V17a1 1 0 0 1 1-1h2a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1"/></svg>
+                                 <svg class="w-6 h-6 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette-icon lucide-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>
                                 <span data-i18n="settings_appearance" class="font-bold text-slate-700">外觀設定</span>
                             </div>
                             <div class="flex items-center gap-2"><span>▶</span></div>

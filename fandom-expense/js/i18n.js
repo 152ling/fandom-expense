@@ -65,6 +65,14 @@ const translations = {
     unreceived_待二補: '待二補({n})',
     unreceived_待出貨: '待出貨({n})',
     unreceived_待取貨: '待取貨({n})',
+    single_item_mode: '一般模式',
+    multi_item_mode: '多品項模式',
+    multi_amount_details: '品項金額明細',
+    multi_add_item: '新增細項',
+    multi_shared_shipping: '共同運費/二補',
+    multi_total_amount: '細項合計總額',
+    multi_placeholder_desc: '品項說明...',
+    multi_placeholder_amount: '金額',
 
 
     // === 新增/編輯彈窗 ===
@@ -354,6 +362,14 @@ const translations = {
     unreceived_待二補: 'Awaiting Restock({n})',
     unreceived_待出貨: 'Processing({n})',
     unreceived_待取貨: 'Ready for Pickup({n})',
+    single_item_mode: 'Single Item Mode', 
+    multi_item_mode: 'Multi-item Mode',
+    multi_amount_details: 'Item Amount Details',
+    multi_add_item: 'Add Item',
+    multi_shared_shipping: 'Shared Shipping',
+    multi_total_amount: 'Total Item Amount',
+    multi_placeholder_desc: 'Item description...',
+    multi_placeholder_amount: 'Amount',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  'Add Expense',
@@ -364,7 +380,7 @@ const translations = {
     field_name:         'Item Name',
     field_price:        'Unit Price',
     field_qty:          'Qty',
-    field_shipping:     'Shipping/二補',
+    field_shipping:     'Shipping',
     field_category:     'Category',
     field_date:         'Date',
     field_platform:     'Platform',
@@ -635,6 +651,14 @@ const translations = {
     unreceived_待二補:    '二次決済待ち({n})',
     unreceived_待出貨:    '発送待ち({n})',
     unreceived_待取貨:    '受取待ち({n})',
+    single_item_mode:     '通常モード',
+    multi_item_mode:      '複数商品モード',
+    multi_amount_details: '商品金額明細',
+    multi_add_item: '明細を追加',
+    multi_shared_shipping: '共通送料／二次決済',
+    multi_total_amount: '明細合計金額',
+    multi_placeholder_desc: '商品の説明...',
+    multi_placeholder_amount: '金額',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '支出の追加',
@@ -919,6 +943,14 @@ const translations = {
     unreceived_待二補: '추가 입금 대기({n})',
     unreceived_待出貨: '출고 대기({n})',
     unreceived_待取貨: '수령 대기({n})',
+    single_item_mode: '일반 모드',
+    multi_item_mode: '다중 품목 모드',
+    multi_amount_details: '품목 금액 상세',
+    multi_add_item: '상세 항목 추가',
+    multi_shared_shipping: '공동 배송비/2차 결제',
+    multi_total_amount: '상세 항목 총액',
+    multi_placeholder_desc: '품목 설명...',
+    multi_placeholder_amount: '금액',
 
     // === 新增/編輯彈窗 ===
     modal_add_expense:  '지출 추가',
@@ -1203,6 +1235,13 @@ export function getSupportedLangs() { return SUPPORTED_LANGS; }
  *   data-i18n-label="key"       → el.setAttribute('aria-label', ...)
  */
 export function updateStaticTranslations(root = document) {
+  if (root !== document && root.nodeType === Node.ELEMENT_NODE) {
+    if (root.hasAttribute('data-i18n')) root.textContent = t(root.getAttribute('data-i18n'));
+    if (root.hasAttribute('data-i18n-html')) root.innerHTML = t(root.getAttribute('data-i18n-html'));
+    if (root.hasAttribute('data-i18n-placeholder')) root.placeholder = t(root.getAttribute('data-i18n-placeholder'));
+    if (root.hasAttribute('data-i18n-title')) root.title = t(root.getAttribute('data-i18n-title'));
+    if (root.hasAttribute('data-i18n-label')) root.setAttribute('aria-label', t(root.getAttribute('data-i18n-label')));
+  }
   // textContent
   root.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));

@@ -1,7 +1,7 @@
 // js/expenseList.js
 import { state } from './state.js';
 import { baseCategories } from './constants.js';
-import { renderContent ,getCurrentCategories,askUser} from './ui.js';
+import { renderContent ,getCurrentCategories,askUser, showToast} from './ui.js';
 import { escapeHTML } from './utils.js';
 import './i18n.js';
 
@@ -360,9 +360,8 @@ import './i18n.js';
                     `;
                 } else {// 已登入但真的沒資料
                     container.innerHTML = `<div data-i18n="expense_empty" class="text-center pt-24 text-slate-300 font-bold">${emptyMessage}</div>
-                                <button data-i18n="filter_clear" id="clearFiltersBtn" onclick="clearAllSearch()" class="block mx-auto bg-brand  text-white font-bold py-4 px-2 rounded-2xl shadow-lg active:scale-95 transition-transform">
-                                    清除所有篩選條件
-                                </button>`;
+                        ${hasActiveFilters ? `<button data-i18n="filter_clear" id="clearFiltersBtn" onclick="clearAllSearch()" class="block mx-auto bg-brand  text-white font-bold py-4 px-2 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                        清除所有篩選</button>`:``}`;
                 }
                 return;
             }
@@ -508,9 +507,9 @@ import './i18n.js';
                         </div>
                     </div>
                     ${isMulti? `
-                        <div class="my-3 py-2 px-3 bg-brand-opacity border border-brand-opacity rounded-2xl text-[11px] text-slate-500 space-y-1">
-                        <div class="text-[9px] font-bold text-brand mb-1 flex items-center">
-                            <span class="w-1.5 h-1.5 bg-brand-one rounded-full mr-1.5"></span>
+                        <div class="my-3 py-2 px-3 ${isIncome ? 'bg-white border border-emerald-300' : 'bg-brand-opacity border border-brand-opacity'} rounded-2xl text-[11px] text-slate-500 space-y-1">
+                        <div class="text-[9px] font-bold ${isIncome ? 'text-emerald-500' : 'text-brand'}  mb-1 flex items-center">
+                            <span class="w-1.5 h-1.5 ${isIncome ?`bg-emerald-300`:`bg-brand-one`}  rounded-full mr-1.5"></span>
                             內含 ${item.subItems.length} 項明細：
                         </div>
                         ${item.subItems.map(sub => `

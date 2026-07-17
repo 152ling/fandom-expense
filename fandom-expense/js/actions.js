@@ -179,7 +179,8 @@ export async function saveData() {
                 localStorage.setItem('fe_v11_wishlist', JSON.stringify(state.wishlist));
                 state.wishSourceId = null; // 處理完後清空
             }
-
+            closeModal(); 
+            renderContent(); 
             // 同步至雲端 (加入 await)
             if (window.cloud && typeof window.cloud.sync === 'function') {
                 await window.cloud.sync(state.expenses, state.wishlist);
@@ -194,8 +195,6 @@ export async function saveData() {
                     if (el) el.className = `flex-1 flex flex-col items-center gap-1 transition-colors ${state.activeTab === t ? 'tab-active' : 'text-gray-400'}`;
                 });
             }
-            closeModal(); 
-            renderContent(); 
             showToast(t('toast_saved'));//已成功儲存並同步
         } catch (error) {
             console.error("儲存失敗：", error);
