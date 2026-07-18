@@ -33,7 +33,7 @@
             categorySet: localStorage.getItem('fe_cat_set') || 'categories', //若無預設則kpop模式
             catOrder: JSON.parse(localStorage.getItem('fe_v11_catOrder')) || {},
             WishcategorySet:'wishCategories',
-            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1,THB:1},
+            rates: { KRW: 0.022, JPY: 0.21, CNY: 4.5, USD: 32.0, HKD: 4.05, MYR: 7.2, SGD: 23.8, TWD: 1,THB:1,GBP:43.5},
             rateStatusText: '匯率已就緒',
             enableExchange: localStorage.getItem('fe_v11_enableExchange') === 'true',
             defaultCurrency: localStorage.getItem('fe_v11_defaultCurrency') || 'TWD',

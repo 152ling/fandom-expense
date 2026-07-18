@@ -281,6 +281,7 @@ import  './i18n.js';
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
                                             <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
                                             <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="GBP" ${itemData?.currency === 'GBP' ? 'selected' : ''}>GBP</option>
                                             <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
@@ -388,6 +389,7 @@ import  './i18n.js';
                                             <option value="HKD" ${itemData?.currency === 'HKD' ? 'selected' : ''}>HKD</option>
                                             <option value="MYR" ${itemData?.currency === 'MYR' ? 'selected' : ''}>MYR</option>
                                             <option value="SGD" ${itemData?.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                                            <option value="GBP" ${itemData?.currency === 'GBP' ? 'selected' : ''}>GBP</option>
                                             <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
@@ -1217,7 +1219,7 @@ import  './i18n.js';
                     <div onclick="state.subPage = 'version'; renderContent();trackPageView('version');" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v13.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v14.0</span><span>▶</span></div>
                     </div>
                 </div>
                 <div data-i18n="settings_privacy" onclick="state.subPage = 'privacy'; renderContent();trackPageView('privacy');" class="mt-6 flex justify-center font-bold text-xs text-slate-400 item-center text-center underline cursor-pointer">隱私權政策</div>
@@ -1823,6 +1825,7 @@ import  './i18n.js';
                                 <option value="CNY" ${state.defaultCurrency === 'CNY' ? 'selected' : ''}>CNY - 人民幣</option>
                                 <option value="MYR" ${state.defaultCurrency === 'MYR' ? 'selected' : ''}>MYR - 令吉</option>
                                 <option value="SGD" ${state.defaultCurrency === 'SGD' ? 'selected' : ''}>SGD - 新加坡幣</option>
+                                <option value="GBP" ${state.defaultCurrency === 'GBP' ? 'selected' : ''}>GBP - 英鎊</option>
                                 <option value="THB" ${state.defaultCurrency === 'THB' ? 'selected' : ''}>THB - 泰銖</option>
                             </select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
@@ -1905,6 +1908,7 @@ import  './i18n.js';
                         MYR: 1 / data.conversion_rates.MYR, // 增加馬來西亞
                         SGD: 1 / data.conversion_rates.SGD, // 增加新加坡
                         THB: 1 / data.conversion_rates.THB, // 增加泰銖
+                        GBP: 1 / data.conversion_rates.GBP, // 增加英鎊
                         TWD: 1 / data.conversion_rates.TWD
                     };
                     // 更新狀態並存入本地儲存
@@ -2147,6 +2151,7 @@ import  './i18n.js';
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                { version: 'v14.0', date: '2026.07.18', updates: ['新增消費細項功能：一筆消費可拆分記錄多個品項，合單購買、專輯套組、周邊訂單管理更方便', '優化「已售出」狀態 UI：狀態顏色改為跟隨使用者主題色，讓收藏回血紀錄與整體介面更加協調',]},
                 { version: 'v13.0', date: '2026.07.15', updates: ['新增物流管理篩選：顯示各狀態商品數量，快速切換並支援一鍵清除篩選','支援多語系:繁體中文、英文、韓文、日文，可前往外觀設定切換語系 <br> 非專業翻譯若有遇到翻譯錯誤或不通順的地方，歡迎回報','成功馴服AI所以抱著我家大胖貓慶祝🐈']},
                 { version: 'v12.0', date: '2026.06.22', updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
                 { version: 'v11.0', date: '2026.06.13', updates: ['設定自動記憶：修正帳本模式（KPOP/ACGN）與匯率工具，重開 App 不再跳回預設值','優化登入合流機制，重新登入時會自動將登出期間新增的資料合併上雲端','未登入限制與提示：未登入時會鎖定新增功能並跳出提示，避免資料沒同步到雲端而遺失']},
@@ -2174,7 +2179,7 @@ import  './i18n.js';
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 13.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 14.0</p>
                     </div>
 
                     <div class="space-y-6">
@@ -2401,7 +2406,7 @@ import  './i18n.js';
                 <section>
                     <h2 class="text-2xl font-bold text-brand mb-4">十、聯絡我們</h2>
                     <p class="leading-8">若您對本隱私權政策或個人資料處理方式有任何疑問、建議或申請，歡迎透過以下方式聯絡我們。</p>
-                    <div class="mt-6 rounded-2xl bg-violet-50 p-6 border border-violet-100">
+                    <div class="mt-6 rounded-2xl bg-slate-100 p-6 border border-violet-100">
                         <p><strong>開發者：</strong>追星錢包</p>
                         <p class="mt-2"><strong>電子郵件：</strong>bobi9yu@gmail.com</p>
                     </div>

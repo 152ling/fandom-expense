@@ -79,7 +79,7 @@ import './i18n.js';
                     </div>
                     <div class="relative flex mb-3 gap-2">
                         <div class="relative flex-1 flex items-center">
-                            <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                            <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" value="${state.searchKeyword || ''}" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                             <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
                             <button id="search-clear-btn" onclick="clearKeywordSearch()" 
                                     class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
@@ -330,7 +330,7 @@ import './i18n.js';
             const totalExp = filtered.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
             const totalInc = filtered.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const netTotal = totalExp - totalInc;
-            const totalDisplay = state.hideAmount ? '•••••' : `$ ${netTotal.toLocaleString()}`;
+            const totalDisplay = state.hideAmount ? '快樂無價' : `$ ${netTotal.toLocaleString()}`;
             const totalExpDisplay= state.hideAmount ? '•••' : `$ ${totalExp.toLocaleString()}`;
             const summaryLabel = state.filterYear === 0 ? 'Total Cost' : (state.filterMonth === 0 ? t('report_year_net') : t('report_month_net'));
             // 判斷使用者目前有沒有啟用任何「非時間」的篩選條件
