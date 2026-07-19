@@ -347,6 +347,8 @@ import './i18n.js';
                     : "這個月份目前沒有紀錄唷";
             }
             if (Basefiltered.length === 0) {
+                const filterbtn=document.getElementById("toggleFilterBtn");
+                filterbtn.classList.add('hidden'); //防呆 沒資料的時候隱藏
                 if (!state.user) { // 檢查是否未登入
                     container.innerHTML = `
                         <div class="text-center py-20 px-6">
@@ -362,6 +364,7 @@ import './i18n.js';
                     container.innerHTML = `<div data-i18n="expense_empty" class="text-center pt-24 text-slate-300 font-bold">${emptyMessage}</div>
                         ${hasActiveFilters ? `<button data-i18n="filter_clear" id="clearFiltersBtn" onclick="clearAllSearch()" class="block mx-auto bg-brand  text-white font-bold py-4 px-2 rounded-2xl shadow-lg active:scale-95 transition-transform">
                         清除所有篩選</button>`:``}`;
+                        
                 }
                 return;
             }

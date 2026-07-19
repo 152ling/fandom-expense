@@ -1590,8 +1590,13 @@ import  './i18n.js';
                 <div class="bg-white rounded-3xl p-8 card-shadow border-2 border-dashed border-slate-200 text-center text-slate-800"><div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">📊</div><h3 data-i18n="backup_excel_title" class="text-lg font-bold mb-2">Excel 管理</h3><p class="text-sm text-slate-400 mb-8 px-4"><span data-i18n="backup_excel_desc">本地 Excel 備份不包含圖片資料</span><br><span data-i18n="backup_excel_warn" class="text-yellow-500 font-bold">⚠️匯入後會覆蓋現有資料並清除圖片</span></p>
                 <div class="grid grid-cols-1 gap-4">
                     <button data-i18n="btn_export" onclick="exportToExcel()" class="bg-brand text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">匯出 Excel 備份</button>
-                <label data-i18n="btn_import" class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">匯入 Excel 還原<input type="file" class="hidden" accept=".xlsx, .xls" onchange="importFromExcel(this)"></label>
-                </div></div></div>`;
+                    <label class="bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 cursor-pointer text-center">
+                        <span data-i18n="btn_import">匯入 Excel 還原</span>
+                        <input type="file" accept=".xlsx, .xls" class="hidden" onchange="console.log('選到了');;importFromExcel(this)">
+                    </label>
+                </div>
+                </div>
+                </div>`;
         }
         export function exportToExcel() {
             const wb = XLSX.utils.book_new();
