@@ -549,7 +549,7 @@
     import { state } from './js/state.js';
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserLocalPersistence,setPersistence} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, signInWithPopup,signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc,getDocFromServer } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
     import { getAnalytics,logEvent } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
@@ -568,10 +568,6 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
-    await setPersistence(
-        auth,
-        browserLocalPersistence
-    );
     const db = getFirestore(app);
     const storage = getStorage(app);
     let isExplicitLogin = false; // 標記這次驗證狀態改變是否來自使用者主動點擊登入
@@ -580,9 +576,21 @@
     window.cloud = {
         login: async () => {
             const provider = new GoogleAuthProvider();
+            // 偵測是否為 iOS 或者是否在 PWA 獨立模式下
+             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
             try {
+                if (isIOS || isStandalone) {
+                    //isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
+                    await signInWithRedirect(auth, provider);
+                // 注意：signInWithRedirect 執行後頁面會直接跳轉，下面的程式碼不會繼續執行
+            } else {
+                // 桌機或其他環境維持彈窗
                 isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                 await signInWithPopup(auth, provider);
+            }
+                // isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
+                // await signInWithPopup(auth, provider);
             } catch (err) {
                 isExplicitLogin = false; // 失敗就還原旗標
                 console.error("Login Error:", err);
