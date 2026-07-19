@@ -549,7 +549,7 @@
     import { state } from './js/state.js';
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, signInWithPopup,signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, signInWithPopup,signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc,getDocFromServer } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
     import { getAnalytics,logEvent } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
@@ -571,20 +571,26 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
     let isExplicitLogin = false; // 標記這次驗證狀態改變是否來自使用者主動點擊登入
-    const isStandalone = window.navigator.standalone === true; //是否為IOS PWA 
+    const isStandalone = window.navigator.standalone === true ||window.matchMedia('(display-mode: standalone)').matches; //是否為加入主畫面的pwa
 
     window.cloud = {
         login: async () => {
             const provider = new GoogleAuthProvider();
             try {
                  if (isStandalone) {
+                    sessionStorage.setItem(
+                        "redirectLogin",
+                        "true"
+                    );
                     await signInWithRedirect(auth, provider);
+                    
                 } else {
                     isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                     await signInWithPopup(auth, provider);
                 }
 
             } catch (err) {
+                sessionStorage.removeItem("redirectLogin");
                 isExplicitLogin = false; // 失敗就還原旗標
                 console.error("Login Error:", err);
                 showToast("登入失敗，請檢查彈窗設定，請將網頁加入主畫面後重試。iOS建議使用safari開啟");
@@ -608,6 +614,7 @@
             }
 
             // 2. 確認可以登出後，才執行 signOut + 清除本機資料
+            sessionStorage.removeItem("redirectLogin");
             await signOut(auth);
              // 只清除本 app 相關的 key，不影響同網域下其他可能存在的資料
             const KEY_PREFIXES = ['fe_v11_', 'fe_cat_set', 'fandom_rates_'];
@@ -704,16 +711,22 @@
                 logEvent(analytics, "login", {
                     method: "google_redirect"
                 });
-                isExplicitLogin = true;
             }
         })
         .catch((error) => {
+            showToast("Redirect login error:", error);
             console.error("Redirect login error:", error);
     });
 
     onAuthStateChanged(auth, async (user) => {
+        const isRedirectLogin = sessionStorage.getItem("redirectLogin") === "true";
+        if(isRedirectLogin && user){
+            isExplicitLogin = true;
+            sessionStorage.removeItem("redirectLogin");
+        }
         
         state.user = (user && !user.isAnonymous) ? user : null;
+
         
         if (state.user) {
             if (isExplicitLogin) {
@@ -851,7 +864,6 @@
             stack: error && error.stack ? String(error.stack) : 'No stack trace available'
         });
     };
-    window.analytics = getAnalytics(app);
     window.logEvent = logEvent;
     function reportEvent(name, params = {}) {
         if (!analytics) return;
