@@ -585,7 +585,7 @@ import './i18n.js';
         }
         export function clearAllSearch(){ //清除所有篩選
             state.selectedCategory = '';
-            state.selectedTags = '';
+            state.selectedTags = [];
             shippingStatusTab = 'all';
             detailedPendingFilter = null;
             // 清除搜尋框與關鍵字狀態
