@@ -586,6 +586,14 @@
             } catch (err) {
                 isExplicitLogin = false; // 失敗就還原旗標
                 console.error("Login Error:", err);
+                // 登入失敗回報 Firebase Analytics
+                reportEvent('login_error', {
+                    code: err.code || 'unknown',
+                    message: err.message || '',
+                    standalone: window.navigator.standalone === true ||
+                                window.matchMedia('(display-mode: standalone)').matches,
+                    userAgent: navigator.userAgent
+                });
                 showToast("登入失敗，請檢查彈窗設定，請將網頁加入主畫面後重試。iOS建議使用safari開啟");
             }
         },
