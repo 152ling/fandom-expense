@@ -582,6 +582,7 @@
             try {
                 if (isIOS || isStandalone) {
                     //isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
+                    showToast("透過Redirect登入")
                     await signInWithRedirect(auth, provider);
                 // 注意：signInWithRedirect 執行後頁面會直接跳轉，下面的程式碼不會繼續執行
             } else {
@@ -713,6 +714,7 @@
             
         }
     };
+    alert("Firebase script loaded");
     getRedirectResult(auth)
         .then(result=>{
             alert(
