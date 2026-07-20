@@ -583,13 +583,12 @@
                 if (isIOS || isStandalone) {
                     //isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                     await signInWithRedirect(auth, provider);
-                    showToast("我是Redirect登入的")
                 // 注意：signInWithRedirect 執行後頁面會直接跳轉，下面的程式碼不會繼續執行
             } else {
                 // 桌機或其他環境維持彈窗
                 isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                 await signInWithPopup(auth, provider);
-                showToast("我是Popup登入的")
+                showToast("透過Popup登入")
             }
                 // isExplicitLogin = true; // 標記接下來的 onAuthStateChanged 是真正登入
                 // await signInWithPopup(auth, provider);
@@ -714,7 +713,17 @@
             
         }
     };
-
+    getRedirectResult(auth)
+        .then(result=>{
+            alert(
+                result 
+                ? "redirect成功"
+                : "redirect沒有結果"
+            );
+        })
+        .catch(e=>{
+            alert("redirect error:" + e.code);
+        });
     onAuthStateChanged(auth, async (user) => {
         
         state.user = (user && !user.isAnonymous) ? user : null;
