@@ -17,30 +17,30 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "logo_new.jpg",
+      "src": "logo_new.png",
       "sizes": "1024x1024",
-      "type": "image/jpg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo_new.jpg",
+      "src": "logo_new.png",
       "sizes": "1024x1024",
-      "type": "image/jpg",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
-      "src": "logo_new.jpg",
+      "src": "logo_new.png",
       "sizes": "1024x1024",
-      "type": "image/jpg",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "電腦版介面預覽"
     },
     {
-      "src": "logo_new.jpg",
+      "src": "logo_new.png",
       "sizes": "1024x1024",
-      "type": "image/jpg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "手機版介面預覽"
     }
