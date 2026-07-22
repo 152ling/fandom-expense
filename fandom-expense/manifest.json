@@ -17,13 +17,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "logo_new.jpg",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo.png",
+      "src": "logo_new.jpg",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "maskable"
@@ -31,14 +31,14 @@
   ],
   "screenshots": [
     {
-      "src": "logo.png",
+      "src": "logo_new.jpg",
       "sizes": "1024x1024",
       "type": "image/png",
       "form_factor": "wide",
       "label": "電腦版介面預覽"
     },
     {
-      "src": "logo.png",
+      "src": "logo_new.jpg",
       "sizes": "1024x1024",
       "type": "image/png",
       "form_factor": "narrow",
