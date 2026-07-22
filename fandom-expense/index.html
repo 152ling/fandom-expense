@@ -221,7 +221,7 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
     <div id="app-splash" class="fixed inset-0 z-[9999] bg-white flex items-center justify-center transition-all duration-1000 ease-in-out">
-        <img src="startimage.svg" alt="Splash" class="absolute inset-0 w-full h-full object-cover">
+        <img src="logo_new.jpg" alt="Splash" class="w-60 h-60 object-cover">
         <div class="relative z-10 flex flex-col items-center"></div>
     </div>
 
@@ -548,11 +548,11 @@
     <script type="module">
     import { state } from './js/state.js';
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserLocalPersistence,setPersistence} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc,getDocFromServer } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
-    import { getAnalytics,logEvent } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserLocalPersistence,setPersistence} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc,getDocFromServer } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
+    import { getAnalytics,logEvent } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
 
     const firebaseConfig = {
         apiKey:"AIzaSyCiJHNQcqr07KVu4Xh6KjOQ9KmVS9YG78A",
@@ -575,7 +575,6 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
     let isExplicitLogin = false; // 標記這次驗證狀態改變是否來自使用者主動點擊登入
-    const isStandalone = window.navigator.standalone === true ||window.matchMedia('(display-mode: standalone)').matches; //是否為加入主畫面的pwa
 
     window.cloud = {
         login: async () => {
