@@ -508,7 +508,8 @@ import './i18n.js';
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
                             <div class="flex justify-between items-end mt-2">
                                 <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="text-slate-400 text-[9px] mr-1.5">#${t}</span>`).join('')}</div>
-                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p><p class="font-black text-lg leading-none">${state.hideAmount ? '•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
+                                <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal ${state.hideAmount ?'hidden':''}">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p>
+                                <p class="font-black text-lg leading-none">${state.hideAmount ? '$•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
                             </div>
                         </div>
                     </div>
@@ -521,7 +522,7 @@ import './i18n.js';
                         ${item.subItems.map(sub => `
                             <div class="flex justify-between items-center pl-3">
                             <span class="truncate pr-2">• ${sub.name}</span>
-                            <span class="font-semibold text-sub flex-shrink-0">$${sub.price} <span class="text-sub font-normal">x ${sub.qty}</span></span>
+                            <span class="font-semibold text-sub flex-shrink-0">${state.hideAmount ? '' : `$${sub.price}`}<span class="text-sub font-normal">x ${sub.qty}</span></span>
                             </div>
                         `).join('')}
                         </div>

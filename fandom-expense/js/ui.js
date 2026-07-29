@@ -245,7 +245,7 @@ import  './i18n.js';
                             </div>
                             
                             <!-- 細項容器 -->
-                            <div id="multiItemsContainer" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+                            <div id="multiItemsContainer" class="space-y-2.5 max-h-[220px] overflow-y-visible pr-1 no-scrollbar">
                                 <!-- 動態行 -->
                             </div>
 
@@ -612,15 +612,20 @@ import  './i18n.js';
             div.innerHTML = `
                 <input type="text" data-i18n-placeholder="multi_placeholder_desc" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
                 <input type="number" data-i18n-placeholder="multi_placeholder_amount" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
-                <div class="flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
+                
+                <div class="relative flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
                     <span class="text-[9px] text-slate-400 font-bold mr-0.5">x</span>
-                    <select class="bg-transparent text-xs py-1 outline-none text-slate-700 cursor-pointer" onchange="calculateTotal()">
-                        <option value="1" ${qty === 1 ? 'selected' : ''}>1</option>
-                        <option value="2" ${qty === 2 ? 'selected' : ''}>2</option>
-                        <option value="3" ${qty === 3 ? 'selected' : ''}>3</option>
-                        <option value="4" ${qty === 4 ? 'selected' : ''}>4</option>
-                        <option value="5" ${qty === 5 ? 'selected' : ''}>5</option>
-                    </select>
+                    <input type="number" min="1" value="${qty}" class="w-10 bg-transparent text-xs py-1 outline-none text-slate-700 text-center" 
+                           oninput="calculateTotal()" 
+                           onfocus="toggleQtyDropdown('${rowId}', true)" 
+                           onblur="setTimeout(() => toggleQtyDropdown('${rowId}', false), 200)" />
+                    
+                    <div id="dropdown-${rowId}" class="hidden absolute right-0 top-full mt-1 w-20 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-36 overflow-y-auto">
+                        ${[1,2,3,4,5,6,7,8,9,10].map(n => `
+                            <div class="px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 cursor-pointer text-center" 
+                                 onmousedown="selectQty('${rowId}', ${n})">${n}</div>
+                        `).join('')}
+                    </div>
                 </div>
                 <button type="button" onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -646,7 +651,27 @@ import  './i18n.js';
                 addMultiItemRow('', '', 1); // 自動補回一列
             }
         }
+        export function toggleQtyDropdown(rowId, show) {
+            const dropdown = document.getElementById(`dropdown-${rowId}`);
+            if (dropdown) {
+                if (show) {
+                    dropdown.classList.remove('hidden');
+                } else {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        }
 
+        export function selectQty(rowId, value) {
+            const row = document.getElementById(rowId);
+            const input = row.querySelectorAll('input')[2];
+            input.value = value;
+            toggleQtyDropdown(rowId, false);
+            calculateTotal(); // 觸發計算
+        }
+        window.selectQty=selectQty;
+        window.toggleQtyDropdown= toggleQtyDropdown;
+        
         export function calculateTotal() {
             if (state.isMultiItemMode) {
                 const container = document.getElementById('multiItemsContainer');
@@ -654,7 +679,7 @@ import  './i18n.js';
                 let subtotal = 0;
                 for (let row of rows) {
                     const priceInput = row.querySelectorAll('input')[1];
-                    const qtySelect = row.querySelector('select');
+                    const qtySelect = row.querySelectorAll('input')[2];
                     const price = parseFloat(priceInput.value) || 0;
                     const qty = parseInt(qtySelect.value) || 1;
                     subtotal += (price * qty);

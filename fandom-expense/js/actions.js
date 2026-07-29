@@ -120,7 +120,7 @@ export async function saveData() {
                     for (let row of rows) {
                         const itemNameInput = row.querySelectorAll('input')[0];
                         const priceInput = row.querySelectorAll('input')[1];
-                        const qtySelect = row.querySelector('select');
+                        const qtySelect = row.querySelectorAll('input')[2];
                         
                         const subName = itemNameInput.value.trim() || '未命名細項';
                         const subPrice = parseFloat(priceInput.value) || 0;
