@@ -611,11 +611,11 @@ import  './i18n.js';
             div.className = "flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-100/50";
             div.innerHTML = `
                 <input type="text" data-i18n-placeholder="multi_placeholder_desc" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
-                <input type="number" data-i18n-placeholder="multi_placeholder_amount" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="number" data-i18n-placeholder="multi_placeholder_amount" inputmode="numeric" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
                 
                 <div class="relative flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
                     <span class="text-[9px] text-slate-400 font-bold mr-0.5">x</span>
-                    <input type="number" min="1" value="${qty}" class="w-10 bg-transparent text-xs py-1 outline-none text-slate-700 text-center" 
+                    <input type="number" min="1" inputmode="numeric" value="${qty}" class="w-10 bg-transparent text-xs py-1 outline-none text-slate-700 text-center" 
                            oninput="calculateTotal()" 
                            onfocus="toggleQtyDropdown('${rowId}', true)" 
                            onblur="setTimeout(() => toggleQtyDropdown('${rowId}', false), 200)" />
