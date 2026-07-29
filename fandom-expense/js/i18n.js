@@ -255,7 +255,10 @@ const translations = {
     faq_a5:               '目前不支援。<br/>為了維持報表統計的一致性，採用固定分類。<br/>💡記帳小貼士：<br/>1. 標籤功能：細節（如：成員）請用 #標籤，能更靈活地記錄細節並支援搜尋篩選。<br/>2. 切換模式：在「設定 > 帳本與功能」可依照喜好切換預設分類。<br/>3. 許願功能：歡迎點擊下方前往許願，會評估後新增！',
     faq_q6:               '為什麼在網頁版新增了資料，打開 App (加入主畫面) 卻沒看到？',
     faq_a6:               '這通常是因為 App 端的登入狀態尚未同步更新。<br/><b>檢查登入</b>：進入「設定」，確認目前是否為登入狀態。若顯示未登入，請重新登入即可抓回雲端資料。<br/><br/>追星錢包採用即時雲端儲存，只要是登入狀態新增的資料都會安全存在雲端囉！',
-
+    faq_q7:               '如何修改已建立的資料或標籤？',
+    faq_a7:               '點擊商品卡片右上角的...按鈕後，會跳出彈窗選擇「編輯資料」即可進行修改；若要修改已建立的 tag，可以直接在編輯時刪除舊標籤、輸入並新增正確的 tag 後儲存即可。',
+    faq_q8:               '如果數量下拉選單的數字不夠用怎麼辦？',
+    faq_a8:               '數量欄位除了可以透過選單快速點選之外，也可以直接點擊該數量輸入框，會跳出數字鍵盤讓你自己輸入想要的數量！',
     // === 確認彈窗 ===
     // 彈窗系列文案
     msg_delete_title: '確定要刪除嗎？',
@@ -551,7 +554,10 @@ const translations = {
     faq_a5:               'Currently not supported.<br/>To maintain consistency in report statistics, we use fixed categories.<br/>💡 Quick Bookkeeping Tips:<br/>1. Tags Feature: Use #tags for details (e.g., member names) to flexibly record and filter your data.<br/>2. Switch Modes: Go to "Settings > Ledger & Features" to switch the default category set according to your preference.<br/>3. Wishlist Feature: Feel free to tap below to make a wish; we will evaluate and add new categories accordingly!',
     faq_q6:               'Why can\'t I see the data I added on the web version when I open the App (added to home screen)?',
     faq_a6:               'This usually happens because the login status on the App side hasn\'t synchronized yet.<br/><b>Check Login</b>: Go to "Settings" and check if you are currently logged in. If it shows you are logged out, simply log in again to fetch your cloud data.<br/><br/>Fandom Wallet uses real-time cloud storage, so any data added while logged in is safely saved in the cloud!',
-
+    faq_q7:               'How to edit existing data or tags?',
+    faq_a7:               'Click the button in the upper right corner of the item card and select "Edit Data" in the pop-up to modify it. To change an existing tag, simply delete the old tag during editing, type and add the correct tag, and save.',
+    faq_q8:               'What if the numbers in the quantity dropdown are not enough?',
+    faq_a8:               'In addition to selecting 1-10 quickly from the dropdown menu, you can also click directly on the quantity input field to bring up the numeric keypad and enter any quantity you want!',
     // === 確認彈窗 ===
     msg_delete_title: 'Delete this record?',
     msg_delete_desc:  'This action cannot be undone.',
@@ -840,7 +846,10 @@ const translations = {
     faq_a5:               '現在は対応しておりません。<br/>レポート統計の一貫性を維持するため、固定のカテゴリーを採用しています。<br/>💡 家計簿のコツ：<br/>1. タグ機能：詳細（例：メンバー名など）は #タグ を使用すると、より柔軟に記録や検索・絞り込みが可能です。<br/>2. モード切り替え：「設定 > 家計簿と機能」でお好みに合わせてデフォルトのカテゴリーセットを切り替えることができます。<br/>3. リクエスト機能：下のボタンから追加の要望（リクエスト）を送っていただければ、検討の上、新しいカテゴリーを追加いたします！',
     faq_q6:               'ウェブ版でデータを追加したのに、アプリ（ホーム画面に追加したもの）を開くと反映されていないのはなぜですか？',
     faq_a6:               'これは通常、アプリ側のログイン状態がまだ同期・更新されていないことが原因です。<br/><b>ログインの確認</b>：「設定」に移動し、現在ログイン状態であるか確認してください。未ログインと表示されている場合は、再度ログインし直すことでクラウドからデータを取得できます。<br/><br/>推し活お財布はリアルタイムのクラウド保存を採用しているため、ログイン状態で追加されたデータは安全にクラウドに保存されています！',
-
+    faq_q7:               '登録済みのデータやタグを編集するにはどうすればよいですか？',
+    faq_a7:               'アイテムカードの右上にあるボタンをクリックし、ポップアップから「データを編集」を選択して変更します。既存のタグを修正するには、編集時に古いタグを削除し、正しいタグを入力して追加・保存してください。',
+    faq_q8:               '数量のプルダウンメニューの数字が足りない場合はどうすればよいですか？',
+    faq_a8:               '数量欄はメニューから1〜10を素早く選択できるだけでなく、数量入力欄を直接タップして数字キーパッドを呼び出し、お好みの数量を自由に入力することもできます！',
     // === 確認彈窗 ===
     msg_delete_title: '本当に削除しますか？',
     msg_delete_desc:  '削除された記録は復元できません。',
@@ -1132,7 +1141,10 @@ const translations = {
     faq_a5:               '현재는 지원하지 않습니다.<br/>통계 리포트의 일관성을 유지하기 위해 고정된 카테고리를 사용하고 있습니다.<br/>💡 작성 팁:<br/>1. 태그 기능: 상세 내용(예: 멤버 이름)은 #태그를 사용하시면 더욱 유연하게 기록하고 검색 필터링을 할 수 있습니다.<br/>2. 모드 전환: \'설정 > 장부 및 기능\'에서 취향에 따라 기본 카테고리 세트를 전환할 수 있습니다.<br/>3. 건의 기능: 아래 링크를 통해 원하시는 카테고리를 건의해 주시면 검토 후 추가하도록 하겠습니다!',
     faq_q6:               '웹 버전에서 데이터를 추가했는데, 앱(홈 화면에 추가된 버전)을 열었을 때 안 보이는 이유는 무엇인가요?',
     faq_a6:               '이는 보통 앱 쪽의 로그인 상태가 아직 동기화되어 업데이트되지 않았기 때문입니다.<br/><b>로그인 상태 확인</b>: \'설정\'으로 이동하여 현재 로그인 상태인지 확인해 주세요. 로그아웃 상태로 표시된다면 다시 로그인하시면 클라우드 데이터를 즉시 불러올 수 있습니다.<br/><br/>덕질 가계부는 실시간 클라우드 저장을 적용하고 있으므로, 로그인 상태에서 추가한 데이터는 모두 클라우드에 안전하게 보관됩니다!',
-
+    faq_q7:               '이미 등록된 데이터나 태그는 어떻게 수정하나요?',
+    faq_a7:               '상품 카드의 우측 상단 버튼을 클릭한 후 팝업에서 "데이터 수정"을 선택하여 수정할 수 있습니다. 기존 태그를 변경하려면 편집 시 기존 태그를 삭제하고 올바른 태그를 입력하여 추가한 뒤 저장하면 됩니다.',
+    faq_q8:               '수량 드롭다운 메뉴의 숫자가 부족하면 어떻게 하나요?',
+    faq_a8:               '수량 칸은 메뉴를 통해 1~10을 빠르게 선택할 수 있을 뿐만 아니라, 수량 입력란을 직접 터치하여 숫자 키패드를 띄운 뒤 원하는 수량을 직접 입력할 수도 있습니다!',
     // === 確認彈窗 ===
     msg_delete_title: '정말로 삭제하시겠습니까?',
     msg_delete_desc:  '삭제된 기록은 복구할 수 없습니다.',
