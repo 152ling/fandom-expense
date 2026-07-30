@@ -245,7 +245,7 @@ import  './i18n.js';
                             </div>
                             
                             <!-- 細項容器 -->
-                            <div id="multiItemsContainer" class="space-y-2.5 max-h-[220px] overflow-y-visible pr-1 no-scrollbar">
+                            <div id="multiItemsContainer" class="space-y-2.5 overflow-y-visible pr-1 no-scrollbar">
                                 <!-- 動態行 -->
                             </div>
 
