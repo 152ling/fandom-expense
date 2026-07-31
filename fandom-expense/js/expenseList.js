@@ -248,10 +248,13 @@ import './i18n.js';
             const tagMatch = state.selectedTags.length === 0 || state.selectedTags.every(t => ex.tags && ex.tags.includes(t));
             // 4. 進階關鍵字過濾 (包含：名稱、備註、到貨狀態、收物平台)
             const keywordMatch = (
-                ex.name.toLowerCase().includes(kw) || 
+                ex.name.toLowerCase().includes(kw) ||
                 (ex.remark && ex.remark.toLowerCase().includes(kw)) ||
                 (ex.arrivalStatus && ex.arrivalStatus.toLowerCase().includes(kw)) || // 新增：搜尋到貨狀態
-                (ex.platform && ex.platform.toLowerCase().includes(kw))             // 新增：搜尋收物平台
+                (ex.platform && ex.platform.toLowerCase().includes(kw))||             // 新增：搜尋收物平台
+                (Array.isArray(ex.subItems) && ex.subItems.some(sub =>  // 新增：檢查細項名稱是否有匹配到關鍵字
+                    sub.name && sub.name.toLowerCase().includes(kw)
+                ))
             );
 
             return dateMatch && catMatch && keywordMatch && tagMatch;
@@ -367,6 +370,9 @@ import './i18n.js';
                         
                 }
                 return;
+            }else{
+                const filterbtn=document.getElementById("toggleFilterBtn");
+                filterbtn.classList.remove('hidden'); 
             }
                 // 動態決定頁籤高亮 Classes 嵌入
             const getTabClass = (tab) => {
