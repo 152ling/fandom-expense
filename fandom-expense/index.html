@@ -221,7 +221,7 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
     <div id="app-splash" class="fixed inset-0 z-[9999] bg-white flex items-center justify-center transition-all duration-1000 ease-in-out">
-        <img src="logo_new.png" alt="Splash" class="w-60 h-60 object-cover">
+        <img src="logo_new.png" alt="圖片載入失敗，如果看到這段請聯繫開發者的thread:bobi_9yu" class="w-60 h-60 object-cover">
         <div class="relative z-10 flex flex-col items-center"></div>
     </div>
 
@@ -479,6 +479,20 @@
 
         </div>
     </div>
+    <script>
+        // Splash 最多顯示 1.5 秒
+        setTimeout(() => {
+            const splash = document.getElementById('app-splash');
+
+            if (splash) {
+                splash.classList.add('splash-fade-out');
+
+                setTimeout(() => {
+                    splash.remove();
+                }, 500);
+            }
+        }, 1500);
+    </script>
 <script type="module">
     import { state } from './js/state.js';
     import { renderContent, applyTheme, switchTab,trackPageView } from './js/ui.js';
@@ -820,13 +834,16 @@
                 };
             }
         }
-        const splash = document.getElementById('app-splash');
-        if (splash) {
-            setTimeout(() => {
-                splash.classList.add('splash-fade-out');
-                setTimeout(() => splash.remove(), 500);
-            }, 800);
-        }
+        // const splash = document.getElementById('app-splash');
+        // if (splash) {
+        //     setTimeout(() => {
+        //         splash.classList.add('splash-fade-out');
+
+        //         setTimeout(() => {
+        //             splash.remove();
+        //         }, 500);
+        //     }, 800);
+        // }
     });
     window.onerror = function (message, source, lineno, colno, error) {
         const frames = error?.stack
