@@ -270,7 +270,7 @@ export    async function handleImage(input) { //願望清單用的上傳
 
                     } catch (error) {
                         console.error("Image processing error:", error);
-                        showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
+                        showToast(`${t('toast_img_error')}：${error.message}`);//圖片處理失敗，請換一張試試
                         // 重置狀態
                         state.tempImageBlob = null;
                         document.getElementById('img-placeholder').innerHTML = `<span class="text-slate-300 text-[10px] font-bold uppercase tracking-widest">上傳相片</span>`;
@@ -300,6 +300,7 @@ export async function handleMultiImage(input) {
 
             const toProcess = files.slice(0, remain);
             showToast(t('toast_uploading')); //正在上傳圖片...
+            let successfulCount = 0;
 
             for (const file of toProcess) {
                 // 1. 類型檢查 (每一張圖片都會個別執行此檢查)
@@ -326,7 +327,6 @@ export async function handleMultiImage(input) {
                     const b64 = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onerror = () => {
-                            showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
                             reject(new Error("Read failed"));
                         };
                         reader.onload = async (e) => {
@@ -344,16 +344,19 @@ export async function handleMultiImage(input) {
 
                     if (b64) {
                         state.tempImageBase64.push(b64);
+                        successfulCount++;
                         // 每處理完一張就更新一次預覽，增加反應速度
                         updateImagePreviewUI();
                     }
                 } catch (error) {
                     console.error("Image processing error:", error);
-                    showToast(t('toast_img_error')); //圖片處理失敗，請換一張試試
+                    showToast(`${t('toast_img_error')}：${error.message}`);//圖片處理失敗，請換一張試試
                 }
             }
             
-            showToast(t('toast_img_success')); //圖片上傳成功
+            if (successfulCount > 0) {
+                showToast(t('toast_img_success')); //圖片上傳成功
+            }
             input.value = ""; // 清空 input 以便下次選擇
         }
             // 點擊刪除按鈕觸發

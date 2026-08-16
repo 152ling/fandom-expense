@@ -13,35 +13,56 @@
 
 
 export    function compressImage(base64Str, maxWidth = 600) {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const img = new Image();
-                img.src = base64Str;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
+                // 某些格式（例如裝置／瀏覽器不支援的 HEIC）可被 FileReader
+                // 讀取，卻無法被瀏覽器解碼。這時一定要結束 Promise，讓呼叫端顯示錯誤。
+                const timeoutId = setTimeout(() => {
+                    reject(new Error('Image decode timed out'));
+                }, 15000);
 
-                    // 1. 強制調整尺寸
-                    if (w > maxWidth) {
-                        h *= maxWidth / w;
-                        w = maxWidth;
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
-
-                    const ctx = canvas.getContext('2d');
-                    // 2. 使用更平滑的縮放繪製
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    // 3. 優先使用 webp 格式 (體積減少約 30%)，品質設為 0.4
-                    // 如果瀏覽器不支援 webp，它會自動退回到 image/jpeg
-                    let outputFormat = "image/webp";
-                    let quality = 0.4; 
-
-                    const compressedBase64 = canvas.toDataURL(outputFormat, quality);
-                    resolve(compressedBase64);
+                const fail = (message) => {
+                    clearTimeout(timeoutId);
+                    reject(new Error(message));
                 };
+
+                img.onload = () => {
+                    clearTimeout(timeoutId);
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+
+                        if (!w || !h) throw new Error('Image has invalid dimensions');
+
+                        // 1. 強制調整尺寸
+                        if (w > maxWidth) {
+                            h *= maxWidth / w;
+                            w = maxWidth;
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) throw new Error('Canvas is unavailable');
+                        // 2. 使用更平滑的縮放繪製
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, w, h);
+
+                        // 3. 優先使用 webp 格式 (體積減少約 30%)，品質設為 0.4
+                        // 如果瀏覽器不支援 webp，它會自動退回到 image/jpeg
+                        const outputFormat = "image/webp";
+                        const quality = 0.4;
+
+                        const compressedBase64 = canvas.toDataURL(outputFormat, quality);
+                        resolve(compressedBase64);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                img.onerror = () => fail('Image cannot be decoded');
+                img.onabort = () => fail('Image loading was aborted');
+                img.src = base64Str;
             });
         }
 
