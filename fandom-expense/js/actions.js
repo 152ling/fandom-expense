@@ -3,7 +3,7 @@
  */
 import { state } from './state.js';
 import { showToast,askUser, renderContent,openAddModal, closeModal, closeActionModal, updateImagePreviewUI } from './ui.js';
-import { compressImage } from './utils.js';
+import { compressImage, normalizeImageFile } from './utils.js';
 import './i18n.js'
 import { t } from './i18n.js';
 
@@ -238,6 +238,16 @@ export    async function handleImage(input) { //願望清單用的上傳
                 return;
             }
             if (file) {
+                let normalizedFile;
+                try {
+                    normalizedFile = await normalizeImageFile(file);
+                } catch (error) {
+                    console.error("HEIC conversion error:", error);
+                    showToast(`${t('toast_img_error')}：${error.message}`);
+                    input.value = "";
+                    return;
+                }
+
                 const reader = new FileReader();
                 // 檔案讀取失敗的處理
                 reader.onerror = () => {
@@ -246,7 +256,7 @@ export    async function handleImage(input) { //願望清單用的上傳
                 };
                 reader.onload = async (e) => {
                     try {
-                        const compressionWidth = file.size > 2 * 1024 * 1024 ? 500 : 800;
+                        const compressionWidth = normalizedFile.size > 2 * 1024 * 1024 ? 500 : 800;
                         const compressedBase64 = await compressImage(e.target.result, compressionWidth);
                         if (!compressedBase64) throw new Error("壓縮失敗");
 
@@ -277,7 +287,7 @@ export    async function handleImage(input) { //願望清單用的上傳
                         input.value = "";
                     }
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(normalizedFile);
             }
         }
 export async function handleMultiImage(input) {
@@ -302,7 +312,8 @@ export async function handleMultiImage(input) {
             showToast(t('toast_uploading')); //正在上傳圖片...
             let successfulCount = 0;
 
-            for (const file of toProcess) {
+            for (const selectedFile of toProcess) {
+                let file = selectedFile;
                 // 1. 類型檢查 (每一張圖片都會個別執行此檢查)
                 let isImage = false;
                 if (file.type) {
@@ -320,6 +331,14 @@ export async function handleMultiImage(input) {
                 // 2. 大小檢查 (上限 15MB)
                 if (file.size > 15 * 1024 * 1024) {
                     showToast(t('toast_img_too_large')); //圖片太大囉！請選擇較小的照片
+                    continue;
+                }
+
+                try {
+                    file = await normalizeImageFile(file);
+                } catch (error) {
+                    console.error("HEIC conversion error:", error);
+                    showToast(`${t('toast_img_error')}：不支援的圖片格式`);//圖片處理失敗，請換一張試試
                     continue;
                 }
 

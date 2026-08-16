@@ -1,7 +1,7 @@
-const CACHE_NAME = 'fe-v11-cache-v14.4';
+const CACHE_NAME = 'fe-v11-cache-v14.5';
 const ASSETS = [
   './',
-  './index.html',
+  './index.html', 
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.0',
   'https://cdn.jsdelivr.net/npm/chart.js'

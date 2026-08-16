@@ -67,6 +67,41 @@ export    function compressImage(base64Str, maxWidth = 600) {
         }
 
 /**
+ * 將瀏覽器本身無法解碼的 HEIC/HEIF 檔案轉成 JPEG，再交給既有壓縮流程處理。
+ * 非 HEIC 圖片會直接回傳原檔，不增加任何處理成本。
+ */
+export function isHeicFile(file) {
+            const type = (file.type || '').toLowerCase();
+            return ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'].includes(type)
+                || /\.(heic|heif)$/i.test(file.name || '');
+        }
+
+export async function normalizeImageFile(file) {
+            if (!isHeicFile(file)) return file;
+
+            if (typeof window.heic2any !== 'function') {
+                throw new Error('HEIC converter is unavailable');
+            }
+
+            const result = await window.heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.8
+            });
+            // HEIC 連拍可能回傳陣列；此功能一個選取檔對應一張預覽，取第一張即可。
+            const jpegBlob = Array.isArray(result) ? result[0] : result;
+            if (!(jpegBlob instanceof Blob)) {
+                throw new Error('HEIC conversion returned an invalid image');
+            }
+
+            return new File(
+                [jpegBlob],
+                (file.name || 'image.heic').replace(/\.(heic|heif)$/i, '.jpg'),
+                { type: 'image/jpeg' }
+            );
+        }
+
+/**
  * 分享卡專用的工具
  */
 export    function showShareConfirm() {
