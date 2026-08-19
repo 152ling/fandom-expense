@@ -12,7 +12,7 @@
   "scope": "./",
   "lang": "zh-TW",
   "dir": "ltr",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#92A8D1",
   "orientation": "portrait",
   "icons": [
@@ -23,7 +23,7 @@
       "purpose": "any"
     },
     {
-      "src": "logo_new.png",
+      "src": "logo_maskable.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "maskable"
