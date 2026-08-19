@@ -1,0 +1,11 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fangling.fandomwallet",
+      "sha256_cert_fingerprints":
+        ["AE:ED:12:8B:9E:91:56:0C:AC:4A:57:A6:82:BE:6C:FE:1D:67:F0:25:B0:97:DE:A8:71:5F:EA:0A:4F:D6:71:05"]
+    }
+  }
+]
