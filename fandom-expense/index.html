@@ -847,6 +847,14 @@
         // }
     });
     window.onerror = function (message, source, lineno, colno, error) {
+        // 排除已知、不需要記錄的錯誤
+        if (
+            String(message).includes("window.webkit.messageHandlers") ||
+            String(message) === "Script error."
+        ) {
+            return true;
+        }
+
         const frames = error?.stack
         ? error.stack.split('\n').map(f => f.trim())
         : [];
