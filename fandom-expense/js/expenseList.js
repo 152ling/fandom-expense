@@ -2,8 +2,11 @@
 import { state } from './state.js';
 import { baseCategories } from './constants.js';
 import { renderContent ,getCurrentCategories,askUser, showToast} from './ui.js';
-import { escapeHTML } from './utils.js';
+import { escapeHTML, escapeAttr } from './utils.js';
 import './i18n.js';
+
+const safeText = (value) => escapeHTML(value ?? '');
+const safeAttr = (value) => escapeAttr(value ?? '');
 
         let showStatusFilter = false;
         let shippingStatusTab = 'all'; // 'all', 'not-received', 'received', 'sold'
@@ -79,7 +82,7 @@ import './i18n.js';
                     </div>
                     <div class="relative flex mb-3 gap-2">
                         <div class="relative flex-1 flex items-center">
-                            <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" value="${state.searchKeyword || ''}" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
+                            <input data-i18n-placeholder="expense_search_ph" id="search-input" type="text" value="${safeAttr(state.searchKeyword || '')}" oninput="state.searchKeyword=this.value;state.currentPage=1;document.getElementById('search-clear-btn').classList.toggle('hidden', !this.value); renderExpenseListItems(document.getElementById('expense-list-items'))" class="w-full bg-white border border-gray-100 rounded-2xl py-3 px-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand focus:ring-opacity-20 transition-all text-gray-800">
                             <svg class="text-brand w-4 h-4 absolute left-4 top-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
                             <button id="search-clear-btn" onclick="clearKeywordSearch()" 
                                     class="${state.searchKeyword ? '' : 'hidden'} absolute right-4 top-3.5 text-slate-400 hover:text-brand transition-colors p-0.5 rounded-full hover:bg-slate-50 active:scale-90 transition-all" 
@@ -470,10 +473,16 @@ import './i18n.js';
 
                 const imgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
                 const isIncome = item.type === 'income';
+                const safeItemName = safeText(item.name);
+                const safeItemCategory = safeText(item.category);
+                const safeItemPlatform = safeText(item.platform || '');
+                const safeItemRemark = safeText(item.remark || '');
+                const safeItemArrival = safeText(item.arrivalStatus || '');
+                const safeItemPayment = safeText(item.paymentMethod || '');
+                const safeItemSubName = (sub) => safeText(sub?.name || '');
                 
                 const isMulti = item.isMulti===true;
                 const cardBg = isIncome ? 'bg-brand-opacity' : 'bg-white border-transparent card-shadow';
-                // const payInfo = item.paymentMethod === '已付訂金' ? `已付訂金 $${item.paidAmount || 0}` : (item.paymentMethod || '待付款');
                 const payKey = `pay_${item.paymentMethod}`;
                 let depositText = '';
                 if (item.paymentMethod === '已付訂金') {
@@ -485,13 +494,13 @@ import './i18n.js';
                 let displayText = getMonthDisplayText(item.month);
                 return `<div class="${cardBg} rounded-3xl p-4 relative overflow-hidden group">
                     <div class="absolute top-4 right-4 z-10">
-                        <button onclick="openActionModal(event, 'expense', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
+                        <button onclick="openActionModal(event, 'expense', '${safeAttr(String(item.id))}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                         </button>
                     </div>
                     <div class="flex gap-4" >
                     <div class="relative w-20 h-20 flex-shrink-0"
-                        onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g, '&quot;')}, '${item.name}', '${item.year}/${item.month}')">
+                        onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g, '&quot;')}, ${JSON.stringify(String(item.name)).replace(/"/g, '&quot;')}, ${JSON.stringify(`${item.year}/${item.month}`).replace(/"/g, '&quot;')})">
                             ${imgs.length > 0 
                             ? `<img src="${imgs[0]}" class="w-full h-full object-cover rounded-2xl">`
                             : `<div class="w-full h-full ${isIncome ? 'bg-slate-100' : 'bg-slate-50'} rounded-2xl flex items-center justify-center text-3xl shadow-inner">${cat.icon}</div>`
@@ -507,13 +516,13 @@ import './i18n.js';
                         </div>
                         <div class="flex-grow">
                             <div class="flex gap-2 mb-1">
-                                <span onclick="quickFilter('category', '${item.category}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon}<span>${CategoriesText}</span></span>
-                                <span data-i18n="arrival_${item.arrivalStatus}" onclick="quickFilter('status', '${item.arrivalStatus}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${item.arrivalStatus}</span>
+                                <span onclick="quickFilter('category', '${safeAttr(item.category)}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg"  style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.icon}<span>${CategoriesText}</span></span>
+                                <span data-i18n="arrival_${safeItemArrival}" onclick="quickFilter('status', '${safeAttr(item.arrivalStatus || '')}')" class="cursor-pointer text-[9px] font-bold px-2 py-0.5 rounded-lg ${getStatusClass(item.arrivalStatus)}">${safeItemArrival}</span>
                                  ${state.filterMonth === 0 ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400">${displayText}</span>` : ''}
                             </div>
-                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h4>
+                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${safeItemName}</h4>
                             <div class="flex justify-between items-end mt-2">
-                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="text-slate-400 text-[9px] mr-1.5">#${t}</span>`).join('')}</div>
+                                <div class="flex flex-wrap gap-1 pr-2">${(item.tags || []).map(t => `<span class="text-slate-400 text-[9px] mr-1.5">#${safeText(t)}</span>`).join('')}</div>
                                 <div class="text-right flex-shrink-0 text-brand"><p class="text-[9px] text-slate-300 font-normal ${state.hideAmount ?'hidden':''}">$${item.price} × ${item.qty} ${item.shipping > 0 ? `+ 運$${item.shipping}` : ''}</p>
                                 <p class="font-black text-lg leading-none">${state.hideAmount ? '$•••' : `$${(Number(item.total)).toLocaleString()}`}</p></div>
                             </div>
@@ -527,7 +536,7 @@ import './i18n.js';
                         </div>
                         ${item.subItems.map(sub => `
                             <div class="flex justify-between items-center pl-3">
-                            <span class="truncate pr-2">• ${sub.name}</span>
+                            <span class="truncate pr-2">• ${safeItemSubName(sub)}</span>
                             <span class="font-semibold text-sub flex-shrink-0">${state.hideAmount ? '' : `$${sub.price}`}<span class="text-sub font-normal">x ${sub.qty}</span></span>
                             </div>
                         `).join('')}
@@ -543,7 +552,7 @@ import './i18n.js';
                                         ${item.platform ? `<span class="text-[10px] text-slate-400 flex items-center">
                                         <span class="text-slate-300 font-bold">•</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                                            ${t('purchased_from', { n: item.platform})}
+                                            ${t('purchased_from', { n: safeItemPlatform })}
                                         </span>` : ''}
                                     </div>
                                     ${item.shipping > 0 ? `<div class="text-[10px] text-slate-400 font-bold"><span data-i18n="shipping" class="opacity-70">運費:</span> $${item.shipping}</div>
@@ -553,7 +562,7 @@ import './i18n.js';
                     ${item.remark ? `
                     <div class="mt-3  text-[10px] text-slate-500 flex items-start gap-0.5">
                         <span data-i18n="field_remark" class="text-brand-one font-bold shrink-0 px-1.5 py-0.5 bg-brand-opacity rounded-md">備註:</span>
-                        <span class="text-slate-400 font-medium py-0.5">${escapeHTML(item.remark)}</span>
+                        <span class="text-slate-400 font-medium py-0.5">${safeItemRemark}</span>
                     </div>
                     ` : ''}
                 </div>`;
@@ -727,14 +736,15 @@ import './i18n.js';
                 const cleanId = cat.id.replace(/\s+/g, ''); //把有分號的分類轉換
                 let translatedText = typeof t === 'function' ? t(`cat_${cleanId}`) : cat.id;
                 const shortText = translatedText.split(' ')[0];
+                const safeCatId = safeAttr(cat.id);
                 return `
-                    <div onclick="state.selectedCategory=(state.selectedCategory==='${cat.id}'?'':'${cat.id}'); 
+                    <div onclick="state.selectedCategory=(state.selectedCategory==='${safeCatId}'?'':'${safeCatId}'); 
                                 state.currentPage=1;            
                                 renderTagAndCatBar(); 
                                 renderExpenseListItems(document.getElementById('expense-list-items'))" 
                         class="chip ${isActive ? 'active-cat' : ''}" 
                         style="${isActive ? `background-color:${cat.color}` : `color:${cat.color}; background-color:${cat.color}10; border-color:${cat.color}30`}">
-                        <span>${cat.icon}</span><span>${shortText}</span>
+                        <span>${cat.icon}</span><span>${safeText(shortText)}</span>
                     </div>`;
             }).join('');
             if (typeof updateStaticTranslations === 'function') {
@@ -765,24 +775,32 @@ import './i18n.js';
             } else {
                 tagBar.innerHTML = relevantTags.map(tag => {
                     const isActive = state.selectedTags.includes(tag);
+                    const safeTag = safeAttr(tag);
                     return `
-                        <div onclick="toggleTagFilter('${tag}')" 
-                            class="chip ${isActive ? 'active-tag' : ''}">
-                            #${tag}
+                        <div data-tag="${safeTag}" class="chip ${isActive ? 'active-tag' : ''}">
+                            #${safeText(tag)}
                         </div>`;
                 }).join('');
             }
-                window.toggleTagFilter = (tag) => {
-                    const index = state.selectedTags.indexOf(tag);
-                    if (index > -1) {
-                        state.selectedTags.splice(index, 1); // 已選中則移除
-                    } else {
-                        state.selectedTags.push(tag); // 未選中則加入
-                    }
-                    state.currentPage = 1;
-                    renderTagAndCatBar(); 
-                    renderExpenseListItems(document.getElementById('expense-list-items'));
-                };
+
+            tagBar.onclick = (event) => {
+                const tagEl = event.target.closest('[data-tag]');
+                if (!tagEl) return;
+                const tag = tagEl.getAttribute('data-tag');
+                toggleTagFilter(tag);
+            };
+
+            window.toggleTagFilter = (tag) => {
+                const index = state.selectedTags.indexOf(tag);
+                if (index > -1) {
+                    state.selectedTags.splice(index, 1); // 已選中則移除
+                } else {
+                    state.selectedTags.push(tag); // 未選中則加入
+                }
+                state.currentPage = 1;
+                renderTagAndCatBar(); 
+                renderExpenseListItems(document.getElementById('expense-list-items'));
+            };
         }
         export function quickFilter(type, value) {
             const input = document.getElementById('search-input');

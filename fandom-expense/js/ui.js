@@ -1,8 +1,12 @@
 import { state } from './state.js';
 import { baseCategories, arrivalOptions,wishCategories,wishCategoriesACGN,paymentOptions } from './constants.js';
 import { renderExpenseList } from './expenseList.js';
-import { escapeHTML} from './utils.js';
+import { escapeHTML, escapeAttr } from './utils.js';
 import  './i18n.js';
+
+const safeText = (value) => escapeHTML(value ?? '');
+const safeAttr = (value) => escapeAttr(value ?? '');
+
     export function showToast(msg) {
         const t = document.getElementById("toast");
         if(!t) return;
@@ -212,25 +216,25 @@ import  './i18n.js';
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
                             </div>
-                            <input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off"  value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
+                            <input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" value="${safeText(itemData?.name || '')}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none border-2 border-transparent text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                         </div>
 
                         <div id="singleItemForm" class="flex gap-4">
                             <div class="flex-1 space-y-1">
                                 <label data-i18n="field_price" class="text-[10px] font-bold text-slate-400 uppercase">單&#8203;價</label>
-                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
+                                <input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${safeText(itemData?.price || '')}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                             </div>
                             <div class="flex-1 space-y-1 relative" id="qty-combobox">
                                 <label data-i18n="field_qty" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">數量</label>
                                 <div class="relative flex items-center">
-                                    <input type="number" id="m-qty" inputmode="numeric" value="${itemData?.qty || 1}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
+                                    <input type="number" id="m-qty" inputmode="numeric" value="${safeText(itemData?.qty || 1)}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 border-2 border-transparent focus:border-brand">
                                     <div id="qty-toggle" class="absolute right-3 cursor-pointer text-slate-400"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg></div>
                                 </div>
                                 <ul id="qty-options" class="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto hidden custom-scrollbar"></ul>
                             </div>
                             <div class="flex-1 space-y-1" id="shipping-fee">
                                 <label data-i18n="field_shipping" class="text-[10px] font-bold text-slate-400 uppercase">運費/二補</label>
-                                <input type="number" id="m-shipping" inputmode="numeric" value="${itemData?.shipping || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
+                                <input type="number" id="m-shipping" inputmode="numeric" value="${safeText(itemData?.shipping || '')}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                             </div>
                         </div>
 
@@ -285,7 +289,7 @@ import  './i18n.js';
                                             <option value="THB" ${itemData?.currency === 'THB' ? 'selected' : ''}>THB</option>
                                             <option value="TWD" ${itemData?.currency === 'TWD' ? 'selected' : ''}>TWD</option>
                                         </select>
-                                        <input type="number" id="foreign-amount" value="${itemData?.foreign_amount || ''}" class="w-full outline-none border-none p-4 text-sm font-medium transition" placeholder="0">
+                                        <input type="number" id="foreign-amount" value="${safeText(itemData?.foreign_amount || '')}" class="w-full outline-none border-none p-4 text-sm font-medium transition" placeholder="0">
                                         <button type="button" onclick="convertCurrency()" class="p-4 text-brand hover:bg-brand/5 transition-colors group">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-active:scale-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -297,15 +301,14 @@ import  './i18n.js';
                         ` : ''}
                         <div class="grid grid-cols-2 gap-4">
                             <div data-i18n-label="field_category" class="space-y-1"><label data-i18n="field_category" class="text-[10px] font-bold text-slate-400 uppercase">分類</label>
-                            <select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => {const cleanId = c.id.replace(/\s+/g, ''); return `<option value="${c.id}" data-i18n="cat_${cleanId}" ${itemData?.category == c.id ? 'selected' : ''}>${c.id}</option>`}).join('')}</select></div>
-                            <div class="space-y-1 flex flex-col"><label data-i18n="field_date" class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date"     value="${itemData?.year && itemData?.month ? 
-                                `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
+                            <select id="m-cat" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">${dropdownOptions.map(c => {const cleanId = c.id.replace(/\s+/g, ''); return `<option value="${safeAttr(c.id)}" data-i18n="cat_${cleanId}" ${itemData?.category == c.id ? 'selected' : ''}>${safeText(c.id)}</option>`}).join('')}</select></div>
+                            <div class="space-y-1 flex flex-col"><label data-i18n="field_date" class="text-[10px] font-bold text-slate-400 uppercase mb-1">消費年月日</label><input type="date" id="m-date" value="${itemData?.year && itemData?.month ? `${itemData.year}-${String(itemData.month).padStart(2,'0')}-${String(itemData.day? String(itemData.day).padStart(2,'0') : '01').padStart(2,'0')}` : defaultDate}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800"></div>
                         </div>
                         <div class="flex gap-4" id="shipping-state">
                             <div class="flex-1 space-y-1 relative" id="platform-combobox">
                                 <label data-i18n="field_platform" class="text-[10px] font-bold text-slate-400 uppercase">購物平台</label>
                                 <input type="text" id="m-platform" autocomplete="off" autocorrect="off" 
-                                    data-i18n-placeholder="field_platform_ph" value="${itemData?.platform || ''}" 
+                                    data-i18n-placeholder="field_platform_ph" value="${safeText(itemData?.platform || '')}" 
                                     class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 focus:ring-2 focus:ring-brand focus:bg-white transition">
                                 <ul id="platform-suggestions" class="hidden absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto custom-scrollbar"></ul>
                             </div>
@@ -371,8 +374,8 @@ import  './i18n.js';
                     }
                 }
                 form.innerHTML = `<div class="space-y-4">
-                    <div class="space-y-1"><label data-i18n="field_name" class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${itemData?.name || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
-                    <div class="space-y-1"><label data-i18n="field_wish_price" class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${itemData?.price || ''}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label data-i18n="field_name" class="text-[10px] font-bold text-slate-400 uppercase">商&#8203;品&#8203;名&#8203;稱<span style="color:red;">*</span></label><input type="text" id="m-t-l" autocomplete="one-time-code" autocorrect="off" required value="${safeText(itemData?.name || '')}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
+                    <div class="space-y-1"><label data-i18n="field_wish_price" class="text-[10px] font-bold text-slate-400 uppercase">預&#8203;估&#8203;價&#8203;格</label><input type="number" id="m-u-p" inputmode="decimal" autocomplete="one-time-code" autocorrect="off" value="${safeText(itemData?.price || '')}" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold"></div>
                         ${state.enableExchange ?`
                             <div id="converter-section" class="space-y-1 transition-all duration-300 origin-top overflow-hidden">
                                 <div class="flex justify-between items-end ml-1">
@@ -406,9 +409,9 @@ import  './i18n.js';
                     <div class="space-y-1"><label data-i18n="field_wish_cat" class="text-[10px] font-bold text-slate-400 uppercase">分類</label><select id="m-wish-cat" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800">
                     ${dropdownOptions.map(c => {
                         const cleanId = c.replace(/\s+/g, '');
-                        return `<option data-i18n="cat_${cleanId}" value="${c}" ${itemData?.category == c ? 'selected' : ''}>${c}</option>`;
+                        return `<option data-i18n="cat_${cleanId}" value="${safeAttr(c)}" ${itemData?.category == c ? 'selected' : ''}>${safeText(c)}</option>`;
                     }).join('')}</select></div>
-                    <div class="space-y-1"><label data-i18n="field_wish_remark" class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold">${itemData?.remark || ''}</textarea></div>
+                    <div class="space-y-1"><label data-i18n="field_wish_remark" class="text-[10px] font-bold text-slate-400 uppercase font-black">心願備註</label><textarea id="m-remark" autocomplete="one-time-code" autocorrect="off" class="w-full bg-slate-50 rounded-xl p-3 text-sm outline-none text-gray-800 font-bold">${safeText(itemData?.remark || '')}</textarea></div>
                     
                     <div class="space-y-1">
                         <div class="flex items-center justify-between">
@@ -483,13 +486,20 @@ import  './i18n.js';
                     return;
                 }
                 list.innerHTML = matches.map(p => `
-                    <li class="px-4 py-3 hover:bg-slate-50  cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium" 
-                        onclick="document.getElementById('m-platform').value='${p.replace(/'/g, "\\'")}'; document.getElementById('platform-suggestions').classList.add('hidden');">
-                        ${p}
+                    <li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium" data-platform="${safeAttr(p)}">
+                        ${safeText(p)}
                     </li>
                 `).join('');
                 list.classList.remove('hidden');
             };
+
+            list.addEventListener('click', (e) => {
+                const item = e.target.closest('[data-platform]');
+                if (!item) return;
+                const value = item.getAttribute('data-platform');
+                input.value = value;
+                list.classList.add('hidden');
+            });
 
             input.addEventListener('focus', () => showSuggestions(input.value));
             input.addEventListener('input', () => showSuggestions(input.value));
@@ -610,24 +620,24 @@ import  './i18n.js';
             div.id = rowId;
             div.className = "flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-100/50";
             div.innerHTML = `
-                <input type="text" data-i18n-placeholder="multi_placeholder_desc" placeholder="品項說明..." value="${name}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
-                <input type="number" data-i18n-placeholder="multi_placeholder_amount" inputmode="numeric" placeholder="金額" value="${price}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="text" data-i18n-placeholder="multi_placeholder_desc" placeholder="品項說明..." value="${safeAttr(name)}" class="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
+                <input type="number" data-i18n-placeholder="multi_placeholder_amount" inputmode="numeric" placeholder="金額" value="${safeAttr(String(price))}" class="w-16 bg-white border border-slate-200/60 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-700" oninput="calculateTotal()" />
                 
                 <div class="relative flex items-center bg-white border border-slate-200/60 rounded-lg px-1">
                     <span class="text-[9px] text-slate-400 font-bold mr-0.5">x</span>
-                    <input type="number" min="1" inputmode="numeric" value="${qty}" class="w-10 bg-transparent text-xs py-1 outline-none text-slate-700 text-center" 
+                    <input type="number" min="1" inputmode="numeric" value="${safeAttr(String(qty))}" class="w-10 bg-transparent text-xs py-1 outline-none text-slate-700 text-center" 
                            oninput="calculateTotal()" 
-                           onfocus="toggleQtyDropdown('${rowId}', true)" 
-                           onblur="setTimeout(() => toggleQtyDropdown('${rowId}', false), 200)" />
+                           onfocus="toggleQtyDropdown('${safeAttr(rowId)}', true)" 
+                           onblur="setTimeout(() => toggleQtyDropdown('${safeAttr(rowId)}', false), 200)" />
                     
-                    <div id="dropdown-${rowId}" class="hidden absolute right-0 top-full mt-1 w-20 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-36 overflow-y-auto">
+                    <div id="dropdown-${safeAttr(rowId)}" class="hidden absolute right-0 top-full mt-1 w-20 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-36 overflow-y-auto">
                         ${[1,2,3,4,5,6,7,8,9,10].map(n => `
                             <div class="px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 cursor-pointer text-center" 
-                                 onmousedown="selectQty('${rowId}', ${n})">${n}</div>
+                                 onmousedown="selectQty('${safeAttr(rowId)}', ${n})">${n}</div>
                         `).join('')}
                     </div>
                 </div>
-                <button type="button" onclick="removeMultiItemRow('${rowId}')" class="text-slate-300 hover:text-rose-500 transition p-1">
+                <button type="button" onclick="removeMultiItemRow('${safeAttr(rowId)}')" class="text-slate-300 hover:text-rose-500 transition p-1">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 </button>
             `;
@@ -866,26 +876,32 @@ import  './i18n.js';
                         </div>` 
                         : filtered.map(item =>{
                             const cleanId = item.category ? item.category.toLowerCase().replace(/\s+/g, '') : 'default';
+                            const safeName = safeText(item.name);
+                            const safeCategory = safeText(item.category || '一般');
+                            const safeRemark = safeText(item.remark || '');
+                            const safeReleaseDate = safeText(item.releaseDate || '');
+                            const safeReleaseTime = safeText(item.releaseTime || '');
+                            const safeImage = safeAttr(item.image || '');
                         return `
                         <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
                             <div class="absolute top-4 right-4 z-10">
-                                <button onclick="openActionModal(event,'wish', '${item.id}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
+                                <button onclick="openActionModal(event,'wish', '${safeAttr(String(item.id))}')" class="p-2 text-slate-300 hover:text-slate-600 active:scale-90 transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                                 </button>
                             </div>
-                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox(['${item.image}'], '${item.name}', '${item.releaseDate || ''}')` : ''}">
-                                ${item.image ? `<img src="${item.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox(['${safeImage}'], '${safeAttr(String(item.name))}', '${safeReleaseDate}')` : ''}">
+                                ${item.image ? `<img src="${safeImage}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                                 <div class="flex-grow pr-24">
-                                    <span data-i18n="cat_${cleanId}" class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${item.category || '一般'}</span>
-                                    <h4 class="font-bold text-sm leading-tight text-slate-800">${item.name}</h4>
+                                    <span data-i18n="cat_${cleanId}" class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${safeCategory}</span>
+                                    <h4 class="font-bold text-sm leading-tight text-slate-800">${safeName}</h4>
                                     <p class="text-xs font-black text-brand mt-1">$ ${Number(item.price).toLocaleString()}</p>
-                                    ${item.releaseDate ? `<p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${item.releaseDate} ${item.releaseTime || ''}</p>` : ''}
+                                    ${item.releaseDate ? `<p class="text-[10px] text-slate-400 mt-1 font-bold">🗓️ ${safeReleaseDate} ${safeReleaseTime}</p>` : ''}
                                 </div>
                             </div>
                             ${item.remark ? `
                                 <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1">
                                     <div class="bg-slate-50 p-2 rounded-xl mt-1 border border-gray-100 text-[10px] text-slate-500 leading-relaxed">
-                                        <span data-i18n="field_remark" class="text-brand font-bold mr-1 opacity-70">備註:</span>${item.remark}
+                                        <span data-i18n="field_remark" class="text-brand font-bold mr-1 opacity-70">備註:</span>${safeRemark}
                                     </div>
                                 </div>` : ''}
                         </div>`}).join('')}
@@ -903,10 +919,11 @@ import  './i18n.js';
             bar.innerHTML = currentCats.map(cat => {
                 const isActive = state.selectedCategory === cat;
                 const cleanId = cat.replace(/\s+/g, '');
+                const safeCat = safeAttr(cat);
                 return `
-                    <div data-i18n="cat_${cleanId}" onclick="state.selectedCategory=(state.selectedCategory==='${cat}'?'':'${cat}'); renderContent();"
+                    <div data-i18n="cat_${cleanId}" onclick="state.selectedCategory=(state.selectedCategory==='${safeCat}'?'':'${safeCat}'); renderContent();"
                         class="chip ${isActive ? 'active-tag' : ''}">
-                        ${cat}
+                        ${safeText(cat)}
                     </div>
                     `;
             }).join('');
@@ -1323,19 +1340,27 @@ import  './i18n.js';
                     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
                         <div onclick="state.photoFilterCat='';renderContent()" 
                             class="chip ${state.photoFilterCat === '' ? 'active-tag' : ''}" data-i18n="photowall_all">全部</div>
-                        ${currentCats.map(c => `
-                            <div onclick="state.photoFilterCat='${c}';renderContent()" 
-                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}" data-i18n="cat_${c.toLowerCase().replace(/\s+/g, '')}">${c.split(' ')[0]}</div>
-                        `).join('')}
+                        ${currentCats.map(c => {
+                            const safeCat = safeAttr(c);
+                            return `
+                            <div onclick="state.photoFilterCat='${safeCat}';renderContent()" 
+                                class="chip ${state.photoFilterCat === c ? 'active-tag' : ''}" data-i18n="cat_${c.toLowerCase().replace(/\s+/g, '')}">${safeText(c.split(' ')[0])}</div>
+                        `;
+                        }).join('')}
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">
-                        ${photos.length > 0 ? photos.map(item => `
-                            <div onclick="openLightbox(['${item.image}'], '${item.name}', '${isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)}')" 
+                        ${photos.length > 0 ? photos.map(item => {
+                            const safeImage = safeAttr(item.image || '');
+                            const safePhotoName = safeAttr(String(item.name || ''));
+                            const safePhotoMeta = safeAttr(String(isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)));
+                            return `
+                            <div onclick="openLightbox(['${safeImage}'], '${safePhotoName}', '${safePhotoMeta}')" 
                                 class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
-                                <img src="${item.image}" class="w-full h-full object-cover">
+                                <img src="${safeImage}" class="w-full h-full object-cover">
                             </div>
-                        `).join('') : `
+                        `;
+                        }).join('') : `
                             <div data-i18n="photowall_empty" class="col-span-full py-24 text-center text-slate-300 font-bold">目前尚無照片</div>
                         `}
                     </div>

@@ -2,9 +2,15 @@
  * tags.js - 智慧標籤建議系統
  */
 import { state } from './state.js';
-        const PREDEFINED_TAGS = ["待二補", "不須二補", "線上購買", "線下購買", "SEVENTEEN"];
-        // 初始化智慧標籤
-        function initSmartTags(initialTags = []) {
+import { escapeHTML, escapeAttr } from './utils.js';
+
+const PREDEFINED_TAGS = ["待二補", "不須二補", "線上購買", "線下購買", "SEVENTEEN"];
+const safeText = (value) => escapeHTML(value ?? '');
+const safeAttr = (value) => escapeAttr(value ?? '');
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// 初始化智慧標籤
+function initSmartTags(initialTags = []) {
             const container = document.getElementById('m-tag-container');
             const input = document.getElementById('m-tag-input');
             const suggestionsList = document.getElementById('m-tag-suggestions');
@@ -17,7 +23,7 @@ import { state } from './state.js';
                 selectedTags.forEach((tag, index) => {
                     const chip = document.createElement('div');
                     chip.className = 'tag-chip flex items-center bg-slate-100 text-brand px-2 py-1 rounded-lg text-xs font-bold';
-                    chip.innerHTML = `${tag}<span class="ml-1 cursor-pointer hover:text-red-500" onclick="event.stopPropagation(); window.removeSmartTag(${index})">✕</span>`;
+                    chip.innerHTML = `${safeText(tag)}<span class="ml-1 cursor-pointer hover:text-red-500" onclick="event.stopPropagation(); window.removeSmartTag(${index})">✕</span>`;
                     container.insertBefore(chip, input);
                 });
             };
@@ -37,7 +43,11 @@ import { state } from './state.js';
                 suggestionsList.classList.add('hidden');
             };
 
-            window.addSmartTagByClick = (val) => addSmartTag(val);
+            suggestionsList.addEventListener('click', (e) => {
+                const item = e.target.closest('li[data-tag]');
+                if (!item) return;
+                addSmartTag(item.dataset.tag || '');
+            });
             // 監聽輸入行為：處理逗號與建議清單
             input.addEventListener('input', (e) => {
                 const val = e.target.value;
@@ -61,8 +71,11 @@ import { state } from './state.js';
                 if (matches.length > 0) {  
                     suggestionsList.innerHTML = matches.map(m => {
                         const isDynamic = !PREDEFINED_TAGS.includes(m);
-                        return `<li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium flex justify-between items-center" onclick="window.addSmartTagByClick('${m}')">
-                            <span>${m.replace(new RegExp(`(${query})`, 'gi'), `<span class="text-brand font-bold">$1</span>`)}</span>
+                        const safeValue = safeAttr(m);
+                        const safeMatch = safeText(m);
+                        const highlighted = safeMatch.replace(new RegExp(`(${escapeRegExp(query)})`, 'gi'), '<span class="text-brand font-bold">$1</span>');
+                        return `<li class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0 font-medium flex justify-between items-center" data-tag="${safeValue}">
+                            <span>${highlighted}</span>
                             ${isDynamic ? '<span class="text-[9px] text-slate-300 italic">已使用過</span>' : ''}
                         </li>`;
                     }).join('');
