@@ -550,6 +550,21 @@
             window.fetchRates();
         };
     };
+    if (!history.state?.tab) {
+        history.replaceState(
+            { tab: 'expense' },
+            '',
+            '#expense'
+        );
+    }
+    // Android 返回鍵 / 瀏覽器返回
+    // window.addEventListener('popstate', (event) => {
+    //     const tab = event.state?.tab || 'expense';
+    //     console.log('BACK:', event.state);
+    //     switchTab(tab, false);
+        
+    // });
+
 </script>
 
     <script>
@@ -880,6 +895,14 @@
             console.warn('Analytics logEvent failed', e);
         }
     }
+
+window.addEventListener('popstate', (event) => {
+    console.log('🔥 POPSTATE:', event.state);
+});
+
+window.addEventListener('hashchange', (event) => {
+    console.log('🔥 HASHCHANGE:', location.hash);
+});
 </script>
 </body>
 </html>

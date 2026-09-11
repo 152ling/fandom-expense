@@ -83,7 +83,17 @@ const safeAttr = (value) => escapeAttr(value ?? '');
         /**
          * 3. 導覽與渲染
          */
-    export function switchTab(tab) {
+        export function switchTab(tab, addHistory = true) {
+            // 使用者主動切換 Tab 才新增 history
+            if (addHistory && state.activeTab !== tab) {
+                history.pushState(
+                    { tab: tab },
+                    '',
+                    `#${tab}`
+                );
+                console.log('PUSH TAB:', tab);
+            }
+
             state.activeTab = tab; state.subPage = null; state.searchKeyword = ''; state.selectedCategory = '';state.currentPage = 1;
             ['expense', 'report', 'wish', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
