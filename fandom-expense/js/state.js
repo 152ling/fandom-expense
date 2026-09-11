@@ -3,6 +3,7 @@
  */
     export const state = {
             activeTab: 'expense',
+            addModalOpen: false,
             subPage: null,
             photoWallTab: 'purchased',
             themeColor: localStorage.getItem('fe_v11_theme') || 'svt', 

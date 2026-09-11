@@ -6,6 +6,7 @@ import  './i18n.js';
 
 const safeText = (value) => escapeHTML(value ?? '');
 const safeAttr = (value) => escapeAttr(value ?? '');
+let lastSubPage = null;
 
     export function showToast(msg) {
         const t = document.getElementById("toast");
@@ -85,7 +86,7 @@ const safeAttr = (value) => escapeAttr(value ?? '');
          */
         export function switchTab(tab, addHistory = true) {
             // 使用者主動切換 Tab 才新增 history
-            if (addHistory && state.activeTab !== tab) {
+            if (addHistory) {
                 history.pushState(
                     { tab: tab },
                     '',
@@ -120,6 +121,21 @@ const safeAttr = (value) => escapeAttr(value ?? '');
     export function renderContent() {
             const container = document.getElementById('main-content');
             if(!container) return;
+            // 只有「使用者進入新的 Settings 子頁」才建立 history,避免renderContent()被呼叫時重複 pushState
+            if (state.activeTab === 'settings' && state.subPage !== null && state.subPage !== lastSubPage) {
+                history.pushState(
+                    {
+                        tab: 'settings',
+                        subPage: state.subPage
+                    },
+                    '',
+                    '#settings'
+                );
+
+                console.log('PUSH SUBPAGE:', state.subPage);
+            }
+
+            lastSubPage = state.subPage;
             container.innerHTML = '';
             if (state.activeTab === 'expense') renderExpenseList(container);
             else if (state.activeTab === 'report') renderReport(container);
@@ -141,6 +157,15 @@ const safeAttr = (value) => escapeAttr(value ?? '');
 
 
         export function openAddModal(itemData = null) {
+            state.addModalOpen = true;
+            history.pushState(
+                { 
+                    ...history.state,
+                    modal: 'add'
+                },
+                '',
+                location.href
+            );
             state.editingId = (itemData?.id && !itemData?.isCopy) ? String(itemData.id) : null;
             // 初始化清空
             state.tempImages = [];
@@ -814,7 +839,7 @@ const safeAttr = (value) => escapeAttr(value ?? '');
             }, 300);
         }
 
-        export function closeModal() {state.wishSourceId = null; closeModalAnimation('modal-overlay', 'modal-container'); }
+        export function closeModal() {state.wishSourceId = null; state.addModalOpen = false;closeModalAnimation('modal-overlay', 'modal-container'); }
         export function closeActionModal() { closeModalAnimation('action-modal-overlay', 'action-modal-container'); }
 
         export function setTempType(type) { //切換消費/售出

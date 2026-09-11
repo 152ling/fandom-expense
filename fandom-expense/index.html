@@ -496,7 +496,7 @@
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script type="module">
     import { state } from './js/state.js';
-    import { renderContent, applyTheme, switchTab,trackPageView } from './js/ui.js';
+    import { renderContent, applyTheme, switchTab,trackPageView,closeModal } from './js/ui.js';
     import './js/expenseList.js';
     import './js/constants.js';
     import './js/actions.js';
@@ -557,14 +557,6 @@
             '#expense'
         );
     }
-    // Android 返回鍵 / 瀏覽器返回
-    // window.addEventListener('popstate', (event) => {
-    //     const tab = event.state?.tab || 'expense';
-    //     console.log('BACK:', event.state);
-    //     switchTab(tab, false);
-        
-    // });
-
 </script>
 
     <script>
@@ -898,6 +890,20 @@
 
     window.addEventListener('popstate', (event) => {
         const tab = event.state?.tab || 'expense';
+        if (state.addModalOpen) {
+            closeModal();
+            return;
+        }
+        // Settings 子頁 → 回 Settings 首頁
+        if (state.subPage !== null) {
+            if(state.subPage === 'photowall') {
+                state.photoFilterCat='';
+            }
+            state.subPage = null;
+            renderContent();
+            return;
+        }
+
         console.log('BACK:', event.state);
         switchTab(tab, false);
     });
