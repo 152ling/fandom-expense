@@ -480,8 +480,7 @@ let lastSubPage = null;
                 if(state.enableExchange) {updateRateUI();}
                 updateStaticTranslations(form);
             }
-                        
-            document.getElementById('modal-overlay').classList.remove('hidden');
+            openModalAnimation('modal-overlay', 'modal-container'); 
             setTimeout(() => { if (form) form.scrollTop = 0; }, 50);//每次開啟都在彈窗最上方
         }
         export function handlePaymentChange(val) {
@@ -818,24 +817,31 @@ let lastSubPage = null;
         export function openModalAnimation(overlayId, containerId) {
             const overlay = document.getElementById(overlayId);
             const container = document.getElementById(containerId);
+
             if (!overlay || !container) return;
+
             overlay.classList.remove('hidden');
-            container.style.transform = 'translateY(100%)';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-            container.offsetHeight; // force reflow
-            container.style.transform = 'translateY(0)';
+
+            requestAnimationFrame(() => {
+                container.classList.remove('translate-y-full');
+                container.classList.add('translate-y-0');
+            });
+
             overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
         }
-
         export function closeModalAnimation(overlayId, containerId) {
             const overlay = document.getElementById(overlayId);
             const container = document.getElementById(containerId);
+
             if (!overlay || !container) return;
-            container.style.transform = 'translateY(100%)';
+
+            container.classList.remove('translate-y-0');
+            container.classList.add('translate-y-full');
+
             overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+
             setTimeout(() => {
                 overlay.classList.add('hidden');
-                container.style.transform = ''; 
             }, 300);
         }
 
@@ -2535,9 +2541,7 @@ window.removeImg=removeImg;
 window.fetchRates = fetchRates;
 
 window.setTempType = setTempType;
-window.closeModal = () => {
-    document.getElementById('modal-overlay').classList.add('hidden');
-};
+window.closeModal = closeModal;
 window.toggleWishDateInput = toggleWishDateInput;
 
 
