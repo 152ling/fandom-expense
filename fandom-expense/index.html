@@ -706,6 +706,7 @@
                         return;
                     }
                 }
+                console.log("同步中，將本機資料寫入雲端...");
                 await setDoc(userDoc, { expenses, wishlist, catOrder: state.catOrder }, { merge: true });
             } catch (e) { console.error("Sync failed:", e); }
         },

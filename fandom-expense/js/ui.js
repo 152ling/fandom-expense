@@ -92,7 +92,6 @@ let lastSubPage = null;
                     '',
                     `#${tab}`
                 );
-                console.log('PUSH TAB:', tab);
             }
 
             state.activeTab = tab; state.subPage = null; state.searchKeyword = ''; state.selectedCategory = '';state.currentPage = 1;
@@ -1306,7 +1305,7 @@ let lastSubPage = null;
                     <div onclick="state.subPage = 'version'; renderContent();trackPageView('version');" class="flex items-center justify-between p-5 custom-hover cursor-pointer ">
                         <div class="flex items-center gap-4 text-brand">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="settings_version" class="font-bold text-slate-700">版本說明</span></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v14.0</span><span>▶</span></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] text-slate-300 font-mono text-right">v15.0</span><span>▶</span></div>
                     </div>
                 </div>
                 <div data-i18n="settings_privacy" onclick="state.subPage = 'privacy'; renderContent();trackPageView('privacy');" class="mt-6 flex justify-center font-bold text-xs text-slate-400 item-center text-center underline cursor-pointer">隱私權政策</div>
@@ -2265,6 +2264,7 @@ let lastSubPage = null;
         // --- 版本說明 ---
         function renderVersionView(container) { 
             const logs = [
+                { version: 'v15.0', date: '2026.10.13', updates: ['照片牆支援顯示所有上傳圖片','多品項功能優化：數量支援自行輸入數字','修正很多小bug只是開發者偷懶沒更新版本說明']},
                 { version: 'v14.0', date: '2026.07.18', updates: ['新增消費細項功能：一筆消費可拆分記錄多個品項，合單購買、專輯套組、周邊訂單管理更方便', '優化「已售出」狀態 UI：狀態顏色改為跟隨使用者主題色，讓收藏回血紀錄與整體介面更加協調',]},
                 { version: 'v13.0', date: '2026.07.15', updates: ['新增物流管理篩選：顯示各狀態商品數量，快速切換並支援一鍵清除篩選','支援多語系:繁體中文、英文、韓文、日文，可前往外觀設定切換語系 <br> 非專業翻譯若有遇到翻譯錯誤或不通順的地方，歡迎回報','成功馴服AI所以抱著我家大胖貓慶祝🐈']},
                 { version: 'v12.0', date: '2026.06.22', updates: ['新增常用購物平台建議，快速完成消費紀錄','優化年月切換介面：新增左右箭頭快速瀏覽歷史紀錄','新增「標記已取貨」功能，收到商品後可一鍵更新狀態','財務報表新增標籤分析，看看你的錢都花在哪個坑裡']},
@@ -2293,7 +2293,7 @@ let lastSubPage = null;
                     <div class="flex flex-col items-center mb-10">
                         <div class="w-20 h-20 bg-brand rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-xl mb-4">💎</div>
                         <h3 class="text-lg font-black text-slate-800">追星錢包 Fandom Wallet</h3>
-                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version 14.0</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-1">Version ${logs[0].version}</p>
                     </div>
 
                     <div class="space-y-6">
