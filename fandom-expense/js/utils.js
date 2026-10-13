@@ -175,7 +175,15 @@ export    function shrinkImage(blob, targetSize) {
             const totalExp = currentMonthItems.filter(i => i.type !== 'income').reduce((sum, i) => sum + i.total, 0);
             const totalInc = currentMonthItems.filter(i => i.type === 'income').reduce((sum, i) => sum + i.total, 0);
             const total = totalExp - totalInc;
-            const allPhotoItems = currentMonthItems.filter(i => i.image);
+            const allPhotoItems = currentMonthItems.flatMap(item => {
+                if (item.type === 'income') return [];
+                const imgs = Array.isArray(item.images)
+                    ? item.images
+                    : (typeof item.image === 'string' && item.image ? [item.image] : []);
+                return imgs
+                    .filter(src => typeof src === 'string' && src.trim() !== '')
+                    .map(src => ({ ...item, image: src }));
+            });
             const photoItems = allPhotoItems.length <= 9 ? allPhotoItems : shuffleArray(allPhotoItems).slice(0, 9);
             
             // 關鍵優化：Cache Key 包含圖片 URL，網址一換快取就自動失效

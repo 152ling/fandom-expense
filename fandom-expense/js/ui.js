@@ -922,7 +922,11 @@ let lastSubPage = null;
                             const safeRemark = safeText(item.remark || '');
                             const safeReleaseDate = safeText(item.releaseDate || '');
                             const safeReleaseTime = safeText(item.releaseTime || '');
-                            const safeImage = safeAttr(item.image || '');
+                            const itemImgs = Array.isArray(item.images)
+                                ? item.images.filter(src => typeof src === 'string' && src.trim() !== '')
+                                : (typeof item.image === 'string' && item.image ? [item.image] : []);
+                            const safeImage = safeAttr(itemImgs[0] || '');
+                            const galleryImages = JSON.stringify(itemImgs).replace(/"/g, '&quot;');
                         return `
                         <div class="bg-white rounded-3xl p-4 flex flex-col gap-3 card-shadow relative overflow-hidden">
                             <div class="absolute top-4 right-4 z-10">
@@ -930,8 +934,8 @@ let lastSubPage = null;
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                                 </button>
                             </div>
-                            <div class="flex items-center gap-4" onclick="${item.image ? `openLightbox(['${safeImage}'], '${safeAttr(String(item.name))}', '${safeReleaseDate}')` : ''}">
-                                ${item.image ? `<img src="${safeImage}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
+                            <div class="flex items-center gap-4" onclick="${itemImgs.length ? `openLightbox(${galleryImages}, '${safeAttr(String(item.name))}', '${safeReleaseDate}')` : ''}">
+                                ${itemImgs.length ? `<img src="${safeImage}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : `<div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">✨</div>`}
                                 <div class="flex-grow pr-24">
                                     <span data-i18n="cat_${cleanId}" class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-slate-50 text-brand mb-1 inline-block">${safeCategory}</span>
                                     <h4 class="font-bold text-sm leading-tight text-slate-800">${safeName}</h4>
@@ -1348,16 +1352,26 @@ let lastSubPage = null;
             const WishCats = getCurrentWishCategories();
             const currentCats = isWishWall ? WishCats : BuyCats.map(c => c.id);
 
-            // 取得有照片的資料並過濾分類
-            let photos = dataSource.filter(i => i.image && i.type !== 'income');
+            // 取得有照片的資料並展開每筆資料中的所有圖片（兼容舊版單圖與新版 images 陣列）
+            let photos = dataSource.flatMap(item => {
+                if (item.type === 'income') return [];
+                const imageList = Array.isArray(item.images)
+                    ? item.images
+                    : (typeof item.image === 'string' && item.image ? [item.image] : []);
+
+                return imageList
+                    .filter(src => typeof src === 'string' && src.trim() !== '')
+                    .map(src => ({ src, item }));
+            });
+
             if (state.photoFilterCat && state.photoFilterCat !== '') {
-                photos = photos.filter(p => p.category === state.photoFilterCat);
+                photos = photos.filter(p => p.item.category === state.photoFilterCat);
             }
             photos.sort((a, b) => 
-                Number(b.year) - Number(a.year) ||
-                Number(b.month) - Number(a.month) ||
-                Number(b.day || 1) - Number(a.day || 1) ||
-                Number(b.id) - Number(a.id)
+                Number(b.item.year) - Number(a.item.year) ||
+                Number(b.item.month) - Number(a.item.month) ||
+                Number(b.item.day || 1) - Number(a.item.day || 1) ||
+                Number(b.item.id) - Number(a.item.id)
             );
 
             container.innerHTML = `
@@ -1391,12 +1405,16 @@ let lastSubPage = null;
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-20">
-                        ${photos.length > 0 ? photos.map(item => {
-                            const safeImage = safeAttr(item.image || '');
+                        ${photos.length > 0 ? photos.map(photo => {
+                            const item = photo.item;
+                            const imgList = Array.isArray(item.images)
+                                ? item.images.filter(src => typeof src === 'string' && src.trim() !== '')
+                                : (typeof item.image === 'string' && item.image ? [item.image] : []);
+                            const safeImage = safeAttr(photo.src || '');
                             const safePhotoName = safeAttr(String(item.name || ''));
                             const safePhotoMeta = safeAttr(String(isWishWall ? (item.category || '一般') : (item.year + '/' + item.month)));
                             return `
-                            <div onclick="openLightbox(['${safeImage}'], '${safePhotoName}', '${safePhotoMeta}')" 
+                            <div onclick="openLightbox(${JSON.stringify(imgList).replace(/"/g, '&quot;')}, '${safePhotoName}', '${safePhotoMeta}')" 
                                 class="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-all">
                                 <img src="${safeImage}" class="w-full h-full object-cover">
                             </div>
